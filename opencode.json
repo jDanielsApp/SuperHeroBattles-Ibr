@@ -1,0 +1,33 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permissions": [
+    { "action": "shell", "resource": "*", "effect": "allow" },
+    { "action": "shell", "resource": "rm -rf *", "effect": "ask" },
+    { "action": "shell", "resource": "git push *", "effect": "ask" },
+    { "action": "shell", "resource": "sudo *", "effect": "ask" },
+    { "action": "read", "resource": "*Secrets.xcconfig", "effect": "deny" },
+    { "action": "edit", "resource": "*Secrets.xcconfig", "effect": "deny" }
+  ],
+  "commands": {
+    "build": {
+      "description": "Compila SuperHeroBattle para el simulador iOS",
+      "template": "Compila el proyecto SuperHeroBattle para el simulador iOS. Usa DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer y el esquema SuperHeroBattle. Si hay errores, analízalos y corrígelos sin cambiar la arquitectura ni las convenciones de AGENTS.md. $ARGUMENTS"
+    },
+    "test": {
+      "description": "Ejecuta los tests de SuperHeroBattle",
+      "template": "Ejecuta los tests de SuperHeroBattle con xcodebuild usando DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer. Elige un simulador iOS disponible con xcrun simctl list devices available. Corrige los fallos que introduzca el cambio actual; no desactives tests sin justificarlo. $ARGUMENTS"
+    },
+    "verify": {
+      "description": "Compila, ejecuta tests y revisa el diff",
+      "template": "Verifica el estado del proyecto: compila con xcodebuild, ejecuta los tests, revisa git diff y comprueba que no haya secretos ni referencias al nombre antiguo del proyecto. Resume los resultados y los riesgos. $ARGUMENTS"
+    }
+  },
+  "watcher": {
+    "ignore": [
+      "DerivedData/**",
+      "**/xcuserdata/**",
+      "**/*.xcuserstate",
+      ".build/**"
+    ]
+  }
+}

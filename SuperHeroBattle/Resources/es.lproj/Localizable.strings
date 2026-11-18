@@ -1,0 +1,33 @@
+"app.name" = "Superhero Battle";
+
+"home.tagline" = "Forma tu equipo. Reescribe la leyenda.";
+"home.publishers" = "MARVEL / DC / MÁS";
+"home.dataSource" = "SUPERHEROAPI";
+"home.versus" = "VS";
+"home.guide.title" = "Guía de personajes";
+"home.guide.subtitle" = "Explora héroes, poderes y afiliaciones.";
+"home.duels.title" = "Duelos";
+"home.duels.subtitle" = "Forma dos equipos y lanza un combate cinematográfico.";
+"home.settings" = "Ajustes";
+
+"guide.title" = "Guía de personajes";
+"guide.placeholder.title" = "El catálogo llega pronto";
+"guide.placeholder.message" = "La búsqueda, los filtros locales y el detalle llegarán en la siguiente fase.";
+
+"duels.title" = "Duelos";
+"duels.placeholder.title" = "Elige a tus luchadores";
+"duels.placeholder.message" = "La selección de equipos y el motor de combate llegarán en las próximas fases.";
+
+"settings.title" = "Ajustes";
+"settings.language" = "Idioma";
+"settings.language.system" = "Sistema";
+"settings.language.english" = "Inglés";
+"settings.language.spanish" = "Español";
+"settings.about" = "Acerca de";
+"settings.version" = "Versión";
+
+"common.comingSoon" = "Próximamente";
+
+"accessibility.home.guide" = "Abrir la guía de personajes";
+"accessibility.home.duels" = "Abrir el modo duelo";
+"accessibility.home.settings" = "Abrir ajustes";

@@ -1,0 +1,8 @@
+// Shared build settings for SuperHeroBattle.
+// Never put secrets in this file: use Secrets.xcconfig instead.
+
+SUPERHERO_API_BASE_URL = https:/$()/superheroapi.com/api
+SUPERHERO_API_TOKEN =
+
+// Optional local overrides. The file is gitignored.
+#include? "Secrets.xcconfig"
