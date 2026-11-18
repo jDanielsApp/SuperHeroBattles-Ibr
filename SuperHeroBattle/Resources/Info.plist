@@ -2,13 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>SchemeUserState</key>
-	<dict>
-		<key>SuperHeroBattleSwift.xcscheme_^#shared#^_</key>
-		<dict>
-			<key>orderHint</key>
-			<integer>0</integer>
-		</dict>
-	</dict>
+	<key>SuperHeroAPIBaseURL</key>
+	<string>$(SUPERHERO_API_BASE_URL)</string>
+	<key>SuperHeroAPIToken</key>
+	<string>$(SUPERHERO_API_TOKEN)</string>
 </dict>
 </plist>

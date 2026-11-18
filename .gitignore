@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# Xcode
+build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM
+*.dSYM.zip
+*.xcresult
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Local secrets
+SuperHeroBattle/Config/Secrets.xcconfig
