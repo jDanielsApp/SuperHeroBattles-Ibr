@@ -1,17 +1,13 @@
-//
-//  SuperHeroBattleApp.swift
-//  SuperHeroBattle
-//
-//  Created by Daniel on 18/11/2026.
-//
-
 import SwiftUI
 
 @main
 struct SuperHeroBattleApp: App {
+    @State private var container = AppContainer()
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
+                .environment(container)
         }
     }
 }
