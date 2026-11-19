@@ -182,6 +182,18 @@ Decisiones de la fase:
 - En modo `-uitest-fakes` el servicio de IA ni se instancia: la plantilla alimenta los UI tests.
 - La sesión de `LanguageModelSession` se crea dentro de la tarea de generación: nunca cruza aislamientos.
 
+### Ajuste de narración (prompt v2)
+
+Tras verificar la IA real en un iPhone con iOS 26.5, se afinó la generación:
+
+- `NarrationContext`: cada combatiente llega etiquetado con su bando (`[TEAM A]` / `[TEAM B]`, roster por equipo, base/suerte/total individuales y feeling por bando). En 2v2/3v3, y cuando el mismo héroe está en ambos equipos, el modelo ya no puede confundir los bandos.
+- Tono por diferencia: `gap >= 30` se narra como victoria clara (`CLEAR`), `gap < 30` como combate reñido (`CLOSE`) y empate como igualada sin vencedor.
+- Regla creativa acotada: el modelo puede añadir UN detalle característico del lore conocido del personaje, sin inventar PowerStats ni contradecir los datos.
+- Ejemplos de estilo few-shot localizados (en/es), marcados como referencia, nunca contenido a copiar.
+- `GeneratedNarration` pasa a cuatro beats (`opening`, `exchange`, `climax`, `verdict`) y `NarrationOutputValidator` exige: beats completos, ambos equipos nombrados y el ganador proclamado en el veredicto; si falla → `NarrationError.invalidResponse` → plantilla.
+- `GenerationOptions(temperature: 0.8, maximumResponseTokens: 400)`. `ContextOptions` es solo iOS 27 y no se usa para mantener compatibilidad con iOS 26.
+- Verificación en simulador: la inferencia sigue fallando por falta de assets del host (error documentado arriba); la ruta de producción cae a plantilla correctamente. La verificación con IA real se hace en dispositivo físico con Apple Intelligence.
+
 ## Pendiente inmediato — Fase 7
 
 - Historial de combates en Realm: `CombatRecord` con snapshots inmutables, modalidad, ganador/empate y narración con su origen.
@@ -211,6 +223,8 @@ xcodebuild -project SuperHeroBattle.xcodeproj -scheme SuperHeroBattle \
 xcodebuild -project SuperHeroBattle.xcodeproj -scheme SuperHeroBattle \
   -destination 'platform=iOS Simulator,name=iPhone 17' test
 ```
+
+Resultado ajuste de narración: build correcto, **186 unit tests + 2 UI tests en verde**, sin warnings de código. Cubierto con suerte determinista: contexto etiquetado por bandos (incluido el mismo héroe en ambos equipos), umbral exacto de 30 (`gap >= 30` claro, 29 reñido), prompts v2 con lore acotado y ejemplos localizados, y validador de beats que rechaza respuestas sin ambos equipos o sin el ganador correcto en el veredicto (→ plantilla).
 
 Resultado Fase 6: build correcto, **172 unit tests + 2 UI tests en verde** en iPhone 17 (iOS 27.0), sin warnings de código. La narración está cubierta con `MockNarrationService` (actor interno de registro): plantilla determinista y localizada en `en`/`es`, caso de uso con disponibilidad/error/cancelación, y view model con guarda de generación. Verificación con el modelo real en el simulador mediante probe temporal (eliminado, no commiteado): availability miente (`available`) porque los assets del modelo no están en el simulador; la generación directa falla y la ruta de producción cae a plantilla en español con `source: .template`, exactamente como exige AGENTS.md. En dispositivo real con Apple Intelligence la ruta IA se activa sin cambios.
 

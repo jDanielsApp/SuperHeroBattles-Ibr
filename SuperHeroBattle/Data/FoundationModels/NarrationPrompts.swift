@@ -6,7 +6,7 @@ import Foundation
 /// Contienen exclusivamente datos del dominio (nombres, fichas conocidas y
 /// resultado matemático). Nunca tokens, credenciales ni datos personales.
 nonisolated enum NarrationPrompts {
-    static let version = 1
+    static let version = 2
 
     /// Instrucciones del sistema: estilo, reglas invariables e idioma.
     static func instructions(language: NarrationLanguage) -> String {
@@ -14,43 +14,67 @@ nonisolated enum NarrationPrompts {
         You are the narrator of a superhero combat simulator with a classic \
         comic-book tone: spectacular, entertaining and vivid.
 
-        Rules you must never break:
+        Hard rules you must never break:
         1. The mathematical result provided is final. Never change the winner \
         and never change any score.
-        2. Use only the facts provided. Never invent PowerStats or abilities.
-        3. Do not translate proper nouns: keep character, team, group and \
+        2. Use only the numbers provided. Never invent PowerStats or numeric \
+        abilities.
+        3. You may add ONE characteristic flourish per character drawn from \
+        that character's well-known fictional lore (signature tools, style, \
+        temperament), but never contradict the provided data.
+        4. Do not translate proper nouns: keep character, team, group and \
         publisher names exactly as provided.
-        4. This is a fictional simulation; treat it as such.
+        5. This is a fictional simulation; treat it as such.
 
-        Narrative structure: present both teams, start of the confrontation, \
-        standout moments and special attacks, strategies and interactions \
-        between characters, resolution, and proclamation of the winner \
-        exactly as given.
+        Pace the battle by point difference:
+        - CLEAR victory: narrate a decisive, dominant performance with an \
+        obvious gap between the sides.
+        - CLOSE victory: narrate a hard-fought, evenly matched battle where \
+        the winner barely prevails.
+        - DRAW: narrate a dead heat with no winner at all.
+
+        Structure the narration in the four provided beats: opening (present \
+        both teams by name), exchange (standout moments and special attacks), \
+        climax (strategies and interactions that decide the fight) and \
+        verdict (proclaim the winner exactly as given, or the draw). Always \
+        mention each hero with the team label given in the roster so both \
+        sides stay clearly differentiated.
+
+        Reference style, never copy its content:
+        - \(styleExamples(language: language)[0])
+        - \(styleExamples(language: language)[1])
 
         Write in \(language.displayName). Plain prose only: no headings, \
-        no lists, no quotation marks. Length between 80 and 160 words.
+        no lists, no quotation marks.
 
         (prompt version: \(version))
         """
     }
 
-    /// Prompt del combate concreto con los datos inmutables del dominio.
+    /// Prompt del combate concreto a partir del contexto etiquetado.
     static func combatPrompt(
-        result: CombatResult,
-        participants: BattleParticipants,
+        context: NarrationContext,
         language: NarrationLanguage
     ) -> String {
         var lines: [String] = []
-        lines.append("Combat mode: \(participants.mode.rawValue).")
-        lines.append("Team A:")
-        for hero in participants.teamA {
-            lines.append("- " + describe(hero))
+        lines.append("Combat mode: \(context.mode.rawValue).")
+        lines.append("Team A: \(rosterSummary(context, side: .teamA)).")
+        lines.append("Team B: \(rosterSummary(context, side: .teamB)).")
+        lines.append("")
+        lines.append("Roster:")
+        for hero in context.heroes {
+            lines.append("- [\(teamLabel(hero.side))] " + describe(hero))
         }
-        lines.append("Team B:")
-        for hero in participants.teamB {
-            lines.append("- " + describe(hero))
+
+        let bonuses = affinityLines(context)
+        if !bonuses.isEmpty {
+            lines.append("")
+            lines.append("Affinity bonuses (feeling):")
+            lines.append(contentsOf: bonuses)
         }
-        lines.append(resultLine(result))
+
+        lines.append("")
+        lines.append(contentsOf: resultLines(context))
         lines.append("Narrate this battle in \(language.displayName).")
 
         return lines.joined(separator: "\n")
@@ -58,19 +82,27 @@ nonisolated enum NarrationPrompts {
 
     // MARK: - Detalles
 
-    private static func describe(_ hero: Hero) -> String {
-        var parts = [hero.name]
+    private static func rosterSummary(_ context: NarrationContext, side: TeamSide) -> String {
+        context.heroes(in: side).map(\.hero.name).joined(separator: ", ")
+    }
 
-        if let fullName = hero.fullName {
+    private static func teamLabel(_ side: TeamSide) -> String {
+        side == .teamA ? "TEAM A" : "TEAM B"
+    }
+
+    private static func describe(_ hero: NarrationContext.HeroContext) -> String {
+        var parts = [hero.hero.name]
+
+        if let fullName = hero.hero.fullName {
             parts.append("real name: \(fullName)")
         }
-        if let publisher = hero.publisher {
+        if let publisher = hero.hero.publisher {
             parts.append("publisher: \(publisher)")
         }
-        parts.append("alignment: \(hero.alignment.rawValue)")
+        parts.append("alignment: \(hero.hero.alignment.rawValue)")
 
         let stats = PowerStatKind.allCases.compactMap { kind -> String? in
-            guard let value = hero.powerStats[kind] else { return nil }
+            guard let value = hero.hero.powerStats[kind] else { return nil }
             return "\(kind.rawValue) \(value)"
         }
         if !stats.isEmpty {
@@ -78,33 +110,92 @@ nonisolated enum NarrationPrompts {
         }
 
         let affiliations = AffinityMatcher.normalizedItems(
-            from: hero.connections.groupAffiliation
+            from: hero.hero.connections.groupAffiliation
         )
         if !affiliations.isEmpty {
             parts.append("group affiliations: " + affiliations.sorted().joined(separator: ", "))
         }
 
         let relatives = AffinityMatcher.normalizedItems(
-            from: hero.connections.relatives
+            from: hero.hero.connections.relatives
         )
         if !relatives.isEmpty {
             parts.append("relatives: " + relatives.sorted().joined(separator: ", "))
         }
 
+        parts.append(
+            "computed base \(formatted(hero.baseScore)), luck \(hero.luck), "
+                + "individual total \(formatted(hero.totalScore))"
+        )
+
         return parts.joined(separator: "; ") + "."
     }
 
-    private static func resultLine(_ result: CombatResult) -> String {
-        let teamA = formatted(result.teamA.totalScore)
-        let teamB = formatted(result.teamB.totalScore)
-        let header = "Mathematical result (final, unchangeable): "
-            + "Team A scored \(teamA) and Team B scored \(teamB). "
+    private static func affinityLines(_ context: NarrationContext) -> [String] {
+        let bonusesBySide: [(side: TeamSide, bonuses: [AffinityBonus])] = [
+            (.teamA, context.teamABonuses),
+            (.teamB, context.teamBBonuses),
+        ]
 
-        switch result.outcome {
+        var lines: [String] = []
+
+        for entry in bonusesBySide {
+            for bonus in entry.bonuses {
+                let firstName = context.heroName(id: bonus.heroAID) ?? bonus.heroAID
+                let secondName = context.heroName(id: bonus.heroBID) ?? bonus.heroBID
+                let matches = (bonus.matchedAffiliations + bonus.matchedRelatives)
+                    .joined(separator: " / ")
+
+                lines.append(
+                    "- [\(teamLabel(entry.side))] \(firstName) + \(secondName): "
+                        + "+\(bonus.bonus) (\(matches))"
+                )
+            }
+        }
+
+        return lines
+    }
+
+    private static func resultLines(_ context: NarrationContext) -> [String] {
+        var lines: [String] = []
+        lines.append("Mathematical result (final, unchangeable):")
+
+        switch context.outcome {
         case .winner(let side):
-            return header + "The winner is \(side == .teamA ? "Team A" : "Team B")."
+            let pace = context.isClearWin ? "CLEAR" : "CLOSE"
+            lines.append(
+                "- Team A scored \(formatted(context.teamATotal)) and "
+                    + "Team B scored \(formatted(context.teamBTotal))."
+            )
+            lines.append(
+                "- Point difference: \(formatted(context.gap)) — the victory is \(pace)."
+            )
+            lines.append(
+                "- The winner is \(side == .teamA ? "Team A" : "Team B")."
+            )
         case .draw:
-            return header + "The combat is a draw."
+            lines.append(
+                "- Team A scored \(formatted(context.teamATotal)) and "
+                    + "Team B scored \(formatted(context.teamBTotal))."
+            )
+            lines.append("- Point difference: 0 — the combat is a DRAW with no winner.")
+        }
+
+        return lines
+    }
+
+    private static func styleExamples(language: NarrationLanguage) -> [String] {
+        switch language {
+        case .english:
+            [
+                "Batman uses the darkness to hurl a batarang soaked in chemical compounds.",
+                "Joker anticipates his rival's move and triggers a smoke bomb that reshapes the battlefield."
+            ]
+        case .spanish:
+            [
+                "Batman aprovecha la oscuridad para lanzar un batarang impregnado de compuestos químicos.",
+                "Joker anticipa el movimiento de su rival y activa una bomba de humo que transforma el campo de batalla."
+            ]
         }
     }
 

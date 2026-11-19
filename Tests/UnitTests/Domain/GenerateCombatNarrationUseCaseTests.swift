@@ -100,15 +100,18 @@ final class GenerateCombatNarrationUseCaseTests: XCTestCase {
 
     func testPromptContainsDomainDataAndNoConfiguration() {
         let prompt = NarrationPrompts.combatPrompt(
-            result: makeResult(),
-            participants: makeParticipants(),
+            context: makeContext(),
             language: .spanish
         )
 
         XCTAssertTrue(prompt.contains("Batman"))
         XCTAssertTrue(prompt.contains("Joker"))
-        XCTAssertTrue(prompt.contains("Team A"))
-        XCTAssertTrue(prompt.contains("winner is Team A"))
+        XCTAssertTrue(prompt.contains("Team A: Batman"))
+        XCTAssertTrue(prompt.contains("Team B: Joker"))
+        XCTAssertTrue(prompt.contains("[TEAM A] Batman"))
+        XCTAssertTrue(prompt.contains("[TEAM B] Joker"))
+        XCTAssertTrue(prompt.contains("Point difference"))
+        XCTAssertTrue(prompt.contains("The winner is Team A"))
         XCTAssertFalse(prompt.contains("SUPERHERO_API_TOKEN"))
         XCTAssertFalse(prompt.contains("SuperHeroAPIToken"))
     }
@@ -116,25 +119,57 @@ final class GenerateCombatNarrationUseCaseTests: XCTestCase {
     func testInstructionsAreVersionedAndForbidChangingTheResult() {
         let instructions = NarrationPrompts.instructions(language: .spanish)
 
-        XCTAssertEqual(NarrationPrompts.version, 1)
-        XCTAssertTrue(instructions.contains("prompt version: 1"))
+        XCTAssertEqual(NarrationPrompts.version, 2)
+        XCTAssertTrue(instructions.contains("prompt version: 2"))
         XCTAssertTrue(instructions.contains("Never change the winner"))
         XCTAssertTrue(instructions.contains("Write in Spanish"))
+        XCTAssertTrue(instructions.contains("characteristic flourish"), "Debe permitirse un detalle del lore conocido")
+        XCTAssertTrue(instructions.contains("batarang"), "Debe incluir el ejemplo de estilo localizado")
     }
 
-    func testDrawPromptDeclaresDraw() {
-        let engine = CombatEngine(luckProvider: SequenceLuckProvider([7, 7]))
-        let hero = Hero(id: "1", name: "Batman")
-        let participants = BattleParticipants(mode: .oneVsOne, teamA: [hero], teamB: [hero])
-        let result = engine.resolve(participants)
-
-        let prompt = NarrationPrompts.combatPrompt(
-            result: result,
-            participants: participants,
+    func testPromptMarksClearVictoryWhenGapIsAtLeastThirty() {
+        // 100 + 7 frente a 70 + 7: diferencia exacta de 30.
+        let clear = NarrationPrompts.combatPrompt(
+            context: makeContext(intelligenceA: 100, intelligenceB: 70, luck: [7, 7]),
+            language: .english
+        )
+        // 99 + 7 frente a 70 + 7: diferencia 29.
+        let close = NarrationPrompts.combatPrompt(
+            context: makeContext(intelligenceA: 99, intelligenceB: 70, luck: [7, 7]),
             language: .english
         )
 
-        XCTAssertTrue(prompt.contains("The combat is a draw"))
+        XCTAssertTrue(clear.contains("the victory is CLEAR"))
+        XCTAssertTrue(close.contains("the victory is CLOSE"))
+    }
+
+    func testPromptLabelsBothSidesWhenSameHeroRepeats() {
+        let hero = Hero(id: "1", name: "Batman")
+        let participants = BattleParticipants(mode: .oneVsOne, teamA: [hero], teamB: [hero])
+        let result = CombatEngine(luckProvider: SequenceLuckProvider([7, 7]))
+            .resolve(participants)
+
+        let prompt = NarrationPrompts.combatPrompt(
+            context: NarrationContext(result: result, participants: participants),
+            language: .english
+        )
+
+        XCTAssertTrue(prompt.contains("[TEAM A] Batman"))
+        XCTAssertTrue(prompt.contains("[TEAM B] Batman"))
+    }
+
+    func testDrawPromptDeclaresDraw() {
+        let hero = Hero(id: "1", name: "Batman", powerStats: PowerStats(intelligence: 50))
+        let participants = BattleParticipants(mode: .oneVsOne, teamA: [hero], teamB: [hero])
+        let result = CombatEngine(luckProvider: SequenceLuckProvider([7, 7]))
+            .resolve(participants)
+
+        let prompt = NarrationPrompts.combatPrompt(
+            context: NarrationContext(result: result, participants: participants),
+            language: .english
+        )
+
+        XCTAssertTrue(prompt.contains("the combat is a DRAW with no winner"))
     }
 
     // MARK: - Helpers
@@ -148,11 +183,38 @@ final class GenerateCombatNarrationUseCaseTests: XCTestCase {
         )
     }
 
-    private func makeParticipants() -> BattleParticipants {
+    private func makeContext(
+        intelligenceA: Int = 100,
+        intelligenceB: Int = 70,
+        luck: [Int] = [40, 20]
+    ) -> NarrationContext {
+        let participants = makeParticipants(intelligenceA: intelligenceA, intelligenceB: intelligenceB)
+        let result = CombatEngine(luckProvider: SequenceLuckProvider(luck))
+            .resolve(participants)
+
+        return NarrationContext(result: result, participants: participants)
+    }
+
+    private func makeParticipants(
+        intelligenceA: Int = 100,
+        intelligenceB: Int = 70
+    ) -> BattleParticipants {
         BattleParticipants(
             mode: .oneVsOne,
-            teamA: [Hero(id: "1", name: "Batman")],
-            teamB: [Hero(id: "2", name: "Joker")]
+            teamA: [
+                Hero(
+                    id: "1",
+                    name: "Batman",
+                    powerStats: PowerStats(intelligence: intelligenceA)
+                )
+            ],
+            teamB: [
+                Hero(
+                    id: "2",
+                    name: "Joker",
+                    powerStats: PowerStats(intelligence: intelligenceB)
+                )
+            ]
         )
     }
 

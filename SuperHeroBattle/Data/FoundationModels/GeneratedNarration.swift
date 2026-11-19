@@ -1,14 +1,41 @@
 import FoundationModels
 
 /// Salida estructurada de la narración generada con Foundation Models.
+///
+/// Cuatro beats que se unen en párrafos tras validarlos: obligan al modelo a
+/// presentar ambos equipos, desarrollar el combate y proclamar el resultado
+/// exactamente como se le dio.
 @Generable
 struct GeneratedNarration: Sendable {
     @Guide(
         description: """
-        Cinematic narration of the battle in the requested language, \
-        between 80 and 160 words, in 3 to 5 short paragraphs of plain prose. \
-        No headings, no lists, no quotation marks.
+        Opening beat: present both teams by their team names, heroes and \
+        rivalry stakes. Plain prose, 25 to 50 words.
         """
     )
-    var text: String
+    var opening: String
+
+    @Guide(
+        description: """
+        Exchange beat: standout moments, signature moves and special \
+        attacks from both sides. Plain prose, 25 to 50 words.
+        """
+    )
+    var exchange: String
+
+    @Guide(
+        description: """
+        Climax beat: strategies and decisive interactions between the \
+        characters that turn the tide. Plain prose, 25 to 50 words.
+        """
+    )
+    var climax: String
+
+    @Guide(
+        description: """
+        Verdict beat: resolution proclaiming the winner exactly as given, \
+        or the draw with no winner. Plain prose, 20 to 40 words.
+        """
+    )
+    var verdict: String
 }

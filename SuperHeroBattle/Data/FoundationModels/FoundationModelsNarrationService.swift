@@ -4,6 +4,7 @@ import FoundationModels
 /// Errores controlados de la narración con IA.
 nonisolated enum NarrationError: Error, Equatable, Sendable {
     case emptyResponse
+    case invalidResponse
     case timeout
 }
 
@@ -11,9 +12,19 @@ nonisolated enum NarrationError: Error, Equatable, Sendable {
 ///
 /// La sesión se crea solo tras confirmar la disponibilidad del modelo. La
 /// generación se cancela al agotar el timeout: nunca bloquea la interfaz.
+/// La salida estructurada se valida antes de publicarse: la IA narra, nunca
+/// decide ni altera el resultado matemático.
 nonisolated struct FoundationModelsNarrationService: CombatNarrationService {
     /// Tiempo máximo de generación antes de cancelar y caer a la plantilla.
     static let timeout: TimeInterval = 20
+
+    /// Temperatura creativa: suficiente variedad entre combates sin perder
+    /// coherencia con los datos inmutables del dominio.
+    static let temperature: Double = 0.8
+
+    /// Tope de tokens por respuesta: los cuatro beats caben de sobra y no
+    /// se desperdicia ventana de contexto.
+    static let maximumResponseTokens = 400
 
     var availability: NarrationAvailability {
         get async {
@@ -31,22 +42,26 @@ nonisolated struct FoundationModelsNarrationService: CombatNarrationService {
         participants: BattleParticipants,
         language: NarrationLanguage
     ) async throws -> CombatNarrative {
+        let context = NarrationContext(result: result, participants: participants)
         let instructions = NarrationPrompts.instructions(language: language)
-        let prompt = NarrationPrompts.combatPrompt(
-            result: result,
-            participants: participants,
-            language: language
-        )
+        let prompt = NarrationPrompts.combatPrompt(context: context, language: language)
         let timeout = Self.timeout
+        let options = GenerationOptions(
+            temperature: Self.temperature,
+            maximumResponseTokens: Self.maximumResponseTokens
+        )
 
-        let text: String = try await withThrowingTaskGroup(of: String.self) { group in
+        let narration: GeneratedNarration = try await withThrowingTaskGroup(
+            of: GeneratedNarration.self
+        ) { group in
             group.addTask {
                 let session = LanguageModelSession(instructions: instructions)
                 let response = try await session.respond(
                     to: prompt,
-                    generating: GeneratedNarration.self
+                    generating: GeneratedNarration.self,
+                    options: options
                 )
-                return response.content.text
+                return response.content
             }
 
             group.addTask {
@@ -62,11 +77,12 @@ nonisolated struct FoundationModelsNarrationService: CombatNarrationService {
             return first
         }
 
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            throw NarrationError.emptyResponse
-        }
+        let text = try NarrationOutputValidator.validatedText(
+            from: narration,
+            context: context,
+            language: language
+        )
 
-        return CombatNarrative(text: trimmed, source: .foundationModels)
+        return CombatNarrative(text: text, source: .foundationModels)
     }
 }
