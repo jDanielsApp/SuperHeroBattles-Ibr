@@ -103,6 +103,14 @@
 "combat.result.total" = "Total";
 "combat.result.affinity" = "Feeling";
 "combat.result.affinity.none" = "Sin coincidencias de feeling.";
+"combat.narration.title" = "Narración cinematográfica";
+"combat.narration.loading" = "Generando narración…";
+"combat.narration.source.foundationModels" = "Generada con Apple Intelligence";
+"combat.narration.source.template" = "Narrativa de plantilla";
+"combat.narration.template.intro" = "Simulación ficticia: %@ (%@) contra %@ (%@).";
+"combat.narration.template.scores" = "Tras el choque, el marcador marca %@ contra %@.";
+"combat.narration.template.winner" = "Ganador: %@.";
+"combat.narration.template.draw" = "El combate termina en empate.";
 
 "settings.title" = "Ajustes";
 "settings.language" = "Idioma";

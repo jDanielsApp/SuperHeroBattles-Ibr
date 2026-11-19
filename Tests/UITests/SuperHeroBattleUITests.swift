@@ -68,6 +68,14 @@ final class SuperHeroBattleUITests: XCTestCase {
             app.staticTexts["combat.total.teamB"].waitForExistence(timeout: 5),
             "Falta el total del Equipo B"
         )
+        XCTAssertTrue(
+            app.staticTexts["combat.narration"].waitForExistence(timeout: 10),
+            "No se mostró la narración"
+        )
+        XCTAssertTrue(
+            app.staticTexts["combat.narration.source"].waitForExistence(timeout: 5),
+            "Falta el badge del origen de la narración"
+        )
     }
 
     /// Hace scroll ascendente hasta que el elemento es visible y golpeable.

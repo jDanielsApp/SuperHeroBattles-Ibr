@@ -6,8 +6,8 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 
 ## Resumen
 
-- **Fase actual:** Fase 5 cerrada; Fase 6 (narración con Foundation Models) pendiente de iniciar.
-- **Última fase cerrada:** Fase 5 — motor matemático de combate con resultado trazable.
+- **Fase actual:** Fase 6 cerrada; Fase 7 (historial de combates en Realm) pendiente de iniciar.
+- **Última fase cerrada:** Fase 6 — narración con Apple Foundation Models y fallback determinista.
 - **Herramienta nueva:** índice público de IDs (`data/character_ids.json`) con actualización semanal mediante GitHub Actions.
 - **Estado del build:** compila y los tests pasan en Xcode 27.2 / iOS Simulator 27.0.
 - **Dependencias:** RealmSwift 20.0.6 y Lottie 4.6.1 resueltas con SwiftPM.
@@ -32,7 +32,7 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 | 3. Catálogo, filtros, detalle e imágenes | Completada (imágenes pendientes) | Catálogo paginado por IDs, Realm, filtros, detalle y búsqueda unificada |
 | 4. Selección de equipos | Completada | Modalidades 1v1/2v2/3v3, huecos con elegir/aleatorio/quitar, Guía reutilizada como selector |
 | 5. Motor de combate | Completada | Base, suerte 7-77, feeling +33 por pareja, ganador/empate y trazabilidad completa |
-| 6. Apple Foundation Models | Pendiente | |
+| 6. Apple Foundation Models | Completada (simulador sin assets) | Prompts versionados, `@Generable`, timeout 20s, fallback de plantilla honesto y badge de origen |
 | 7. Combate, resultados e historial | Pendiente | |
 | 8. Diseño comic, Lottie, idiomas y accesibilidad | Pendiente | Wrapper y assets Lottie |
 | 9. Calidad final | Pendiente | |
@@ -161,13 +161,33 @@ Decisiones de la fase:
 - El ejemplo conceptual del prompt maestro ("feeling 66" en un equipo de tres) contradice sus propias reglas (33 por pareja, tres parejas = 99); se siguen las reglas, no el ejemplo.
 - `SequenceLuckProvider` es `@unchecked Sendable` con nota: el motor lo consume síncronamente desde un único contexto.
 
-## Pendiente inmediato — Fase 6
+## Fase 6 — completada
 
-- Narración con Apple Foundation Models: sesión con `SystemLanguageModel`, `@Generable` para salida estructurada y prompts versionados en un único punto.
-- Comprobación de `availability` antes de crear la sesión y fallback determinista localizado si no hay modelo.
-- Registro del origen de la narración (`foundationModels` o `template`) y presentación en la UI.
-- Narración en el idioma seleccionado por el usuario; nombres propios sin traducir.
-- Tests con generador de narrativa falso; nunca invocar el modelo real.
+- [x] `GenerateCombatNarrationUseCase`: comprueba disponibilidad, delega en el servicio de IA y cae a la plantilla ante error o respuesta vacía. La cancelación se propaga y nunca se sustituye por el fallback.
+- [x] `Data/FoundationModels/NarrationPrompts`: prompts versionados (`version = 1`) en un único punto; reglas invariables (no cambiar ganador ni puntuaciones, no inventar PowerStats, no traducir nombres propios, simulación ficticia) y estructura narrativa completa. Solo datos del dominio; sin tokens.
+- [x] `GeneratedNarration` con `@Generable` y `@Guide`; el texto se valida antes de publicarse.
+- [x] `FoundationModelsNarrationService`: comprueba `SystemLanguageModel.default.availability`, sesión por generación, **timeout de 20 s** que cancela la tarea y errores tipados (`NarrationError`).
+- [x] `TemplateNarrationService`: fallback determinista y localizado con `source: .template`; sin simular IA.
+- [x] `CombatView` muestra la narración con badge de origen (`foundationModels` / `template`), indicador de generación y carga por `.task` que no bloquea la UI.
+- [x] Idioma de la narración derivado de `AppLanguage.narrationCode`; nombres propios sin traducir.
+- [x] Corregido un bug latente de localización: `L10n.string` ahora resuelve el bundle del `lproj` pedido (antes `String(localized:)` respondía siempre en el idioma del proceso).
+- [x] Tests con `MockNarrationService` (actor interno para registro): plantilla, caso de uso y view model. Los tests nunca invocan el modelo real.
+- [x] UI test permanente con fakes: afirma la narración de plantilla y su badge.
+
+Verificación con el modelo REAL (probe temporal, eliminado tras la comprobación, nunca commiteado): en el simulador iPhone 27.0 de este MacBook Pro M4, `availability` reporta `available` pero los assets del modelo no están aprovisionados (`Model Catalog 5000` / `LanguageModelError -1`), y la generación directa falla. La ruta de producción completa (servicio real que falla → caso de uso → plantilla) devolvió una narración española correcta con `source: .template`. En un dispositivo real con Apple Intelligence la ruta IA se activará sin cambios de código; en este entorno el fallback funciona exactamente como exige AGENTS.md: sin simular IA.
+
+Decisiones de la fase:
+
+- Timeout de 20 s, constante única (`FoundationModelsNarrationService.timeout`), cancelando la generación al agotarse.
+- En modo `-uitest-fakes` el servicio de IA ni se instancia: la plantilla alimenta los UI tests.
+- La sesión de `LanguageModelSession` se crea dentro de la tarea de generación: nunca cruza aislamientos.
+
+## Pendiente inmediato — Fase 7
+
+- Historial de combates en Realm: `CombatRecord` con snapshots inmutables, modalidad, ganador/empate y narración con su origen.
+- Pantalla de historial con listado, borrado individual y vaciado.
+- Conectar la resolución del combate con el guardado automático del registro.
+- Realm `CombatObject` + mapeadores y migración (schemaVersion 2) en el punto único.
 
 ## Pendientes y riesgos
 
@@ -191,6 +211,10 @@ xcodebuild -project SuperHeroBattle.xcodeproj -scheme SuperHeroBattle \
 xcodebuild -project SuperHeroBattle.xcodeproj -scheme SuperHeroBattle \
   -destination 'platform=iOS Simulator,name=iPhone 17' test
 ```
+
+Resultado Fase 6: build correcto, **172 unit tests + 2 UI tests en verde** en iPhone 17 (iOS 27.0), sin warnings de código. La narración está cubierta con `MockNarrationService` (actor interno de registro): plantilla determinista y localizada en `en`/`es`, caso de uso con disponibilidad/error/cancelación, y view model con guarda de generación. Verificación con el modelo real en el simulador mediante probe temporal (eliminado, no commiteado): availability miente (`available`) porque los assets del modelo no están en el simulador; la generación directa falla y la ruta de producción cae a plantilla en español con `source: .template`, exactamente como exige AGENTS.md. En dispositivo real con Apple Intelligence la ruta IA se activa sin cambios.
+
+Nota de la fase: `L10n.string` resolvía siempre en el idioma del proceso (`String(localized:)` no garantiza la selección por locale); ahora selecciona el bundle del `lproj` pedido. Esto corrigió también etiquetas de accesibilidad en español.
 
 Resultado Fase 5: build correcto, **153 unit tests + 2 UI tests en verde** en iPhone 17 (iOS 27.0), sin warnings de código. El motor está cubierto con suerte determinista (`SequenceLuckProvider`): base y suerte por combatiente, tiradas independientes para el mismo héroe en ambos equipos, feeling +33 por pareja (0/1/3 parejas según modalidad, nunca entre equipos, nunca 66), totales, ganador y empate. El UI test llega con fakes hasta la pantalla de resultado y comprueba banner y totales de ambos equipos.
 

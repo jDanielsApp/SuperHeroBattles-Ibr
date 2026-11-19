@@ -103,6 +103,14 @@
 "combat.result.total" = "Total";
 "combat.result.affinity" = "Affinity";
 "combat.result.affinity.none" = "No affinity matches.";
+"combat.narration.title" = "Cinematic narration";
+"combat.narration.loading" = "Generating narration…";
+"combat.narration.source.foundationModels" = "Generated with Apple Intelligence";
+"combat.narration.source.template" = "Template narrative";
+"combat.narration.template.intro" = "Fictional simulation: %@ (%@) versus %@ (%@).";
+"combat.narration.template.scores" = "After the clash the scoreboard reads %@ to %@.";
+"combat.narration.template.winner" = "Winner: %@.";
+"combat.narration.template.draw" = "The combat ends in a draw.";
 
 "settings.title" = "Settings";
 "settings.language" = "Language";
