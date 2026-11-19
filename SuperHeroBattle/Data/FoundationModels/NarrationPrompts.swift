@@ -6,7 +6,7 @@ import Foundation
 /// Contienen exclusivamente datos del dominio (nombres, fichas conocidas y
 /// resultado matemático). Nunca tokens, credenciales ni datos personales.
 nonisolated enum NarrationPrompts {
-    static let version = 3
+    static let version = 4
 
     /// Instrucciones del sistema: estilo, reglas invariables e idioma.
     ///
@@ -26,9 +26,12 @@ nonisolated enum NarrationPrompts {
             numeric abilities.
             3. Focus on clever tactics, teamwork and dazzling displays of \
             ability. Never describe injuries, gore or weapons in detail.
-            4. Do not translate proper nouns: keep character, team, group \
+            4. Heroes on the same team NEVER attack each other: they \
+            cooperate, cover each other and combine their abilities. Describe \
+            confrontations only between heroes from different teams.
+            5. Do not translate proper nouns: keep character, team, group \
             and publisher names exactly as provided.
-            5. This is a fictional simulation; treat it as such.
+            6. This is a fictional simulation; treat it as such.
 
             Pace the battle by point difference:
             - CLEAR victory: narrate a decisive, dominant performance with \
@@ -38,12 +41,13 @@ nonisolated enum NarrationPrompts {
             - DRAW: narrate a dead heat with no winner at all.
 
             Structure the narration in the four provided beats: opening \
-            (present both teams by name), exchange (standout moments and \
-            dazzling displays of ability), climax (strategies and teamwork \
-            that decide the outcome) and verdict (proclaim the winner \
-            exactly as given, or the draw). Always mention each hero with \
-            the team label given in the roster so both sides stay clearly \
-            differentiated.
+            (present both teams, naming each team explicitly), exchange \
+            (standout moments and dazzling displays of ability, teammates \
+            cooperating and confrontations only across teams), climax \
+            (strategies and teamwork that decide the outcome) and verdict \
+            (proclaim the winner exactly as given, or the draw). Always \
+            mention each hero with the team label given in the roster so \
+            both sides stay clearly differentiated.
 
             Reference style, never copy its content:
             - Batman se funde entre las sombras y supera a su rival con un \
@@ -70,9 +74,12 @@ nonisolated enum NarrationPrompts {
         3. You may add ONE characteristic flourish per character drawn from \
         that character's well-known fictional lore (signature tools, style, \
         temperament), but never contradict the provided data.
-        4. Do not translate proper nouns: keep character, team, group and \
+        4. Heroes on the same team NEVER attack each other: they cooperate, \
+        cover each other and combine their abilities. Describe confrontations \
+        only between heroes from different teams.
+        5. Do not translate proper nouns: keep character, team, group and \
         publisher names exactly as provided.
-        5. This is a fictional simulation; treat it as such.
+        6. This is a fictional simulation; treat it as such.
 
         Pace the battle by point difference:
         - CLEAR victory: narrate a decisive, dominant performance with an \
@@ -82,11 +89,12 @@ nonisolated enum NarrationPrompts {
         - DRAW: narrate a dead heat with no winner at all.
 
         Structure the narration in the four provided beats: opening (present \
-        both teams by name), exchange (standout moments and special attacks), \
-        climax (strategies and interactions that decide the fight) and \
-        verdict (proclaim the winner exactly as given, or the draw). Always \
-        mention each hero with the team label given in the roster so both \
-        sides stay clearly differentiated.
+        both teams, naming each team explicitly), exchange (standout moments \
+        and special attacks, teammates cooperating and confrontations only \
+        across teams), climax (strategies and interactions that decide the \
+        fight) and verdict (proclaim the winner exactly as given, or the \
+        draw). Always mention each hero with the team label given in the \
+        roster so both sides stay clearly differentiated.
 
         Reference style, never copy its content:
         - \(styleExamples(language: language)[0])
@@ -100,21 +108,24 @@ nonisolated enum NarrationPrompts {
     }
 
     /// Prompt del combate concreto a partir del contexto etiquetado.
+    ///
+    /// Las etiquetas de bando se generan en el idioma de la narración para
+    /// que el modelo ecoar `Equipo A` en español o `Team A` en inglés.
     static func combatPrompt(
         context: NarrationContext,
         language: NarrationLanguage
     ) -> String {
         var lines: [String] = []
         lines.append("Combat mode: \(context.mode.rawValue).")
-        lines.append("Team A: \(rosterSummary(context, side: .teamA)).")
-        lines.append("Team B: \(rosterSummary(context, side: .teamB)).")
+        lines.append("\(teamName(.teamA, language: language)): \(rosterSummary(context, side: .teamA)).")
+        lines.append("\(teamName(.teamB, language: language)): \(rosterSummary(context, side: .teamB)).")
         lines.append("")
         lines.append("Roster:")
         for hero in context.heroes {
-            lines.append("- [\(teamLabel(hero.side))] " + describe(hero))
+            lines.append("- \(teamLabel(hero.side, language: language)) " + describe(hero))
         }
 
-        let bonuses = affinityLines(context)
+        let bonuses = affinityLines(context, language: language)
         if !bonuses.isEmpty {
             lines.append("")
             lines.append("Affinity bonuses (feeling):")
@@ -122,7 +133,7 @@ nonisolated enum NarrationPrompts {
         }
 
         lines.append("")
-        lines.append(contentsOf: resultLines(context))
+        lines.append(contentsOf: resultLines(context, language: language))
         lines.append("Narrate this battle in \(language.displayName).")
 
         return lines.joined(separator: "\n")
@@ -134,8 +145,18 @@ nonisolated enum NarrationPrompts {
         context.heroes(in: side).map(\.hero.name).joined(separator: ", ")
     }
 
-    private static func teamLabel(_ side: TeamSide) -> String {
-        side == .teamA ? "TEAM A" : "TEAM B"
+    /// Nombre del bando en el idioma de la narración.
+    private static func teamName(_ side: TeamSide, language: NarrationLanguage) -> String {
+        switch language {
+        case .english:
+            side == .teamA ? "Team A" : "Team B"
+        case .spanish:
+            side == .teamA ? "Equipo A" : "Equipo B"
+        }
+    }
+
+    private static func teamLabel(_ side: TeamSide, language: NarrationLanguage) -> String {
+        "[\(teamName(side, language: language))]"
     }
 
     private static func describe(_ hero: NarrationContext.HeroContext) -> String {
@@ -179,7 +200,10 @@ nonisolated enum NarrationPrompts {
         return parts.joined(separator: "; ") + "."
     }
 
-    private static func affinityLines(_ context: NarrationContext) -> [String] {
+    private static func affinityLines(
+        _ context: NarrationContext,
+        language: NarrationLanguage
+    ) -> [String] {
         let bonusesBySide: [(side: TeamSide, bonuses: [AffinityBonus])] = [
             (.teamA, context.teamABonuses),
             (.teamB, context.teamBBonuses),
@@ -195,7 +219,7 @@ nonisolated enum NarrationPrompts {
                     .joined(separator: " / ")
 
                 lines.append(
-                    "- [\(teamLabel(entry.side))] \(firstName) + \(secondName): "
+                    "- \(teamLabel(entry.side, language: language)) \(firstName) + \(secondName): "
                         + "+\(bonus.bonus) (\(matches))"
                 )
             }
@@ -204,29 +228,53 @@ nonisolated enum NarrationPrompts {
         return lines
     }
 
-    private static func resultLines(_ context: NarrationContext) -> [String] {
+    private static func resultLines(
+        _ context: NarrationContext,
+        language: NarrationLanguage
+    ) -> [String] {
+        let nameA = teamName(.teamA, language: language)
+        let nameB = teamName(.teamB, language: language)
+
         var lines: [String] = []
         lines.append("Mathematical result (final, unchangeable):")
+
+        switch language {
+        case .english:
+            lines.append("- \(nameA) scored \(formatted(context.teamATotal)) and "
+                + "\(nameB) scored \(formatted(context.teamBTotal)).")
+        case .spanish:
+            lines.append("- \(nameA) anotó \(formatted(context.teamATotal)) y "
+                + "\(nameB) anotó \(formatted(context.teamBTotal)).")
+        }
 
         switch context.outcome {
         case .winner(let side):
             let pace = context.isClearWin ? "CLEAR" : "CLOSE"
-            lines.append(
-                "- Team A scored \(formatted(context.teamATotal)) and "
-                    + "Team B scored \(formatted(context.teamBTotal))."
-            )
-            lines.append(
-                "- Point difference: \(formatted(context.gap)) — the victory is \(pace)."
-            )
-            lines.append(
-                "- The winner is \(side == .teamA ? "Team A" : "Team B")."
-            )
+            let winnerName = teamName(side, language: language)
+
+            switch language {
+            case .english:
+                lines.append(
+                    "- Point difference: \(formatted(context.gap)) — the victory is \(pace)."
+                )
+                lines.append("- The winner is \(winnerName).")
+            case .spanish:
+                lines.append(
+                    "- Diferencia de puntos: \(formatted(context.gap)) — la victoria es \(pace)."
+                )
+                lines.append("- El ganador es \(winnerName).")
+            }
         case .draw:
-            lines.append(
-                "- Team A scored \(formatted(context.teamATotal)) and "
-                    + "Team B scored \(formatted(context.teamBTotal))."
-            )
-            lines.append("- Point difference: 0 — the combat is a DRAW with no winner.")
+            switch language {
+            case .english:
+                lines.append(
+                    "- Point difference: 0 — the combat is a DRAW with no winner."
+                )
+            case .spanish:
+                lines.append(
+                    "- Diferencia de puntos: 0 — el combate es un DRAW sin vencedor."
+                )
+            }
         }
 
         return lines

@@ -22,20 +22,25 @@ nonisolated struct FoundationModelsNarrationService: CombatNarrationService {
     /// plantilla.
     static let timeout: TimeInterval = 20
 
-    /// Temperatura creativa: suficiente variedad entre combates sin perder
+    /// Temperatura del intento creativo: variedad entre combates sin perder
     /// coherencia con los datos inmutables del dominio.
-    static let temperature: Double = 0.8
+    static let creativeTemperature: Double = 0.8
+
+    /// Temperatura del reintento safe: menor desviación del prompt y más
+    /// adherencia a las reglas tras un rechazo del guardrail.
+    static let safeTemperature: Double = 0.5
 
     /// Tope de tokens por respuesta: los cuatro beats caben de sobra y no
     /// se desperdicia ventana de contexto.
     static let maximumResponseTokens = 400
 
-    /// Un intento de generación: instrucciones, prompt y tiempo restante.
-    /// Seam inyectable para probar la estrategia de reintento sin invocar
-    /// el modelo real.
+    /// Un intento de generación: instrucciones, prompt, temperatura y tiempo
+    /// restante. Seam inyectable para probar la estrategia de reintento sin
+    /// invocar el modelo real.
     typealias Attempt = @Sendable (
         _ instructions: String,
         _ prompt: String,
+        _ temperature: Double,
         _ remainingBudget: TimeInterval
     ) async throws -> GeneratedNarration
 
@@ -72,8 +77,8 @@ nonisolated struct FoundationModelsNarrationService: CombatNarrationService {
             return try await generate(
                 instructions: NarrationPrompts.instructions(language: language, safeMode: false),
                 prompt: NarrationPrompts.combatPrompt(context: context, language: language),
+                temperature: Self.creativeTemperature,
                 context: context,
-                language: language,
                 deadline: deadline
             )
         } catch {
@@ -90,8 +95,8 @@ nonisolated struct FoundationModelsNarrationService: CombatNarrationService {
             return try await generate(
                 instructions: NarrationPrompts.instructions(language: language, safeMode: true),
                 prompt: NarrationPrompts.combatPrompt(context: context, language: language),
+                temperature: Self.safeTemperature,
                 context: context,
-                language: language,
                 deadline: deadline
             )
         } catch {
@@ -104,8 +109,8 @@ nonisolated struct FoundationModelsNarrationService: CombatNarrationService {
     private func generate(
         instructions: String,
         prompt: String,
+        temperature: Double,
         context: NarrationContext,
-        language: NarrationLanguage,
         deadline: Date
     ) async throws -> CombatNarrative {
         let remaining = deadline.timeIntervalSinceNow
@@ -113,11 +118,10 @@ nonisolated struct FoundationModelsNarrationService: CombatNarrationService {
             throw NarrationError.timeout
         }
 
-        let narration = try await attempt(instructions, prompt, remaining)
+        let narration = try await attempt(instructions, prompt, temperature, remaining)
         let text = try NarrationOutputValidator.validatedText(
             from: narration,
-            context: context,
-            language: language
+            context: context
         )
 
         return CombatNarrative(text: text, source: .foundationModels)
@@ -131,6 +135,7 @@ nonisolated struct FoundationModelsNarrationService: CombatNarrationService {
     private static func foundationModelsAttempt(
         instructions: String,
         prompt: String,
+        temperature: Double,
         remainingBudget: TimeInterval
     ) async throws -> GeneratedNarration {
         let model = SystemLanguageModel(
@@ -145,7 +150,7 @@ nonisolated struct FoundationModelsNarrationService: CombatNarrationService {
                     to: prompt,
                     generating: GeneratedNarration.self,
                     options: GenerationOptions(
-                        temperature: Self.temperature,
+                        temperature: temperature,
                         maximumResponseTokens: Self.maximumResponseTokens
                     )
                 )

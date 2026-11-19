@@ -6,7 +6,7 @@ import XCTest
 final class FoundationModelsNarrationServiceTests: XCTestCase {
     func testRetriesWithSafePromptWhenGuardrailTriggers() async throws {
         let recorder = AttemptRecorder()
-        let service = FoundationModelsNarrationService(attempt: { instructions, _, _ in
+        let service = FoundationModelsNarrationService(attempt: { instructions, _, _, _ in
             await recorder.record(instructions: instructions)
             let calls = await recorder.callCount()
 
@@ -35,9 +35,37 @@ final class FoundationModelsNarrationServiceTests: XCTestCase {
         XCTAssertTrue(unwrapped.contains("Never describe injuries"))
     }
 
+    func testAttemptTemperaturesMatchCreativeAndSafeModes() async throws {
+        let recorder = AttemptRecorder()
+        let service = FoundationModelsNarrationService(attempt: { instructions, _, temperature, _ in
+            await recorder.record(instructions: instructions, temperature: temperature)
+            let calls = await recorder.callCount()
+
+            if calls == 1 {
+                throw Self.makeGuardrailError()
+            }
+
+            return Self.validNarration
+        })
+
+        _ = try await service.narrate(
+            result: Self.makeResult(),
+            participants: Self.makeParticipants(),
+            language: .english
+        )
+
+        let firstTemperature = await recorder.temperature(at: 0)
+        let secondTemperature = await recorder.temperature(at: 1)
+
+        XCTAssertEqual(firstTemperature, FoundationModelsNarrationService.creativeTemperature)
+        XCTAssertEqual(secondTemperature, FoundationModelsNarrationService.safeTemperature)
+        XCTAssertEqual(FoundationModelsNarrationService.creativeTemperature, 0.8)
+        XCTAssertEqual(FoundationModelsNarrationService.safeTemperature, 0.5)
+    }
+
     func testGuardrailTwiceThrowsTypedGuardrail() async {
         let recorder = AttemptRecorder()
-        let service = FoundationModelsNarrationService(attempt: { instructions, _, _ in
+        let service = FoundationModelsNarrationService(attempt: { instructions, _, _, _ in
             await recorder.record(instructions: instructions)
             throw Self.makeGuardrailError()
         })
@@ -61,7 +89,7 @@ final class FoundationModelsNarrationServiceTests: XCTestCase {
 
     func testNonGuardrailErrorDoesNotRetry() async {
         let recorder = AttemptRecorder()
-        let service = FoundationModelsNarrationService(attempt: { instructions, _, _ in
+        let service = FoundationModelsNarrationService(attempt: { instructions, _, _, _ in
             await recorder.record(instructions: instructions)
             throw NarrationError.timeout
         })
@@ -83,7 +111,7 @@ final class FoundationModelsNarrationServiceTests: XCTestCase {
 
     func testCancellationPropagatesWithoutRetry() async {
         let recorder = AttemptRecorder()
-        let service = FoundationModelsNarrationService(attempt: { instructions, _, _ in
+        let service = FoundationModelsNarrationService(attempt: { instructions, _, _, _ in
             await recorder.record(instructions: instructions)
             throw CancellationError()
         })
@@ -135,9 +163,13 @@ final class FoundationModelsNarrationServiceTests: XCTestCase {
 /// Registro de intentos con aislamiento por actor.
 private actor AttemptRecorder {
     private var instructionsHistory: [String] = []
+    private var temperatureHistory: [Double] = []
 
-    func record(instructions: String) {
+    func record(instructions: String, temperature: Double? = nil) {
         instructionsHistory.append(instructions)
+        if let temperature {
+            temperatureHistory.append(temperature)
+        }
     }
 
     func callCount() -> Int {
@@ -146,5 +178,9 @@ private actor AttemptRecorder {
 
     func instructions(at index: Int) -> String? {
         instructionsHistory.indices.contains(index) ? instructionsHistory[index] : nil
+    }
+
+    func temperature(at index: Int) -> Double? {
+        temperatureHistory.indices.contains(index) ? temperatureHistory[index] : nil
     }
 }

@@ -120,21 +120,33 @@ final class GenerateCombatNarrationUseCaseTests: XCTestCase {
 
         XCTAssertTrue(prompt.contains("Batman"))
         XCTAssertTrue(prompt.contains("Joker"))
-        XCTAssertTrue(prompt.contains("Team A: Batman"))
-        XCTAssertTrue(prompt.contains("Team B: Joker"))
-        XCTAssertTrue(prompt.contains("[TEAM A] Batman"))
-        XCTAssertTrue(prompt.contains("[TEAM B] Joker"))
-        XCTAssertTrue(prompt.contains("Point difference"))
-        XCTAssertTrue(prompt.contains("The winner is Team A"))
+        XCTAssertTrue(prompt.contains("Equipo A: Batman"))
+        XCTAssertTrue(prompt.contains("Equipo B: Joker"))
+        XCTAssertTrue(prompt.contains("[Equipo A] Batman"))
+        XCTAssertTrue(prompt.contains("[Equipo B] Joker"))
+        XCTAssertTrue(prompt.contains("Diferencia de puntos"))
+        XCTAssertTrue(prompt.contains("El ganador es Equipo A"))
         XCTAssertFalse(prompt.contains("SUPERHERO_API_TOKEN"))
         XCTAssertFalse(prompt.contains("SuperHeroAPIToken"))
+    }
+
+    func testEnglishPromptKeepsEnglishLabels() {
+        let prompt = NarrationPrompts.combatPrompt(
+            context: makeContext(),
+            language: .english
+        )
+
+        XCTAssertTrue(prompt.contains("Team A: Batman"))
+        XCTAssertTrue(prompt.contains("[Team B] Joker"))
+        XCTAssertTrue(prompt.contains("The winner is Team A"))
+        XCTAssertTrue(prompt.contains("Point difference"))
     }
 
     func testInstructionsAreVersionedAndForbidChangingTheResult() {
         let instructions = NarrationPrompts.instructions(language: .spanish, safeMode: false)
 
-        XCTAssertEqual(NarrationPrompts.version, 3)
-        XCTAssertTrue(instructions.contains("prompt version: 3"))
+        XCTAssertEqual(NarrationPrompts.version, 4)
+        XCTAssertTrue(instructions.contains("prompt version: 4"))
         XCTAssertTrue(instructions.contains("Never change the winner"))
         XCTAssertTrue(instructions.contains("Write in Spanish"))
         XCTAssertTrue(instructions.contains("characteristic flourish"), "Debe permitirse un detalle del lore conocido")
@@ -168,8 +180,24 @@ final class GenerateCombatNarrationUseCaseTests: XCTestCase {
             language: .english
         )
 
-        XCTAssertTrue(prompt.contains("[TEAM A] Batman"))
-        XCTAssertTrue(prompt.contains("[TEAM B] Batman"))
+        XCTAssertTrue(prompt.contains("[Team A] Batman"))
+        XCTAssertTrue(prompt.contains("[Team B] Batman"))
+    }
+
+    func testInstructionsForbidIntraTeamFighting() {
+        let creative = NarrationPrompts.instructions(language: .english, safeMode: false)
+        let safe = NarrationPrompts.instructions(language: .english, safeMode: true)
+
+        XCTAssertTrue(
+            creative.contains("NEVER attack each other"),
+            "El intento creativo debe prohibir que los compañeros se peleen"
+        )
+        XCTAssertTrue(
+            safe.contains("NEVER attack each other"),
+            "El reintento safe debe prohibir que los compañeros se peleen"
+        )
+        XCTAssertTrue(creative.contains("only between heroes from different teams"))
+        XCTAssertTrue(safe.contains("only between heroes from different teams"))
     }
 
     func testDrawPromptDeclaresDraw() {

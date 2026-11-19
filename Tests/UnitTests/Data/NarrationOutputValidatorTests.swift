@@ -10,8 +10,7 @@ final class NarrationOutputValidatorTests: XCTestCase {
 
         let text = try NarrationOutputValidator.validatedText(
             from: narration,
-            context: makeContext(.winner(.teamA)),
-            language: .spanish
+            context: makeContext(.winner(.teamA))
         )
 
         XCTAssertEqual(
@@ -28,8 +27,7 @@ final class NarrationOutputValidatorTests: XCTestCase {
         XCTAssertThrowsError(
             try NarrationOutputValidator.validatedText(
                 from: narration,
-                context: makeContext(.winner(.teamA)),
-                language: .spanish
+                context: makeContext(.winner(.teamA))
             )
         ) { error in
             XCTAssertEqual(error as? NarrationError, .invalidResponse)
@@ -45,8 +43,7 @@ final class NarrationOutputValidatorTests: XCTestCase {
         XCTAssertThrowsError(
             try NarrationOutputValidator.validatedText(
                 from: narration,
-                context: makeContext(.winner(.teamA)),
-                language: .spanish
+                context: makeContext(.winner(.teamA))
             )
         ) { error in
             XCTAssertEqual(error as? NarrationError, .invalidResponse)
@@ -63,8 +60,7 @@ final class NarrationOutputValidatorTests: XCTestCase {
         XCTAssertThrowsError(
             try NarrationOutputValidator.validatedText(
                 from: narration,
-                context: makeContext(.winner(.teamA)),
-                language: .spanish
+                context: makeContext(.winner(.teamA))
             )
         ) { error in
             XCTAssertEqual(error as? NarrationError, .invalidResponse)
@@ -79,8 +75,7 @@ final class NarrationOutputValidatorTests: XCTestCase {
 
         let text = try NarrationOutputValidator.validatedText(
             from: narration,
-            context: makeContext(.draw),
-            language: .spanish
+            context: makeContext(.draw)
         )
 
         XCTAssertTrue(text.contains("empate total"))
@@ -95,8 +90,37 @@ final class NarrationOutputValidatorTests: XCTestCase {
         XCTAssertNoThrow(
             try NarrationOutputValidator.validatedText(
                 from: narration,
-                context: makeContext(.winner(.teamA)),
-                language: .spanish
+                context: makeContext(.winner(.teamA))
+            )
+        )
+    }
+
+    func testSpanishNarrationPassesWithEnglishLabels() throws {
+        // El modelo puede ecoar las etiquetas del roster aunque se narra en
+        // español: el validador acepta ambos idiomas.
+        let narration = makeNarration(
+            opening: "Team A y Team B se miden en la arena.",
+            verdict: "El veredicto es claro: gana Team A."
+        )
+
+        XCTAssertNoThrow(
+            try NarrationOutputValidator.validatedText(
+                from: narration,
+                context: makeContext(.winner(.teamA))
+            )
+        )
+    }
+
+    func testBracketedTeamLabelsValidate() throws {
+        let narration = makeNarration(
+            opening: "[TEAM A] y [EQUIPO B] se miden en la arena.",
+            verdict: "al final domina [Team A]."
+        )
+
+        XCTAssertNoThrow(
+            try NarrationOutputValidator.validatedText(
+                from: narration,
+                context: makeContext(.winner(.teamA))
             )
         )
     }
@@ -110,8 +134,93 @@ final class NarrationOutputValidatorTests: XCTestCase {
         XCTAssertNoThrow(
             try NarrationOutputValidator.validatedText(
                 from: narration,
-                context: makeContext(.winner(.teamA)),
-                language: .english
+                context: makeContext(.winner(.teamA))
+            )
+        )
+    }
+
+    func testHeroNamesSatisfyBothSides() throws {
+        // Reproduce el caso real del dispositivo: el modelo narró solo con
+        // nombres de héroes, sin mencionar a ningún equipo.
+        let narration = makeNarration(
+            opening: "El combate comienza con Batman enfrentándose a Joker.",
+            exchange: "Joker responde con un giro brillante.",
+            climax: "Batman anticipa todo el movimiento.",
+            verdict: "Al final Batman se impone por poco."
+        )
+
+        XCTAssertNoThrow(
+            try NarrationOutputValidator.validatedText(
+                from: narration,
+                context: makeContext(.winner(.teamA))
+            )
+        )
+    }
+
+    func testWinnerProclaimedByHeroNamePasses() throws {
+        let narration = makeNarration(
+            opening: "Equipo A contra Equipo B.",
+            verdict: "Batman domina el desenlace."
+        )
+
+        // Batman pertenece al Equipo A, el bando ganador: veredicto válido.
+        XCTAssertNoThrow(
+            try NarrationOutputValidator.validatedText(
+                from: narration,
+                context: makeContext(.winner(.teamA))
+            )
+        )
+    }
+
+    func testWinnerProclaimedByLosingHeroFails() {
+        let narration = makeNarration(
+            opening: "Equipo A contra Equipo B.",
+            verdict: "Joker domina el desenlace."
+        )
+
+        // Joker pertenece al Equipo B, que pierde: veredicto inválido.
+        XCTAssertThrowsError(
+            try NarrationOutputValidator.validatedText(
+                from: narration,
+                context: makeContext(.winner(.teamA))
+            )
+        ) { error in
+            XCTAssertEqual(error as? NarrationError, .invalidResponse)
+        }
+    }
+
+    func testMissingSideFailsWhenNoHeroOrTeamIsNamed() {
+        let narration = makeNarration(
+            opening: "Solo aparece Batman en esta narración.",
+            verdict: "Gana Batman."
+        )
+
+        XCTAssertThrowsError(
+            try NarrationOutputValidator.validatedText(
+                from: narration,
+                context: makeContext(.winner(.teamA))
+            )
+        ) { error in
+            XCTAssertEqual(error as? NarrationError, .invalidResponse)
+        }
+    }
+
+    func testSameHeroInBothTeamsCountsForBothSides() throws {
+        let hero = Hero(id: "1", name: "Batman", powerStats: PowerStats(intelligence: 50))
+        let participants = BattleParticipants(mode: .oneVsOne, teamA: [hero], teamB: [hero])
+        let result = CombatEngine(luckProvider: SequenceLuckProvider([40, 7]))
+            .resolve(participants)
+        let context = NarrationContext(result: result, participants: participants)
+
+        let narration = makeNarration(
+            opening: "Batman contra sí mismo: dos versiones del mismo héroe.",
+            verdict: "La versión del bando vencedor de Batman se impone."
+        )
+
+        XCTAssertNoThrow(
+            try NarrationOutputValidator.validatedText(
+                from: narration,
+                context: context
             )
         )
     }

@@ -18,15 +18,17 @@ struct GeneratedNarration: Sendable {
     @Guide(
         description: """
         Exchange beat: standout moments, signature moves and dazzling \
-        displays of ability from both sides. Plain prose, 25 to 50 words.
+        displays of ability. Teammates cooperate with each other; \
+        confrontations happen only between heroes from different teams. \
+        Plain prose, 25 to 50 words.
         """
     )
     var exchange: String
 
     @Guide(
         description: """
-        Climax beat: strategies and decisive teamwork that turn the tide. \
-        Plain prose, 25 to 50 words.
+        Climax beat: strategies and decisive teamwork that turn the tide; \
+        confrontations only across teams. Plain prose, 25 to 50 words.
         """
     )
     var climax: String

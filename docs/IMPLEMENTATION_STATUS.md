@@ -204,6 +204,17 @@ Tras probar en un iPhone real con iOS 26.5 apareció `Safety guardrails were tri
 - Las `@Guide` de los beats se suavizaron (*"dazzling displays of ability"*, *"decisive teamwork"*) para ambos modos.
 - El reintento se prueba con un seam inyectable (`FoundationModelsNarrationService(attempt:)`): nunca invoca el modelo real en tests.
 
+### Ajuste tras verificación real en dispositivo (prompt v4)
+
+Verificado en iPhone con iOS 26.5 con logs de diagnóstico temporales (retirados tras confirmar):
+
+- El flujo real observado: el intento creativo dispara el guardrail ("May contain unsafe content") y el reintento safe responde correctamente; los fallos restantes venían de la validación, no de la IA.
+- Etiquetas y líneas de resultado localizadas por idioma (`[Equipo A]` / `[Team A]`, "El ganador es Equipo B"), para que el modelo no ecoar etiquetas en otro idioma.
+- `NarrationOutputValidator` pasa a validar **por héroes o equipos**: un bando está presente si aparece su nombre (inglés o español, con o sin corchetes) o cualquiera de sus héroes; el veredicto vale si nombra al ganador por equipo o por uno de sus héroes. El caso real del dispositivo (narrativa solo con nombres de héroes) ya valida.
+- Temperaturas por intento: 0.8 creativo, 0.5 safe (menor desviación del prompt tras un rechazo).
+- Regla dura en ambos prompts (v4): los compañeros de un mismo equipo nunca se atacan; cooperan y se cubren, y los enfrentamientos son solo entre bandos. Reforzada en las `@Guide` de `exchange` y `climax` y en el beat de apertura (nombra ambos equipos explícitamente).
+- Resumen de la verificación final con IA real: narración generada con Apple Intelligence en español, combate 2v2 reñido (gap 20), héroes bien emparejados por bandos y ganador proclamado en el desenlace.
+
 ## Pendiente inmediato — Fase 7
 
 - Historial de combates en Realm: `CombatRecord` con snapshots inmutables, modalidad, ganador/empate y narración con su origen.
@@ -234,7 +245,7 @@ xcodebuild -project SuperHeroBattle.xcodeproj -scheme SuperHeroBattle \
   -destination 'platform=iOS Simulator,name=iPhone 17' test
 ```
 
-Resultado guardrails: build correcto, **196 unit tests + 2 UI tests en verde**, sin warnings de código. El reintento suavizado está cubierto con el seam inyectable: guardrail en el primer intento → segundo intento con prompt safe, guardrail doble → error tipado sin más reintentos, timeout y cancelación sin reintento, y clasificador probado sin el framework. Verificación real pendiente en el iPhone con iOS 26.5: si el guardrail permissivo o el safe mode evitan el rechazo, el badge mostrará "Generada con Apple Intelligence"; si no, plantilla honesta.
+Resultado ajuste tras verificación real (v4): build correcto, **206 unit tests + 2 UI tests en verde**, sin warnings de código y sin logs de diagnóstico en el árbol. Cobierta la validación por héroes (incluido el caso real del dispositivo), el ganador por héroe del bando vencedor, el rechazo si el héroe es del perdedor, las temperaturas 0.8/0.5 por intento y la regla de compañeros en ambos prompts.
 
 Resultado ajuste de narración: build correcto, **186 unit tests + 2 UI tests en verde**, sin warnings de código. Cubierto con suerte determinista: contexto etiquetado por bandos (incluido el mismo héroe en ambos equipos), umbral exacto de 30 (`gap >= 30` claro, 29 reñido), prompts v2 con lore acotado y ejemplos localizados, y validador de beats que rechaza respuestas sin ambos equipos o sin el ganador correcto en el veredicto (→ plantilla).
 
