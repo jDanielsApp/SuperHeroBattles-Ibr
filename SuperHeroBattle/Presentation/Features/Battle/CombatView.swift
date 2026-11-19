@@ -4,12 +4,14 @@ import SwiftUI
 struct CombatView: View {
     @State private var viewModel: CombatViewModel
     @State private var isPresentingSaveConfirmation = false
+    @State private var isBannerAppeared = false
 
     init(viewModel: CombatViewModel) {
         _viewModel = State(initialValue: viewModel)
     }
 
     @Environment(\.locale) private var locale
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack {
@@ -17,6 +19,8 @@ struct CombatView: View {
 
             ScrollView {
                 VStack(spacing: 18) {
+                    introBanner
+
                     outcomeBanner
 
                     teamSection(viewModel.result.teamA)
@@ -41,6 +45,62 @@ struct CombatView: View {
         }
     }
 
+    // MARK: - Inicio del combate
+
+    /// Cabecera decorativa del choque: slot de Lottie con ráfaga comic de
+    /// respaldo. Reduce Motion y ausencia de asset muestran el respaldo.
+    private var introBanner: some View {
+        HStack(spacing: 18) {
+            teamEmblem("A", color: TeamPalette.teamA)
+            ComicLottieView(animationName: "combat_intro", loopMode: .loop) {
+                comicBurst
+            }
+            .frame(width: 104, height: 104)
+
+            teamEmblem("B", color: TeamPalette.teamB)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 4)
+        .accessibilityHidden(true)
+    }
+
+    /// Ráfaga comic de respaldo con el "VS" central.
+    private var comicBurst: some View {
+        ZStack {
+            ForEach(0..<8, id: \.self) { index in
+                Capsule()
+                    .fill(ComicPalette.yellow.opacity(0.85))
+                    .frame(width: 120, height: 20)
+                    .rotationEffect(.degrees(Double(index) * 45))
+            }
+
+            Circle()
+                .fill(ComicPalette.yellow)
+                .frame(width: 74, height: 74)
+
+            L10n.text(.homeVersus)
+                .font(ComicTypography.title)
+                .foregroundStyle(ComicPalette.ink)
+                .rotationEffect(.degrees(-6))
+        }
+    }
+
+    private func teamEmblem(_ label: String, color: Color) -> some View {
+        ZStack {
+            Circle()
+                .fill(color.opacity(0.22))
+                .frame(width: 46, height: 46)
+
+            Circle()
+                .stroke(color, lineWidth: 2)
+                .frame(width: 46, height: 46)
+
+            Text(label)
+                .font(ComicTypography.headline)
+                .foregroundStyle(color)
+        }
+    }
+
     // MARK: - Guardado en el historial
 
     /// Guardado explícito: el botón se habilita con la narración publicada
@@ -49,23 +109,11 @@ struct CombatView: View {
         Button {
             isPresentingSaveConfirmation = true
         } label: {
-            HStack(spacing: 10) {
-                if viewModel.isSaving {
-                    ProgressView()
-                        .tint(ComicPalette.ink)
-                } else {
-                    Image(systemName: "tray.and.arrow.down.fill")
-                }
-
-                L10n.text(.combatSaveAction)
-                    .font(ComicTypography.headline)
-            }
-            .foregroundStyle(ComicPalette.ink.opacity(viewModel.canSave ? 1 : 0.55))
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(
-                viewModel.canSave ? ComicPalette.yellow : ComicPalette.yellow.opacity(0.35),
-                in: Capsule()
+            ComicCTALabel(
+                titleKey: .combatSaveAction,
+                systemImage: "tray.and.arrow.down.fill",
+                isBusy: viewModel.isSaving,
+                isEmphasized: viewModel.canSave
             )
         }
         .buttonStyle(.plain)
@@ -98,6 +146,7 @@ struct CombatView: View {
             L10n.text(.combatNarrationTitle)
                 .font(ComicTypography.headline)
                 .foregroundStyle(ComicPalette.yellow)
+                .accessibilityAddTraits(.isHeader)
 
             if let narration = viewModel.narration {
                 sourceBadge(narration.source)
@@ -157,54 +206,71 @@ struct CombatView: View {
 
     @ViewBuilder
     private var outcomeBanner: some View {
-        switch viewModel.result.outcome {
-        case .winner(let side):
-            VStack(spacing: 10) {
-                Image(systemName: "trophy.fill")
-                    .font(.system(size: 44, weight: .black))
-                    .foregroundStyle(ComicPalette.yellow)
-                    .accessibilityHidden(true)
+        Group {
+            switch viewModel.result.outcome {
+            case .winner(let side):
+                VStack(spacing: 10) {
+                    // Slot de Lottie para la presentación del ganador.
+                    ComicLottieView(
+                        animationName: "combat_winner",
+                        fallbackIcon: "trophy.fill",
+                        loopMode: .playOnce
+                    )
+                    .frame(width: 60, height: 60)
 
-                L10n.text(.combatResultWinner)
-                    .font(ComicTypography.caption)
-                    .foregroundStyle(ComicPalette.paper.opacity(0.75))
+                    L10n.text(.combatResultWinner)
+                        .font(ComicTypography.caption)
+                        .foregroundStyle(ComicPalette.paper.opacity(0.75))
 
-                L10n.text(side == .teamA ? .teamSelectionTeamA : .teamSelectionTeamB)
-                    .font(ComicTypography.title)
-                    .foregroundStyle(side == .teamA ? TeamPalette.teamA : TeamPalette.teamB)
-                    .accessibilityIdentifier("combat.outcome")
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 18)
-            .background(
-                ComicPalette.midnight.opacity(0.86),
-                in: RoundedRectangle(cornerRadius: 22, style: .continuous)
-            )
-            .overlay {
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(ComicPalette.yellow, lineWidth: 2)
-            }
-        case .draw:
-            VStack(spacing: 10) {
-                Image(systemName: "equal.circle.fill")
-                    .font(.system(size: 44, weight: .black))
-                    .foregroundStyle(ComicPalette.paper)
-                    .accessibilityHidden(true)
+                    L10n.text(side == .teamA ? .teamSelectionTeamA : .teamSelectionTeamB)
+                        .font(ComicTypography.title)
+                        .foregroundStyle(side == .teamA ? TeamPalette.teamA : TeamPalette.teamB)
+                        .accessibilityIdentifier("combat.outcome")
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 18)
+                .background(
+                    ComicPalette.midnight.opacity(0.86),
+                    in: RoundedRectangle(cornerRadius: 22, style: .continuous)
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .stroke(ComicPalette.yellow, lineWidth: 2)
+                }
+            case .draw:
+                VStack(spacing: 10) {
+                    Image(systemName: "equal.circle.fill")
+                        .font(.system(size: 44, weight: .black))
+                        .foregroundStyle(ComicPalette.paper)
+                        .accessibilityHidden(true)
 
-                L10n.text(.combatResultDraw)
-                    .font(ComicTypography.title)
-                    .foregroundStyle(ComicPalette.paper)
-                    .accessibilityIdentifier("combat.outcome")
+                    L10n.text(.combatResultDraw)
+                        .font(ComicTypography.title)
+                        .foregroundStyle(ComicPalette.paper)
+                        .accessibilityIdentifier("combat.outcome")
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 18)
+                .background(
+                    ComicPalette.midnight.opacity(0.86),
+                    in: RoundedRectangle(cornerRadius: 22, style: .continuous)
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .stroke(ComicPalette.paper.opacity(0.35), lineWidth: 2)
+                }
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 18)
-            .background(
-                ComicPalette.midnight.opacity(0.86),
-                in: RoundedRectangle(cornerRadius: 22, style: .continuous)
-            )
-            .overlay {
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(ComicPalette.paper.opacity(0.35), lineWidth: 2)
+        }
+        // Entrada sutil del banner de resultado; sin movimiento con Reduce Motion.
+        .scaleEffect(isBannerAppeared ? 1 : 0.85)
+        .opacity(isBannerAppeared ? 1 : 0)
+        .onAppear {
+            if reduceMotion {
+                isBannerAppeared = true
+            } else {
+                withAnimation(.spring(response: 0.45, dampingFraction: 0.7)) {
+                    isBannerAppeared = true
+                }
             }
         }
     }
@@ -224,6 +290,7 @@ struct CombatView: View {
                 L10n.text(summary.side == .teamA ? .teamSelectionTeamA : .teamSelectionTeamB)
                     .font(ComicTypography.headline)
                     .foregroundStyle(ComicPalette.paper)
+                    .accessibilityAddTraits(.isHeader)
 
                 Spacer(minLength: 8)
 

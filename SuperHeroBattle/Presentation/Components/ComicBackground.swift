@@ -1,6 +1,9 @@
 import SwiftUI
 
 /// Fondo compartido de la identidad comic book.
+///
+/// Degradado base con tramas de imprenta (halftone) y dos manchas de color
+/// difuminadas para dar profundidad sin saturar.
 struct ComicBackground: View {
     var body: some View {
         LinearGradient(
@@ -8,6 +11,9 @@ struct ComicBackground: View {
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
+        .overlay {
+            HalftoneOverlay()
+        }
         .overlay(alignment: .topTrailing) {
             Circle()
                 .fill(ComicPalette.blue.opacity(0.20))
@@ -24,5 +30,34 @@ struct ComicBackground: View {
         }
         .ignoresSafeArea()
         .accessibilityHidden(true)
+    }
+}
+
+/// Tramas de puntos de baja opacidad, dibujadas en un único `Canvas`.
+private struct HalftoneOverlay: View {
+    private let spacing: CGFloat = 18
+    private let dotRadius: CGFloat = 1.5
+
+    var body: some View {
+        Canvas { context, size in
+            let dotColor = ComicPalette.paper.opacity(0.05)
+
+            var x = spacing / 2
+            while x < size.width {
+                var y = spacing / 2
+                while y < size.height {
+                    let rect = CGRect(
+                        x: x - dotRadius,
+                        y: y - dotRadius,
+                        width: dotRadius * 2,
+                        height: dotRadius * 2
+                    )
+                    context.fill(Path(ellipseIn: rect), with: .color(dotColor))
+                    y += spacing
+                }
+                x += spacing
+            }
+        }
+        .allowsHitTesting(false)
     }
 }

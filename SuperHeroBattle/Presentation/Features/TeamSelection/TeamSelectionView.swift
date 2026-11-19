@@ -167,23 +167,13 @@ struct TeamSelectionView: View {
 
             if let participants = viewModel.battleParticipants {
                 NavigationLink(value: AppRoute.combat(participants)) {
-                    L10n.text(.teamSelectionStart)
-                        .font(ComicTypography.headline)
-                        .foregroundStyle(ComicPalette.ink)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(ComicPalette.yellow, in: Capsule())
+                    ComicCTALabel(titleKey: .teamSelectionStart)
                 }
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("team.selection.start")
             } else {
                 Button {} label: {
-                    L10n.text(.teamSelectionStart)
-                        .font(ComicTypography.headline)
-                        .foregroundStyle(ComicPalette.ink.opacity(0.55))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(ComicPalette.yellow.opacity(0.35), in: Capsule())
+                    ComicCTALabel(titleKey: .teamSelectionStart, isEmphasized: false)
                 }
                 .buttonStyle(.plain)
                 .disabled(true)

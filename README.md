@@ -38,6 +38,7 @@ Proyecto construido con SwiftUI, Clean Architecture + MVVM, Swift Concurrency es
 | Detalle de personaje con PowerStats accesibles | ✅ Operativa |
 | Selección de equipos y motor de combate | ✅ Operativa | Motor determinista con resultado trazable; narrativa e historial en Fases 6-7 |
 | Narración con Apple Foundation Models | ✅ Operativa (fallback activo en simulador) | En dispositivo con Apple Intelligence genera con IA; sin modelo cae a plantilla honesta con badge de origen |
+| Animaciones Lottie | ✅ Operativas | `combat_intro` (bucle) y `combat_winner` (una vez) activas; Reduce Motion y ausencia de asset caen a fallback comic |
 | Historial de combates con Realm | ✅ Operativa | Guardado explícito con confirmación y vuelta a Home; listado con borrado/vaciado y detalle |
 | Caché de imágenes remotas | ⚠️ Bloqueada por el host externo (HTTP 403) |
 
@@ -252,9 +253,10 @@ git checkout -- SuperHeroBattle.xcodeproj/project.xcworkspace/xcshareddata/swift
 ## Localización y accesibilidad
 
 - Interfaz y narración en inglés y español con `Localizable.strings` clásico (sin String Catalogs). El idioma se elige en Ajustes y se aplica a toda la app; los nombres propios no se traducen.
-- Estética comic book con `ComicPalette` y `TeamPalette`, con color siempre acompañado de texto o icono.
+- Estética comic book con `ComicPalette` y `TeamPalette`, tramas de imprenta (halftone) en el fondo y color siempre acompañado de texto o icono.
 - Las barras de PowerStats exponen el valor numérico y anuncian los desconocidos como "no disponible".
-- VoiceOver, Dynamic Type, Reduce Motion y áreas táctiles verificadas en todas las pantallas; Lottie cae a un fallback estático con Reduce Motion activo.
+- VoiceOver con `.isHeader` en los títulos de sección, Dynamic Type, Reduce Motion y áreas táctiles verificadas en todas las pantallas.
+- Lottie vive encapsulado en `Core/Lottie`: Reduce Motion y ausencia de asset muestran un fallback estático comic. Las animaciones `combat_intro` (bucle) y `combat_winner` (una vez) están activas; para añadir más, suelta el `.json` en `Resources/Lottie/` y coloca un `ComicLottieView` en la vista.
 
 ## Solución de problemas
 
@@ -278,7 +280,7 @@ git checkout -- SuperHeroBattle.xcodeproj/project.xcworkspace/xcshareddata/swift
 - [x] Fase 5: motor de combate (PowerStats, suerte 7-77, feeling +33 por pareja)
 - [x] Fase 6: narración con Apple Foundation Models y fallback local
 - [x] Fase 7: historial de combates en Realm
-- [ ] Fase 8: diseño comic completo, Lottie y accesibilidad final
+- [x] Fase 8: diseño comic completo, Lottie y accesibilidad final
 - [ ] Fase 9: calidad final
 - [ ] Caché de imágenes remotas (bloqueada por HTTP 403 del host)
 
