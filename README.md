@@ -37,7 +37,7 @@ Proyecto construido con SwiftUI, Clean Architecture + MVVM, Swift Concurrency es
 | Filtros locales (editorial, género) sobre los héroes cargados | ✅ Operativa |
 | Detalle de personaje con PowerStats accesibles | ✅ Operativa |
 | Selección de equipos y motor de combate | ✅ Operativa | Motor determinista con resultado trazable; narrativa e historial en Fases 6-7 |
-| Narración con Apple Foundation Models | ⏳ Planificada |
+| Narración con Apple Foundation Models | ✅ Operativa (fallback activo en simulador) | En dispositivo con Apple Intelligence genera con IA; sin modelo cae a plantilla honesta con badge de origen |
 | Historial de combates con Realm | ⏳ Planificada |
 | Caché de imágenes remotas | ⚠️ Bloqueada por el host externo (HTTP 403) |
 
@@ -276,7 +276,7 @@ git checkout -- SuperHeroBattle.xcodeproj/project.xcworkspace/xcshareddata/swift
 - [x] Fase 3: catálogo paginado por IDs, Realm, filtros y detalle
 - [x] Fase 4: selección de equipos con `TeamDraft`
 - [x] Fase 5: motor de combate (PowerStats, suerte 7-77, feeling +33 por pareja)
-- [ ] Fase 6: narración con Apple Foundation Models y fallback local
+- [x] Fase 6: narración con Apple Foundation Models y fallback local
 - [ ] Fase 7: combate, resultados e historial en Realm
 - [ ] Fase 8: diseño comic completo, Lottie y accesibilidad final
 - [ ] Fase 9: calidad final

@@ -23,6 +23,8 @@ struct CombatView: View {
                     versusDivider
 
                     teamSection(viewModel.result.teamB)
+
+                    narrationSection
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 12)
@@ -31,6 +33,72 @@ struct CombatView: View {
         }
         .navigationTitle(L10n.localizedKey(.combatResultTitle))
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            await viewModel.loadNarration()
+        }
+    }
+
+    // MARK: - Narración
+
+    @ViewBuilder
+    private var narrationSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            L10n.text(.combatNarrationTitle)
+                .font(ComicTypography.headline)
+                .foregroundStyle(ComicPalette.yellow)
+
+            if let narration = viewModel.narration {
+                sourceBadge(narration.source)
+
+                Text(narration.text)
+                    .font(ComicTypography.body)
+                    .foregroundStyle(ComicPalette.paper.opacity(0.9))
+                    .lineSpacing(4)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("combat.narration")
+            } else if viewModel.isGeneratingNarration {
+                HStack(spacing: 10) {
+                    ProgressView()
+                        .tint(ComicPalette.yellow)
+
+                    L10n.text(.combatNarrationLoading)
+                        .font(ComicTypography.body)
+                        .foregroundStyle(ComicPalette.paper.opacity(0.7))
+                }
+                .padding(.vertical, 8)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(L10n.text(.combatNarrationLoading))
+                .accessibilityIdentifier("combat.narration.loading")
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(ComicPalette.midnight.opacity(0.86))
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(ComicPalette.paper.opacity(0.18), lineWidth: 2)
+        }
+    }
+
+    @ViewBuilder
+    private func sourceBadge(_ source: NarrativeSource) -> some View {
+        let key: LocalizableStringKey = source == .foundationModels
+            ? .combatNarrationSourceFoundationModels
+            : .combatNarrationSourceTemplate
+        let accent: Color = source == .foundationModels
+            ? ComicPalette.yellow
+            : ComicPalette.blue
+
+        L10n.text(key)
+            .font(ComicTypography.caption)
+            .foregroundStyle(ComicPalette.ink)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(accent, in: Capsule())
+            .accessibilityIdentifier("combat.narration.source")
     }
 
     // MARK: - Resultado global
@@ -290,7 +358,12 @@ struct CombatView: View {
                     teamA: Array(FixedRosterHeroRepository.roster.prefix(2)),
                     teamB: Array(FixedRosterHeroRepository.roster.dropFirst(2).prefix(2))
                 ),
-                resolveCombat: ResolveCombatUseCase()
+                resolveCombat: ResolveCombatUseCase(),
+                generateNarration: GenerateCombatNarrationUseCase(
+                    service: TemplateNarrationService(),
+                    fallback: TemplateNarrationService()
+                ),
+                narrationLanguage: .spanish
             )
         )
     }

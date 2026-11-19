@@ -9,6 +9,11 @@ struct RootView: View {
         AppLanguage(rawValue: languageRawValue) ?? .system
     }
 
+    /// Idioma de la narración derivado de la preferencia del usuario.
+    private var narrationLanguage: NarrationLanguage {
+        NarrationLanguage(rawValue: language.narrationCode) ?? .english
+    }
+
     var body: some View {
         NavigationStack {
             HomeView()
@@ -29,7 +34,10 @@ struct RootView: View {
                         )
                     case let .combat(participants):
                         CombatView(
-                            viewModel: container.makeCombatViewModel(participants: participants)
+                            viewModel: container.makeCombatViewModel(
+                                participants: participants,
+                                language: narrationLanguage
+                            )
                         )
                     }
                 }

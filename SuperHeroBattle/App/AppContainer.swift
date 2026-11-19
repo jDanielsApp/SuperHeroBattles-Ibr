@@ -14,6 +14,7 @@ final class AppContainer {
     let selectHero: SelectHeroUseCase
     let buildBattleParticipants: BuildBattleParticipantsUseCase
     let resolveCombat: ResolveCombatUseCase
+    let generateCombatNarration: GenerateCombatNarrationUseCase
     let characterIDs: any CharacterIDProviding
     let catalogRepository: any HeroCatalogRepository
 
@@ -51,6 +52,18 @@ final class AppContainer {
         resolveCombat = ResolveCombatUseCase(
             engine: CombatEngine(luckProvider: SystemLuckProvider())
         )
+
+        // El servicio de IA solo se instancia fuera del modo fakes; la
+        // plantilla siempre queda como fallback honesto y determinista.
+        let templateNarration = TemplateNarrationService()
+        let narrationService: any CombatNarrationService = usesUITestFakes
+            ? templateNarration
+            : FoundationModelsNarrationService()
+        generateCombatNarration = GenerateCombatNarrationUseCase(
+            service: narrationService,
+            fallback: templateNarration
+        )
+
         characterIDs = usesUITestFakes
             ? FixedCharacterIDProvider(ids: FixedRosterHeroRepository.roster.map(\.id))
             : BundledCharacterIDProvider()
@@ -79,8 +92,16 @@ final class AppContainer {
         )
     }
 
-    func makeCombatViewModel(participants: BattleParticipants) -> CombatViewModel {
-        CombatViewModel(participants: participants, resolveCombat: resolveCombat)
+    func makeCombatViewModel(
+        participants: BattleParticipants,
+        language: NarrationLanguage
+    ) -> CombatViewModel {
+        CombatViewModel(
+            participants: participants,
+            resolveCombat: resolveCombat,
+            generateNarration: generateCombatNarration,
+            narrationLanguage: language
+        )
     }
 
     /// Realm es la caché principal. Si no se puede abrir, la app sigue

@@ -109,6 +109,15 @@ nonisolated enum LocalizableStringKey: String, CaseIterable, Sendable {
     case combatResultAffinity = "combat.result.affinity"
     case combatResultAffinityNone = "combat.result.affinity.none"
 
+    case combatNarrationTitle = "combat.narration.title"
+    case combatNarrationLoading = "combat.narration.loading"
+    case combatNarrationSourceFoundationModels = "combat.narration.source.foundationModels"
+    case combatNarrationSourceTemplate = "combat.narration.source.template"
+    case combatNarrationTemplateIntro = "combat.narration.template.intro"
+    case combatNarrationTemplateScores = "combat.narration.template.scores"
+    case combatNarrationTemplateWinner = "combat.narration.template.winner"
+    case combatNarrationTemplateDraw = "combat.narration.template.draw"
+
     case commonCancel = "common.cancel"
 
     case settingsTitle = "settings.title"
