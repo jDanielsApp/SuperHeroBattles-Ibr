@@ -106,7 +106,7 @@ struct CharacterGuideView: View {
         ScrollView {
             LazyVStack(spacing: 10) {
                 ForEach(heroes) { hero in
-                    heroLink(hero, prefetch: false)
+                    heroRow(hero, prefetch: false)
                 }
             }
             .padding(.vertical, 4)
@@ -159,7 +159,7 @@ struct CharacterGuideView: View {
                     filteredEmptyView
                 } else {
                     ForEach(viewModel.filteredHeroes) { hero in
-                        heroLink(hero, prefetch: true)
+                        heroRow(hero, prefetch: true)
                     }
                 }
 
@@ -253,14 +253,22 @@ struct CharacterGuideView: View {
         }
     }
 
-    private func heroLink(_ hero: Hero, prefetch: Bool) -> some View {
-        NavigationLink(value: hero) {
-            HeroResultRow(hero: hero)
-        }
-        .buttonStyle(.plain)
-        .onAppear {
-            guard prefetch else { return }
-            viewModel.prefetchIfNeeded(currentHero: hero)
+    @ViewBuilder
+    private func heroRow(_ hero: Hero, prefetch: Bool) -> some View {
+        if let onSelect = viewModel.onHeroSelected {
+            Button {
+                onSelect(hero)
+            } label: {
+                HeroResultRow(hero: hero)
+            }
+            .buttonStyle(.plain)
+            .prefetchActions(prefetch, hero: hero, viewModel: viewModel)
+        } else {
+            NavigationLink(value: hero) {
+                HeroResultRow(hero: hero)
+            }
+            .buttonStyle(.plain)
+            .prefetchActions(prefetch, hero: hero, viewModel: viewModel)
         }
     }
 
@@ -360,6 +368,23 @@ struct CharacterGuideView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.horizontal, 16)
+    }
+}
+
+// MARK: - Precarga compartida
+
+/// Encapsula la precarga de página para reutilizarla en las dos variantes de fila.
+private extension View {
+    @ViewBuilder
+    func prefetchActions(
+        _ enabled: Bool,
+        hero: Hero,
+        viewModel: CharacterGuideViewModel
+    ) -> some View {
+        onAppear {
+            guard enabled else { return }
+            viewModel.prefetchIfNeeded(currentHero: hero)
+        }
     }
 }
 

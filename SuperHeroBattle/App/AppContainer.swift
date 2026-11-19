@@ -1,18 +1,30 @@
+import Foundation
 import Observation
 
 /// Composición de dependencias de la app. Se irá completando por fases.
 @MainActor
 @Observable
 final class AppContainer {
+    /// Argumento de lanzamiento que activa los fakes de UI tests.
+    static let uiTestFakesArgument = "-uitest-fakes"
+
     let searchHeroes: SearchHeroesUseCase
     let loadHeroesByIDs: LoadHeroesByIDsUseCase
+    let generateRandomHero: GenerateRandomHeroUseCase
+    let selectHero: SelectHeroUseCase
+    let buildBattleParticipants: BuildBattleParticipantsUseCase
     let characterIDs: any CharacterIDProviding
     let catalogRepository: any HeroCatalogRepository
 
     init() {
+        let usesUITestFakes = ProcessInfo.processInfo.arguments.contains(Self.uiTestFakesArgument)
+
         let remote: any HeroRepository
 
-        if let configuration = SuperHeroAPIConfiguration.live() {
+        if usesUITestFakes {
+            // Modo fakes para UI tests: plantilla sintética, sin red ni token.
+            remote = FixedRosterHeroRepository()
+        } else if let configuration = SuperHeroAPIConfiguration.live() {
             let client = SuperHeroAPIClient(
                 configuration: configuration,
                 httpClient: URLSessionHTTPClient()
@@ -26,19 +38,40 @@ final class AppContainer {
             remote = UnconfiguredHeroRepository()
         }
 
-        let catalog = Self.makeCatalogRepository()
+        let catalog = usesUITestFakes
+            ? InMemoryHeroCatalogRepository(heroes: FixedRosterHeroRepository.roster)
+            : Self.makeCatalogRepository()
 
         searchHeroes = SearchHeroesUseCase(repository: remote)
         loadHeroesByIDs = LoadHeroesByIDsUseCase(catalog: catalog, remote: remote)
-        characterIDs = BundledCharacterIDProvider()
+        generateRandomHero = GenerateRandomHeroUseCase(catalog: catalog)
+        selectHero = SelectHeroUseCase()
+        buildBattleParticipants = BuildBattleParticipantsUseCase()
+        characterIDs = usesUITestFakes
+            ? FixedCharacterIDProvider(ids: FixedRosterHeroRepository.roster.map(\.id))
+            : BundledCharacterIDProvider()
         catalogRepository = catalog
     }
 
-    func makeCharacterGuideViewModel() -> CharacterGuideViewModel {
+    func makeCharacterGuideViewModel(
+        onHeroSelected: HeroSelectionHandler? = nil
+    ) -> CharacterGuideViewModel {
         CharacterGuideViewModel(
             characterIDs: characterIDs,
             loadHeroes: loadHeroesByIDs,
-            searchHeroes: searchHeroes
+            searchHeroes: searchHeroes,
+            onHeroSelected: onHeroSelected
+        )
+    }
+
+    func makeTeamSelectionViewModel(mode: CombatMode) -> TeamSelectionViewModel {
+        TeamSelectionViewModel(
+            mode: mode,
+            selectHero: selectHero,
+            generateRandomHero: generateRandomHero,
+            buildBattleParticipants: buildBattleParticipants,
+            preloadHeroes: loadHeroesByIDs,
+            characterIDs: characterIDs
         )
     }
 

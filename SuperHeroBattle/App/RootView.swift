@@ -22,6 +22,13 @@ struct RootView: View {
                         DuelModeView()
                     case .settings:
                         SettingsView()
+                    case let .teamSelection(mode):
+                        TeamSelectionView(
+                            viewModel: container.makeTeamSelectionViewModel(mode: mode),
+                            container: container
+                        )
+                    case let .combat(participants):
+                        CombatPlaceholderView(participants: participants)
                     }
                 }
         }

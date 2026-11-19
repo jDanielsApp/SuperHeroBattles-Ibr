@@ -73,8 +73,30 @@
 "search.publisher.unknown" = "Unknown publisher";
 
 "duels.title" = "Duels";
-"duels.placeholder.title" = "Choose your fighters";
-"duels.placeholder.message" = "Team selection and the combat engine arrive in the next phases.";
+"duels.mode.oneVsOne.title" = "1 vs 1";
+"duels.mode.oneVsOne.subtitle" = "A classic face-off between two characters.";
+"duels.mode.twoVsTwo.title" = "2 vs 2";
+"duels.mode.twoVsTwo.subtitle" = "Tag-team battle with affinity bonuses.";
+"duels.mode.threeVsThree.title" = "3 vs 3";
+"duels.mode.threeVsThree.subtitle" = "Full squad combat. Maximum chaos.";
+"accessibility.duels.mode.oneVsOne" = "One versus one";
+"accessibility.duels.mode.twoVsTwo" = "Two versus two";
+"accessibility.duels.mode.threeVsThree" = "Three versus three";
+"team.selection.title" = "Team selection";
+"team.selection.teamA" = "Team A";
+"team.selection.teamB" = "Team B";
+"team.selection.slot.empty" = "Empty slot";
+"team.selection.slot.choose" = "Choose";
+"team.selection.slot.random" = "Random";
+"team.selection.slot.replace" = "Replace";
+"team.selection.slot.remove" = "Remove";
+"team.selection.error.duplicate" = "That hero is already on this team.";
+"team.selection.error.noHeroes" = "No downloaded heroes available yet. Open a slot, load the guide and try again.";
+"team.selection.error.invalidSlot" = "That slot is not valid.";
+"team.selection.start" = "Start combat";
+"team.selection.start.hint" = "Available when both teams are complete.";
+"combat.placeholder.title" = "Combat ready";
+"combat.placeholder.message" = "Teams are set. The combat engine arrives in the next phase.";
 
 "settings.title" = "Settings";
 "settings.language" = "Language";
@@ -95,3 +117,4 @@
 "accessibility.search.clear" = "Clear search";
 "accessibility.search.loading" = "Searching heroes";
 "accessibility.catalog.loading" = "Loading catalog heroes";
+"common.cancel" = "Cancel";

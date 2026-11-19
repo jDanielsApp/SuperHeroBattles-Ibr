@@ -79,8 +79,31 @@ nonisolated enum LocalizableStringKey: String, CaseIterable, Sendable {
     case searchPublisherUnknown = "search.publisher.unknown"
 
     case duelsTitle = "duels.title"
-    case duelsPlaceholderTitle = "duels.placeholder.title"
-    case duelsPlaceholderMessage = "duels.placeholder.message"
+    case duelsModeOneVsOneTitle = "duels.mode.oneVsOne.title"
+    case duelsModeOneVsOneSubtitle = "duels.mode.oneVsOne.subtitle"
+    case duelsModeTwoVsTwoTitle = "duels.mode.twoVsTwo.title"
+    case duelsModeTwoVsTwoSubtitle = "duels.mode.twoVsTwo.subtitle"
+    case duelsModeThreeVsThreeTitle = "duels.mode.threeVsThree.title"
+    case duelsModeThreeVsThreeSubtitle = "duels.mode.threeVsThree.subtitle"
+
+    case teamSelectionTitle = "team.selection.title"
+    case teamSelectionTeamA = "team.selection.teamA"
+    case teamSelectionTeamB = "team.selection.teamB"
+    case teamSelectionSlotEmpty = "team.selection.slot.empty"
+    case teamSelectionSlotChoose = "team.selection.slot.choose"
+    case teamSelectionSlotRandom = "team.selection.slot.random"
+    case teamSelectionSlotReplace = "team.selection.slot.replace"
+    case teamSelectionSlotRemove = "team.selection.slot.remove"
+    case teamSelectionErrorDuplicate = "team.selection.error.duplicate"
+    case teamSelectionErrorNoHeroes = "team.selection.error.noHeroes"
+    case teamSelectionErrorInvalidSlot = "team.selection.error.invalidSlot"
+    case teamSelectionStart = "team.selection.start"
+    case teamSelectionStartHint = "team.selection.start.hint"
+
+    case combatPlaceholderTitle = "combat.placeholder.title"
+    case combatPlaceholderMessage = "combat.placeholder.message"
+
+    case commonCancel = "common.cancel"
 
     case settingsTitle = "settings.title"
     case settingsLanguage = "settings.language"
@@ -95,6 +118,9 @@ nonisolated enum LocalizableStringKey: String, CaseIterable, Sendable {
     case accessibilityHomeGuide = "accessibility.home.guide"
     case accessibilityHomeDuels = "accessibility.home.duels"
     case accessibilityHomeSettings = "accessibility.home.settings"
+    case accessibilityDuelsModeOneVsOne = "accessibility.duels.mode.oneVsOne"
+    case accessibilityDuelsModeTwoVsTwo = "accessibility.duels.mode.twoVsTwo"
+    case accessibilityDuelsModeThreeVsThree = "accessibility.duels.mode.threeVsThree"
 
     case accessibilitySearchField = "accessibility.search.field"
     case accessibilitySearchSubmit = "accessibility.search.submit"

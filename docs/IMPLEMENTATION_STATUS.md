@@ -6,8 +6,8 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 
 ## Resumen
 
-- **Fase actual:** Fase 3 cerrada salvo la caché de imágenes remotas; Fase 4 (selección de equipos) pendiente de iniciar.
-- **Última fase cerrada:** Fase 3 — catálogo paginado, filtros, detalle y persistencia Realm.
+- **Fase actual:** Fase 4 cerrada; Fase 5 (motor de combate) pendiente de iniciar.
+- **Última fase cerrada:** Fase 4 — selección de modalidad y equipos con fakes de UI tests.
 - **Herramienta nueva:** índice público de IDs (`data/character_ids.json`) con actualización semanal mediante GitHub Actions.
 - **Estado del build:** compila y los tests pasan en Xcode 27.2 / iOS Simulator 27.0.
 - **Dependencias:** RealmSwift 20.0.6 y Lottie 4.6.1 resueltas con SwiftPM.
@@ -30,7 +30,7 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 | 1. Arquitectura, dominio y navegación | Completada | Entidades, protocolos, casos de uso base, DI, Home y placeholders |
 | 2. API, búsqueda, caché y cancelación | Completada | Cliente HTTP, búsqueda explícita, caché TTL y cancelación con tests |
 | 3. Catálogo, filtros, detalle e imágenes | Completada (imágenes pendientes) | Catálogo paginado por IDs, Realm, filtros, detalle y búsqueda unificada |
-| 4. Selección de equipos | Pendiente | |
+| 4. Selección de equipos | Completada | Modalidades 1v1/2v2/3v3, huecos con elegir/aleatorio/quitar, Guía reutilizada como selector |
 | 5. Motor de combate | Pendiente | |
 | 6. Apple Foundation Models | Pendiente | |
 | 7. Combate, resultados e historial | Pendiente | |
@@ -124,12 +124,34 @@ Decisiones de la fase:
 - Los filtros solo afectan a los héroes ya cargados, nunca al catálogo completo.
 - El detalle se resuelve con los datos persistidos; no hace una petición adicional.
 
-## Pendiente inmediato — Fase 4
+## Fase 4 — completada
 
-- Selección de equipos con `TeamDraft`, huecos y prohibición de duplicados.
-- Integración del catálogo cargado con la selección.
-- Base del motor de combate y su conexión con las puntuaciones.
-- Resolver la carga de imágenes del host externo (cabeceras, proxy/CDN o fuente alternativa).
+- [x] `DuelModeView` con tarjetas 1v1 / 2v2 / 3v3 y navegación a la selección de equipos.
+- [x] `TeamSelectionViewModel`: dos `TeamDraft`, asignar/sustituir/quitar por hueco, aleatorio que rellena solo el hueco pedido, cancelación con guardas de generación y precarga de la primera página al entrar.
+- [x] Reglas: sin repetidos dentro de un equipo; el mismo héroe puede estar en ambos equipos; el aleatorio excluye solo los IDs del equipo que se rellena.
+- [x] `TeamSlotView` reutilizable con estados vacío/ocupado, color de `TeamPalette` acompañado de texto y etiquetas de VoiceOver con equipo y número de hueco.
+- [x] La Guía se reutiliza como selector (`onHeroSelected` opcional): cada hueco abre una hoja con catálogo, búsqueda y filtros; las filas eligen en lugar de navegar al detalle.
+- [x] `BuildBattleParticipantsUseCase`: valida drafts completos y produce `BattleParticipants` en orden de huecos.
+- [x] CTA "Iniciar combate" dentro del scroll, habilitado solo con ambos equipos completos; navega al puente `CombatPlaceholderView`.
+- [x] Fakes de UI tests: argumento `-uitest-fakes` activa `FixedRosterHeroRepository`, `FixedCharacterIDProvider` y catálogo en memoria, sin red ni token.
+- [x] UI test permanente del flujo Duelos → 3v3 → aleatorio completo → combate.
+- [x] Localización en inglés y español con paridad de claves.
+
+Decisiones de la fase:
+
+- El CTA vive dentro del scroll: un footer fijo (`safeAreaInset`) ocultaba los últimos huecos tras él y sus acciones quedaban inaccesibles (detectado con jerarquías de UI test).
+- La selección aleatoria usa el catálogo local; la primera página se precarga al entrar para que el botón aleatorio tenga datos aunque no se haya visitado la Guía.
+- Los errores de precarga son silenciosos: el selector manual o la Guía presentan el error real.
+- `DuelModeView` ya no usa `FeaturePlaceholderView`; las claves `duels.placeholder.*` se han retirado.
+
+## Pendiente inmediato — Fase 5
+
+- Motor de combate puro en `Domain/Combat`.
+- Puntuación base como media de PowerStats conocidos (los desconocidos se excluyen, nunca valen cero).
+- Suerte individual 7–77 con RNG inyectable.
+- Feeling entre compañeros: +33 por pareja con coincidencia de afiliación o familiares (OR, nunca 66).
+- Puntuación total por equipo, ganador o empate, resultado estructurado y trazable.
+- Conectar el CTA con el motor y sustituir `CombatPlaceholderView`.
 
 ## Pendientes y riesgos
 
@@ -153,6 +175,10 @@ xcodebuild -project SuperHeroBattle.xcodeproj -scheme SuperHeroBattle \
 xcodebuild -project SuperHeroBattle.xcodeproj -scheme SuperHeroBattle \
   -destination 'platform=iOS Simulator,name=iPhone 17' test
 ```
+
+Resultado Fase 4: build correcto, **129 unit tests + 2 UI tests en verde** en iPhone 17 (iOS 27.0), sin warnings nuevos. El UI test del flujo de selección corre con `-uitest-fakes` (sin red ni token): Duelos → 3v3 → relleno aleatorio de los seis huecos → "Iniciar combate" habilitado → pantalla de combate.
+
+Nota de la fase: el CTA dentro del scroll corrige una oclusión real; con un footer fijo (`safeAreaInset`), los botones del último hueco quedaban tapados y XCUI reportaba el botón como hittable aunque el tap no llegaba. Se diagnosticó dumpeando la jerarquía de accesibilidad.
 
 Resultado Fase 3: build correcto, **111 unit tests + 1 UI test en verde** en iPhone 17 (iOS 27.0). `SuperHeroBattle.app` incluye `character_ids.json` con 731 IDs, `en.lproj` y `es.lproj`, y no incluye archivos `*.xcconfig`.
 
