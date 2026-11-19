@@ -95,8 +95,14 @@
 "team.selection.error.invalidSlot" = "That slot is not valid.";
 "team.selection.start" = "Start combat";
 "team.selection.start.hint" = "Available when both teams are complete.";
-"combat.placeholder.title" = "Combat ready";
-"combat.placeholder.message" = "Teams are set. The combat engine arrives in the next phase.";
+"combat.result.title" = "Combat result";
+"combat.result.winner" = "Winner";
+"combat.result.draw" = "It's a draw";
+"combat.result.base" = "Base";
+"combat.result.luck" = "Luck";
+"combat.result.total" = "Total";
+"combat.result.affinity" = "Affinity";
+"combat.result.affinity.none" = "No affinity matches.";
 
 "settings.title" = "Settings";
 "settings.language" = "Language";

@@ -95,8 +95,14 @@
 "team.selection.error.invalidSlot" = "Ese hueco no es válido.";
 "team.selection.start" = "Iniciar combate";
 "team.selection.start.hint" = "Disponible cuando ambos equipos estén completos.";
-"combat.placeholder.title" = "Combate listo";
-"combat.placeholder.message" = "Los equipos están confirmados. El motor de combate llega en la siguiente fase.";
+"combat.result.title" = "Resultado del combate";
+"combat.result.winner" = "Ganador";
+"combat.result.draw" = "¡Empate!";
+"combat.result.base" = "Base";
+"combat.result.luck" = "Suerte";
+"combat.result.total" = "Total";
+"combat.result.affinity" = "Feeling";
+"combat.result.affinity.none" = "Sin coincidencias de feeling.";
 
 "settings.title" = "Ajustes";
 "settings.language" = "Idioma";

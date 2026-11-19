@@ -57,8 +57,16 @@ final class SuperHeroBattleUITests: XCTestCase {
         start.tap()
 
         XCTAssertTrue(
-            app.staticTexts["combat.placeholder"].waitForExistence(timeout: 5),
-            "No se llegó a la pantalla de combate"
+            app.staticTexts["combat.outcome"].waitForExistence(timeout: 5),
+            "No se mostró el resultado del combate"
+        )
+        XCTAssertTrue(
+            app.staticTexts["combat.total.teamA"].waitForExistence(timeout: 5),
+            "Falta el total del Equipo A"
+        )
+        XCTAssertTrue(
+            app.staticTexts["combat.total.teamB"].waitForExistence(timeout: 5),
+            "Falta el total del Equipo B"
         )
     }
 

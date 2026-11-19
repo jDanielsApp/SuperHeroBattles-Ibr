@@ -6,8 +6,8 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 
 ## Resumen
 
-- **Fase actual:** Fase 4 cerrada; Fase 5 (motor de combate) pendiente de iniciar.
-- **Última fase cerrada:** Fase 4 — selección de modalidad y equipos con fakes de UI tests.
+- **Fase actual:** Fase 5 cerrada; Fase 6 (narración con Foundation Models) pendiente de iniciar.
+- **Última fase cerrada:** Fase 5 — motor matemático de combate con resultado trazable.
 - **Herramienta nueva:** índice público de IDs (`data/character_ids.json`) con actualización semanal mediante GitHub Actions.
 - **Estado del build:** compila y los tests pasan en Xcode 27.2 / iOS Simulator 27.0.
 - **Dependencias:** RealmSwift 20.0.6 y Lottie 4.6.1 resueltas con SwiftPM.
@@ -31,7 +31,7 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 | 2. API, búsqueda, caché y cancelación | Completada | Cliente HTTP, búsqueda explícita, caché TTL y cancelación con tests |
 | 3. Catálogo, filtros, detalle e imágenes | Completada (imágenes pendientes) | Catálogo paginado por IDs, Realm, filtros, detalle y búsqueda unificada |
 | 4. Selección de equipos | Completada | Modalidades 1v1/2v2/3v3, huecos con elegir/aleatorio/quitar, Guía reutilizada como selector |
-| 5. Motor de combate | Pendiente | |
+| 5. Motor de combate | Completada | Base, suerte 7-77, feeling +33 por pareja, ganador/empate y trazabilidad completa |
 | 6. Apple Foundation Models | Pendiente | |
 | 7. Combate, resultados e historial | Pendiente | |
 | 8. Diseño comic, Lottie, idiomas y accesibilidad | Pendiente | Wrapper y assets Lottie |
@@ -144,14 +144,30 @@ Decisiones de la fase:
 - Los errores de precarga son silenciosos: el selector manual o la Guía presentan el error real.
 - `DuelModeView` ya no usa `FeaturePlaceholderView`; las claves `duels.placeholder.*` se han retirado.
 
-## Pendiente inmediato — Fase 5
+## Fase 5 — completada
 
-- Motor de combate puro en `Domain/Combat`.
-- Puntuación base como media de PowerStats conocidos (los desconocidos se excluyen, nunca valen cero).
-- Suerte individual 7–77 con RNG inyectable.
-- Feeling entre compañeros: +33 por pareja con coincidencia de afiliación o familiares (OR, nunca 66).
-- Puntuación total por equipo, ganador o empate, resultado estructurado y trazable.
-- Conectar el CTA con el motor y sustituir `CombatPlaceholderView`.
+- [x] `Domain/Combat/AffinityMatcher`: normaliza afiliaciones y familiares por comas, recorta espacios, compara en minúsculas con coincidencia exacta (sin parciales) y descarta vacíos, `-`, `unknown`, `none` y `n/a`.
+- [x] `LuckProvider` en `Domain/Services` (junto a `RandomHeroPicker`): protocolo inyectable con `SystemLuckProvider` en 7…77. `SequenceLuckProvider` en los tests permite puntuaciones exactas.
+- [x] `CombatEngine` en `Domain/Combat`: base = `PowerStats.baseScore` (media de conocidos), suerte por combatiente, +33 por pareja con coincidencia OR (nunca 66), total de equipo = individuales + feeling, ganador por mayor total y empate sin re-rolls.
+- [x] El mismo héroe en ambos equipos produce dos combatientes con tiradas de suerte independientes.
+- [x] `ResolveCombatUseCase`: delegación pura y síncrona sobre el motor.
+- [x] `CombatView` y `CombatViewModel`: banner de ganador/empate con texto (no solo color), filas con base/suerte/total accesibles, feeling con elementos coincidentes, totales por equipo con formato localizado. Sustituye y elimina `CombatPlaceholderView`.
+- [x] UI test extendido hasta la pantalla de resultado (`combat.outcome`, `combat.total.teamA/B`).
+- [x] Localización en inglés y español con paridad; claves `combat.placeholder.*` retiradas.
+
+Decisiones de la fase:
+
+- La suerte se consume en orden: Equipo A y luego Equipo B, por hueco; documentado para tests deterministas.
+- El ejemplo conceptual del prompt maestro ("feeling 66" en un equipo de tres) contradice sus propias reglas (33 por pareja, tres parejas = 99); se siguen las reglas, no el ejemplo.
+- `SequenceLuckProvider` es `@unchecked Sendable` con nota: el motor lo consume síncronamente desde un único contexto.
+
+## Pendiente inmediato — Fase 6
+
+- Narración con Apple Foundation Models: sesión con `SystemLanguageModel`, `@Generable` para salida estructurada y prompts versionados en un único punto.
+- Comprobación de `availability` antes de crear la sesión y fallback determinista localizado si no hay modelo.
+- Registro del origen de la narración (`foundationModels` o `template`) y presentación en la UI.
+- Narración en el idioma seleccionado por el usuario; nombres propios sin traducir.
+- Tests con generador de narrativa falso; nunca invocar el modelo real.
 
 ## Pendientes y riesgos
 
@@ -175,6 +191,8 @@ xcodebuild -project SuperHeroBattle.xcodeproj -scheme SuperHeroBattle \
 xcodebuild -project SuperHeroBattle.xcodeproj -scheme SuperHeroBattle \
   -destination 'platform=iOS Simulator,name=iPhone 17' test
 ```
+
+Resultado Fase 5: build correcto, **153 unit tests + 2 UI tests en verde** en iPhone 17 (iOS 27.0), sin warnings de código. El motor está cubierto con suerte determinista (`SequenceLuckProvider`): base y suerte por combatiente, tiradas independientes para el mismo héroe en ambos equipos, feeling +33 por pareja (0/1/3 parejas según modalidad, nunca entre equipos, nunca 66), totales, ganador y empate. El UI test llega con fakes hasta la pantalla de resultado y comprueba banner y totales de ambos equipos.
 
 Resultado Fase 4: build correcto, **129 unit tests + 2 UI tests en verde** en iPhone 17 (iOS 27.0), sin warnings nuevos. El UI test del flujo de selección corre con `-uitest-fakes` (sin red ni token): Duelos → 3v3 → relleno aleatorio de los seis huecos → "Iniciar combate" habilitado → pantalla de combate.
 
