@@ -6,14 +6,15 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 
 ## Resumen
 
-- **Fase actual:** Fase 2 cerrada; Fase 3 (catálogo, filtros, detalle e imágenes) pendiente de iniciar.
-- **Última fase cerrada:** Fase 2 — API, búsqueda, caché y cancelación.
+- **Fase actual:** Fase 3 cerrada salvo la caché de imágenes remotas; Fase 4 (selección de equipos) pendiente de iniciar.
+- **Última fase cerrada:** Fase 3 — catálogo paginado, filtros, detalle y persistencia Realm.
+- **Herramienta nueva:** índice público de IDs (`data/character_ids.json`) con actualización semanal mediante GitHub Actions.
 - **Estado del build:** compila y los tests pasan en Xcode 27.2 / iOS Simulator 27.0.
 - **Dependencias:** RealmSwift 20.0.6 y Lottie 4.6.1 resueltas con SwiftPM.
 
 ## Decisiones confirmadas
 
-1. Catálogo inicial: semilla de ~30 nombres de héroes descargados desde la API oficial en el primer arranque, con concurrencia limitada, persistencia en Realm y progreso/reintento en la Guía. Sin datos inventados.
+1. Catálogo paginado por IDs: `data/character_ids.json` es la fuente de verdad y se empaqueta con la app. Al entrar en la Guía se cargan los 30 primeros IDs, se piden sus fichas con concurrencia limitada y, al llegar al final, se cargan los siguientes 30. Los filtros actúan solo sobre los héroes ya cargados.
 2. Lottie: paquete y wrapper SwiftUI integrados. Las animaciones `.json` las aporta el usuario; mientras no existan, se usa fallback estático.
 3. Token de SuperHeroAPI: configurado en `Secrets.xcconfig` (ignorado por git) y verificado contra la API real. Nunca se imprime ni se commitea.
 4. Localización clásica con `Localizable.strings` en inglés y español. Sin String Catalogs.
@@ -28,7 +29,7 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 | 0. Saneamiento y decisiones | Completada | Documentación movida, Lottie añadido, localización clásica, configs excluidos del bundle |
 | 1. Arquitectura, dominio y navegación | Completada | Entidades, protocolos, casos de uso base, DI, Home y placeholders |
 | 2. API, búsqueda, caché y cancelación | Completada | Cliente HTTP, búsqueda explícita, caché TTL y cancelación con tests |
-| 3. Catálogo, filtros, detalle e imágenes | Pendiente | Siguiente fase; incluye seed inicial |
+| 3. Catálogo, filtros, detalle e imágenes | Completada (imágenes pendientes) | Catálogo paginado por IDs, Realm, filtros, detalle y búsqueda unificada |
 | 4. Selección de equipos | Pendiente | |
 | 5. Motor de combate | Pendiente | |
 | 6. Apple Foundation Models | Pendiente | |
@@ -88,20 +89,55 @@ Decisiones de la fase:
 
 Tests: **84 unit tests + 1 UI test**, todos en verde.
 
-## Pendiente inmediato — Fase 3
+## Herramienta — índice de IDs de SuperHeroAPI
 
-- Semilla inicial del catálogo con ~30 nombres reales, concurrencia limitada, persistencia en Realm y progreso/reintento.
-- Modelos Realm de catálogo e historial, mapeadores y migraciones en un único punto.
-- Filtros locales por editorial, alineación, género y rango de PowerStats.
-- Pantalla de detalle de héroe con PowerStats accesibles.
-- Caché de imágenes, cabeceras para el host externo y fallback para héroes sin retrato.
+- `scripts/download_ids.py` descarga `https://superheroapi.com/ids.html` (sin token), recorre sus tres tablas y extrae los IDs numéricos.
+- Salida: `data/character_ids.json`, una lista de enteros deduplicados y ordenados. Actualmente contiene **731 IDs** (1…731).
+- Validaciones: mínimo de 500 IDs en la primera ejecución, fallo si el JSON anterior está corrupto y fallo si el recuento cae más del 20 %.
+- Escritura atómica; si no hay cambios, no reescribe el archivo.
+- `.github/workflows/update-character-ids.yml` se ejecuta los lunes a las 06:17 UTC y mediante `workflow_dispatch`. Solo commitea `data/character_ids.json` con `github-actions[bot]`.
+- Dependencias fijadas en `requirements.txt`: `requests==2.32.5` y `beautifulsoup4==4.15.0`.
+- Pruebas locales ejecutadas: ejecución real (731 IDs), segunda ejecución sin cambios y fallos simulados (sin tablas, menos de 500 IDs, caída >20 %, JSON corrupto, HTTP 404). En todos los fallos el JSON previo queda intacto y el script devuelve código distinto de cero.
+
+## Fase 3 — completada (imágenes pendientes)
+
+- [x] `data/character_ids.json` empaquetado como recurso del target; verificado dentro de `SuperHeroBattle.app` con 731 IDs.
+- [x] `CharacterIDProviding` y `BundledCharacterIDProvider`, con validación de recurso ausente, JSON inválido, IDs no positivos y lista vacía.
+- [x] `HeroCatalogRepository.heroes(ids:)` para leer páginas completas de la caché.
+- [x] `LoadHeroesByIDsUseCase`: caché Realm primero, remoto solo para IDs ausentes, concurrencia máxima de 6, orden por ID solicitado, omisión de `notFound` y propagación del resto de errores.
+- [x] Modelo `HeroObject` + `HeroRecord` y `RealmHeroCatalogRepository`; el héroe completo se guarda como JSON inmutable y los campos indexables quedan como columnas.
+- [x] Configuración y migraciones de Realm centralizadas en `RealmStore` (schemaVersion 1).
+- [x] Respaldo en memoria si Realm no se puede abrir.
+- [x] Paginación de 30 IDs en la Guía con skeletons, precarga a 5 filas del final, footer de carga, footer de reintento y fin de catálogo.
+- [x] Al fallar una página no se avanza el cursor; los héroes ya cacheados se conservan para el reintento.
+- [x] Búsqueda unificada: catálogo por defecto, búsqueda al enviar y vuelta al catálogo al limpiar.
+- [x] Filtros locales por editorial y género sobre los héroes cargados.
+- [x] Pantalla de detalle con PowerStats numéricos accesibles, biografía, apariencia, trabajo y conexiones.
+- [x] Localización en inglés y español con paridad de claves.
+- [ ] Caché de imágenes remotas: el host sigue devolviendo HTTP 403.
+
+Decisiones de la fase:
+
+- Tamaño de página fijo: 30 IDs.
+- Concurrencia de detalle: 6 peticiones simultáneas.
+- La búsqueda de Fase 2 se mantiene como modo alternativo dentro de la misma barra.
+- Los filtros solo afectan a los héroes ya cargados, nunca al catálogo completo.
+- El detalle se resuelve con los datos persistidos; no hace una petición adicional.
+
+## Pendiente inmediato — Fase 4
+
+- Selección de equipos con `TeamDraft`, huecos y prohibición de duplicados.
+- Integración del catálogo cargado con la selección.
+- Base del motor de combate y su conexión con las puntuaciones.
+- Resolver la carga de imágenes del host externo (cabeceras, proxy/CDN o fuente alternativa).
 
 ## Pendientes y riesgos
 
 - **Token de SuperHeroAPI:** configurado localmente en `Secrets.xcconfig` y verificado con una búsqueda real. El archivo está ignorado por git y no se incluye en el bundle.
-- **Imágenes de SuperHeroAPI:** el host `superherodb.com` responde HTTP 403 a peticiones directas, incluso con User-Agent y Referer de navegador. La app muestra el placeholder correctamente, pero en Fase 3 habrá que resolver la carga de imágenes (cabeceras específicas, proxy/CDN o fuente alternativa) antes de considerar la caché de imágenes terminada.
-- SuperHeroAPI no tiene endpoint de catálogo completo ni paginación; el seed inicial se resolverá con búsquedas controladas en Fase 3.
-- Las imágenes dependen de un host externo; habrá placeholder y fallback.
+- **Imágenes de SuperHeroAPI:** el host `superherodb.com` responde HTTP 403 a peticiones directas, incluso con User-Agent y Referer de navegador. Catálogo y detalle muestran el placeholder correctamente, pero la caché de imágenes sigue pendiente (cabeceras específicas, proxy/CDN o fuente alternativa).
+- SuperHeroAPI no tiene endpoint de catálogo completo ni paginación; el catálogo se resuelve con el índice de IDs y llamadas por ID bajo demanda.
+- El workflow programado se desactiva tras 60 días sin actividad en repositorios públicos; conviene ejecutar `workflow_dispatch` periódicamente. Si la rama `main` exige PR, el push del bot fallará y habrá que permitir escritura a Actions o cambiar el flujo a PR.
+- Los tests del script no cubren el entorno real de GitHub Actions hasta que se ejecute el primer `workflow_dispatch` en el repositorio remoto.
 - Foundation Models puede no estar disponible en simulador; el fallback local es obligatorio.
 - El wrapper Lottie y los assets quedan para Fase 8.
 - El selector de idioma ya persiste la preferencia, pero la revisión completa de accesibilidad e idioma se cierra en Fase 8.
@@ -118,6 +154,10 @@ xcodebuild -project SuperHeroBattle.xcodeproj -scheme SuperHeroBattle \
   -destination 'platform=iOS Simulator,name=iPhone 17' test
 ```
 
-Resultado Fase 2: build correcto, **84 unit tests + 1 UI test en verde** en iPhone 17 (iOS 27.0). `SuperHeroBattle.app` contiene `en.lproj` y `es.lproj`, y no incluye archivos `*.xcconfig`. La navegación Home → Guía y la presencia del campo de búsqueda se verifican con el UI test permanente `testCharacterGuideShowsSearchField`.
+Resultado Fase 3: build correcto, **111 unit tests + 1 UI test en verde** en iPhone 17 (iOS 27.0). `SuperHeroBattle.app` incluye `character_ids.json` con 731 IDs, `en.lproj` y `es.lproj`, y no incluye archivos `*.xcconfig`.
 
-Verificación manual con API real: con el token configurado en `Secrets.xcconfig`, la búsqueda de `batman` devuelve 3 resultados (`Batman`, `Batman`, `Batman II`) y la app los publica en la Guía. La comprobación se hizo con un test UI temporal, ya eliminado. Las imágenes remotas no cargan porque el host responde 403; se muestra el placeholder previsto.
+Verificación manual con API real: al entrar en la Guía se cargan los 30 primeros IDs (`A-Bomb` … `Ant-Man`). Al llegar al final se solicita la página siguiente y aparecen `Ant-Man II` … `Bane`. Al abrir `Bane` se muestra el detalle con PowerStats (inteligencia 88, fuerza 38, combate 95, etc.). La comprobación se hizo con un test UI temporal, ya eliminado.
+
+Nota de localización: Xcode normaliza `localizations.supported` y trata `en` como idioma de desarrollo implícito; el bundle sigue conteniendo `en.lproj` y `es.lproj`, `CFBundleDevelopmentRegion` es `en` y el test de paridad de claves pasa.
+
+Verificación manual previa de Fase 2: con el token configurado en `Secrets.xcconfig`, la búsqueda de `batman` devuelve 3 resultados (`Batman`, `Batman`, `Batman II`) y la app los publica en la Guía. Las imágenes remotas no cargan porque el host responde 403; se muestra el placeholder previsto.

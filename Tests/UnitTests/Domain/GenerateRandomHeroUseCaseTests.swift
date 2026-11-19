@@ -36,6 +36,9 @@ private struct FakeCatalogRepository: HeroCatalogRepository {
 
     func allHeroes() async throws -> [Hero] { heroes }
     func hero(id: String) async throws -> Hero? { heroes.first { $0.id == id } }
+    func heroes(ids: [String]) async throws -> [Hero] {
+        ids.compactMap { id in heroes.first { $0.id == id } }
+    }
     func upsert(_ heroes: [Hero]) async throws {}
 }
 

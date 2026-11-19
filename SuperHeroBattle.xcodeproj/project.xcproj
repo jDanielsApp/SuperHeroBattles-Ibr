@@ -28,6 +28,7 @@
   ],
   "files": [
     { "path": "SuperHeroBattle/Config/Base.xcconfig" },
+    { "path": "data/character_ids.json", "target-membership": [ "SuperHeroBattle/resources" ] },
     {
       "kind": "folder",
       "path": "SuperHeroBattle",

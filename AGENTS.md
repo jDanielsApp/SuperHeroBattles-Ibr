@@ -66,6 +66,16 @@ Validar el proyecto después de editar `project.xcproj`:
 xcodebuild -list -project SuperHeroBattle.xcodeproj
 ```
 
+Actualizar el índice de IDs de personajes (requiere Python 3.9+ y las dependencias de `requirements.txt`):
+
+```sh
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python scripts/download_ids.py
+```
+
+El script solo descarga `https://superheroapi.com/ids.html`, no usa el token de SuperHeroAPI y escribe `data/character_ids.json`. La automatización semanal vive en `.github/workflows/update-character-ids.yml`.
+
 No cambies `xcode-select` de forma global sin permiso del usuario.
 
 ## 4. Estructura del proyecto
@@ -107,6 +117,14 @@ SuperHeroBattle/
 Tests/
 ├── UnitTests/
 └── UITests/
+scripts/                          # Herramientas de mantenimiento (Python)
+├── download_ids.py               # Índice de IDs desde ids.html
+requirements.txt                  # Dependencias Python con versiones fijadas
+data/
+└── character_ids.json            # Índice de IDs versionado y empaquetado en la app
+.github/
+└── workflows/
+    └── update-character-ids.yml  # Actualización semanal del índice de IDs
 docs/                             # Documentación y estado de implementación
 ```
 
@@ -169,6 +187,10 @@ Inyección de dependencias:
 - Implementa caché TTL por query normalizada con reloj inyectable y coalescencia de peticiones idénticas.
 - Los tests no deben hacer peticiones reales: usa `URLProtocol` o un cliente HTTP falso.
 - No inventes endpoints: SuperHeroAPI solo ofrece búsqueda por nombre y consulta por ID. No existe un endpoint de catálogo completo.
+- El catálogo se construye a partir de `data/character_ids.json`, un índice público de IDs generado por `scripts/download_ids.py` y actualizado semanalmente por GitHub Actions. La app conoce todos los IDs al arrancar y pide las fichas por ID bajo demanda, nunca mediante búsquedas masivas.
+- El índice de IDs solo contiene enteros ordenados y sin duplicados; no incluye nombres, fichas ni imágenes. No requiere token y no debe commitearse ningún dato sensible junto a él.
+- La Guía carga páginas de 30 IDs con concurrencia máxima de 6 para las fichas. Consulta primero Realm, pide solo los IDs ausentes, omite los `notFound` y no avanza el cursor si la página falla.
+- La caché de imágenes del host externo sigue pendiente: `superherodb.com` responde 403 y la app usa el placeholder.
 
 ## 8. Persistencia con Realm
 
@@ -233,6 +255,7 @@ Inyección de dependencias:
 - `Resources/Info.plist` está excluido de Copy Bundle Resources porque se usa como `INFOPLIST_FILE`.
 - No añadas archivos ajenos al código dentro de `SuperHeroBattle/` (por ejemplo `.gitkeep`), porque la folder reference los copia como recursos. Para preservar carpetas vacías usa la estructura documentada, no archivos placeholder.
 - Los tests viven fuera de la carpeta de la app, en `Tests/UnitTests` y `Tests/UITests`.
+- `scripts/`, `data/` y `.github/` viven fuera de `SuperHeroBattle/` y no forman parte del bundle salvo `data/character_ids.json`, que se añade como referencia de archivo explícita en `project.xcproj`.
 - La documentación vive en `docs/`. No añadas `.md` ni texto plano dentro de `SuperHeroBattle/`.
 - Los archivos de localización viven en `Resources/en.lproj` y `Resources/es.lproj`; el proyecto debe declarar `en` y `es` como localizaciones soportadas.
 - `Config/Base.xcconfig`, `Config/Secrets.example.xcconfig` y `Config/Secrets.xcconfig` están excluidos de Copy Bundle Resources.
