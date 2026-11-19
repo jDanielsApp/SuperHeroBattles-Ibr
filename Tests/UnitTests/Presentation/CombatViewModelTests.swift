@@ -66,11 +66,109 @@ final class CombatViewModelTests: XCTestCase {
         XCTAssertEqual(calls, 1)
     }
 
+    func testExplicitSavePersistsTheCombatRecord() async {
+        let narrative = CombatNarrative(text: "Narración simulada", source: .foundationModels)
+        let service = MockNarrationService(behavior: .narrative(narrative))
+        let history = InMemoryCombatHistoryRepository()
+        let clock = FakeTimeProvider(now: Date(timeIntervalSince1970: 1_234_567))
+        var savedCallbacks = 0
+        let viewModel = makeViewModel(
+            service: service,
+            language: .spanish,
+            history: history,
+            clock: clock,
+            onSaved: { savedCallbacks += 1 }
+        )
+
+        await viewModel.loadNarration()
+        XCTAssertTrue(viewModel.canSave, "Guardar debe habilitarse con la narración publicada")
+
+        await viewModel.save()
+
+        let records = (try? await history.all()) ?? []
+        XCTAssertEqual(records.count, 1)
+
+        let record = records[0]
+        XCTAssertEqual(record.date, clock.now)
+        XCTAssertEqual(record.mode, .oneVsOne)
+        XCTAssertEqual(record.teamA.map(\.name), ["Batman"])
+        XCTAssertEqual(record.teamB.map(\.name), ["Joker"])
+        XCTAssertEqual(record.outcome, viewModel.result.outcome)
+        XCTAssertEqual(record.narration, "Narración simulada")
+        XCTAssertEqual(record.narrationSource, .foundationModels)
+
+        XCTAssertEqual(savedCallbacks, 1, "onSaved debe invocarse una sola vez tras guardar")
+        XCTAssertTrue(viewModel.isSaved)
+        XCTAssertFalse(viewModel.canSave, "No se puede guardar dos veces el mismo combate")
+    }
+
+    func testTemplateFallbackCanBeSavedExplicitly() async {
+        let service = MockNarrationService(behavior: .failure)
+        let history = InMemoryCombatHistoryRepository()
+        let viewModel = makeViewModel(service: service, language: .english, history: history)
+
+        await viewModel.loadNarration()
+        XCTAssertTrue(viewModel.canSave, "El fallback de plantilla también permite guardar")
+
+        await viewModel.save()
+
+        let records = (try? await history.all()) ?? []
+        XCTAssertEqual(records.count, 1)
+        XCTAssertEqual(records[0].narrationSource, .template)
+        XCTAssertFalse(records[0].narration.isEmpty)
+    }
+
+    func testSaveWithoutNarrationDoesNothing() async {
+        let service = MockNarrationService(behavior: .cancellation)
+        let history = InMemoryCombatHistoryRepository()
+        var savedCallbacks = 0
+        let viewModel = makeViewModel(
+            service: service,
+            language: .english,
+            history: history,
+            onSaved: { savedCallbacks += 1 }
+        )
+
+        await viewModel.loadNarration()
+        XCTAssertNil(viewModel.narration)
+        XCTAssertFalse(viewModel.canSave, "Sin narración publicada no se puede guardar")
+
+        await viewModel.save()
+
+        let records = (try? await history.all()) ?? []
+        XCTAssertTrue(records.isEmpty, "Guardar sin narración no debe historificar nada")
+        XCTAssertEqual(savedCallbacks, 0)
+    }
+
+    func testFailedSaveAllowsRetryWithoutNavigating() async {
+        let narrative = CombatNarrative(text: "Narración simulada", source: .foundationModels)
+        let service = MockNarrationService(behavior: .narrative(narrative))
+        let history = FailingSaveHistoryRepository()
+        var savedCallbacks = 0
+        let viewModel = makeViewModel(
+            service: service,
+            language: .english,
+            history: history,
+            onSaved: { savedCallbacks += 1 }
+        )
+
+        await viewModel.loadNarration()
+
+        await viewModel.save()
+
+        XCTAssertFalse(viewModel.isSaved, "Un fallo de Realm no marca el combate como guardado")
+        XCTAssertTrue(viewModel.canSave, "El usuario puede reintentar tras un fallo")
+        XCTAssertEqual(savedCallbacks, 0, "Un fallo de guardado no navega a Home")
+    }
+
     // MARK: - Helpers
 
     private func makeViewModel(
         service: MockNarrationService,
-        language: NarrationLanguage
+        language: NarrationLanguage,
+        history: any CombatHistoryRepository = InMemoryCombatHistoryRepository(),
+        clock: any TimeProvider = SystemTimeProvider(),
+        onSaved: (@MainActor () -> Void)? = nil
     ) -> CombatViewModel {
         CombatViewModel(
             participants: makeParticipants(),
@@ -81,7 +179,10 @@ final class CombatViewModelTests: XCTestCase {
                 service: service,
                 fallback: TemplateNarrationService()
             ),
-            narrationLanguage: language
+            narrationLanguage: language,
+            saveCombatHistory: SaveCombatHistoryUseCase(repository: history),
+            timeProvider: clock,
+            onSaved: onSaved
         )
     }
 
@@ -92,4 +193,19 @@ final class CombatViewModelTests: XCTestCase {
             teamB: [Hero(id: "2", name: "Joker")]
         )
     }
+}
+
+/// Repositorio cuyo `save` siempre falla: cubre el reintento silencioso.
+private struct FailingSaveHistoryRepository: CombatHistoryRepository {
+    func save(_ record: CombatRecord) async throws {
+        throw HeroRepositoryError.transport
+    }
+
+    func all() async throws -> [CombatRecord] { [] }
+
+    func record(id: UUID) async throws -> CombatRecord? { nil }
+
+    func delete(id: UUID) async throws {}
+
+    func deleteAll() async throws {}
 }

@@ -1,6 +1,6 @@
 import Foundation
 
-nonisolated enum HeroAlignment: String, CaseIterable, Hashable, Sendable {
+nonisolated enum HeroAlignment: String, CaseIterable, Hashable, Codable, Sendable {
     case good
     case bad
     case neutral

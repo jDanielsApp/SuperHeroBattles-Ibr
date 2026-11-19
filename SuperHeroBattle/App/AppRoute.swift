@@ -6,4 +6,6 @@ nonisolated enum AppRoute: Hashable {
     case settings
     case teamSelection(CombatMode)
     case combat(BattleParticipants)
+    case history
+    case combatRecord(CombatRecord)
 }

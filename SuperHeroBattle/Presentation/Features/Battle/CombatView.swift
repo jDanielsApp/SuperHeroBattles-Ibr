@@ -3,6 +3,7 @@ import SwiftUI
 /// Pantalla de resultado del combate: puntuaciones trazables, feeling y ganador.
 struct CombatView: View {
     @State private var viewModel: CombatViewModel
+    @State private var isPresentingSaveConfirmation = false
 
     init(viewModel: CombatViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -25,6 +26,8 @@ struct CombatView: View {
                     teamSection(viewModel.result.teamB)
 
                     narrationSection
+
+                    saveSection
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 12)
@@ -35,6 +38,55 @@ struct CombatView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await viewModel.loadNarration()
+        }
+    }
+
+    // MARK: - Guardado en el historial
+
+    /// Guardado explícito: el botón se habilita con la narración publicada
+    /// y pide confirmación antes de registrar el combate y volver a Home.
+    private var saveSection: some View {
+        Button {
+            isPresentingSaveConfirmation = true
+        } label: {
+            HStack(spacing: 10) {
+                if viewModel.isSaving {
+                    ProgressView()
+                        .tint(ComicPalette.ink)
+                } else {
+                    Image(systemName: "tray.and.arrow.down.fill")
+                }
+
+                L10n.text(.combatSaveAction)
+                    .font(ComicTypography.headline)
+            }
+            .foregroundStyle(ComicPalette.ink.opacity(viewModel.canSave ? 1 : 0.55))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(
+                viewModel.canSave ? ComicPalette.yellow : ComicPalette.yellow.opacity(0.35),
+                in: Capsule()
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(!viewModel.canSave)
+        .accessibilityIdentifier("combat.save")
+        .accessibilityHint(L10n.text(.combatSaveHint))
+        .alert(
+            L10n.localizedKey(.combatSaveConfirmTitle),
+            isPresented: $isPresentingSaveConfirmation
+        ) {
+            Button(L10n.localizedKey(.combatSaveConfirm)) {
+                Task {
+                    await viewModel.save()
+                }
+            }
+            .accessibilityIdentifier("combat.save.confirm")
+
+            Button(L10n.localizedKey(.commonCancel), role: .cancel) {}
+            .accessibilityIdentifier("combat.save.cancel")
+        } message: {
+            L10n.text(.combatSaveConfirmMessage)
         }
     }
 
@@ -363,7 +415,10 @@ struct CombatView: View {
                     service: TemplateNarrationService(),
                     fallback: TemplateNarrationService()
                 ),
-                narrationLanguage: .spanish
+                narrationLanguage: .spanish,
+                saveCombatHistory: SaveCombatHistoryUseCase(
+                    repository: InMemoryCombatHistoryRepository()
+                )
             )
         )
     }

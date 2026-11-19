@@ -5,6 +5,9 @@ struct RootView: View {
 
     @AppStorage("app.language") private var languageRawValue = AppLanguage.system.rawValue
 
+    /// Ruta de la pila: permite volver a la raíz tras guardar un combate.
+    @State private var path = NavigationPath()
+
     private var language: AppLanguage {
         AppLanguage(rawValue: languageRawValue) ?? .system
     }
@@ -15,7 +18,7 @@ struct RootView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             HomeView()
                 .navigationDestination(for: AppRoute.self) { route in
                     switch route {
@@ -36,9 +39,16 @@ struct RootView: View {
                         CombatView(
                             viewModel: container.makeCombatViewModel(
                                 participants: participants,
-                                language: narrationLanguage
+                                language: narrationLanguage,
+                                onSaved: { path = NavigationPath() }
                             )
                         )
+                    case .history:
+                        HistoryView(
+                            viewModel: container.makeCombatHistoryViewModel()
+                        )
+                    case let .combatRecord(record):
+                        CombatRecordDetailView(record: record)
                     }
                 }
         }

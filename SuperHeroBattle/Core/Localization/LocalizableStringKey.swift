@@ -12,6 +12,8 @@ nonisolated enum LocalizableStringKey: String, CaseIterable, Sendable {
     case homeGuideSubtitle = "home.guide.subtitle"
     case homeDuelsTitle = "home.duels.title"
     case homeDuelsSubtitle = "home.duels.subtitle"
+    case homeHistoryTitle = "home.history.title"
+    case homeHistorySubtitle = "home.history.subtitle"
     case homeSettings = "home.settings"
 
     case guideTitle = "guide.title"
@@ -118,6 +120,29 @@ nonisolated enum LocalizableStringKey: String, CaseIterable, Sendable {
     case combatNarrationTemplateWinner = "combat.narration.template.winner"
     case combatNarrationTemplateDraw = "combat.narration.template.draw"
 
+    case historyTitle = "history.title"
+    case historyLoading = "history.loading"
+    case historyEmptyTitle = "history.empty.title"
+    case historyEmptyMessage = "history.empty.message"
+    case historyFailureTitle = "history.failure.title"
+    case historyFailureMessage = "history.failure.message"
+    case historyDelete = "history.delete"
+    case historyClear = "history.clear"
+    case historyClearConfirmTitle = "history.clear.confirm.title"
+    case historyClearConfirm = "history.clear.confirm"
+    case historyClearConfirmMessage = "history.clear.confirm.message"
+    case historyDetailTitle = "history.detail.title"
+    case historyWinner = "history.winner"
+    case historyDeleteConfirmTitle = "history.delete.confirm.title"
+    case historyDeleteConfirm = "history.delete.confirm"
+    case historyDeleteConfirmMessage = "history.delete.confirm.message"
+
+    case combatSaveAction = "combat.save.action"
+    case combatSaveHint = "combat.save.hint"
+    case combatSaveConfirmTitle = "combat.save.confirm.title"
+    case combatSaveConfirm = "combat.save.confirm"
+    case combatSaveConfirmMessage = "combat.save.confirm.message"
+
     case commonCancel = "common.cancel"
 
     case settingsTitle = "settings.title"
@@ -142,4 +167,5 @@ nonisolated enum LocalizableStringKey: String, CaseIterable, Sendable {
     case accessibilitySearchClear = "accessibility.search.clear"
     case accessibilitySearchLoading = "accessibility.search.loading"
     case accessibilityCatalogLoading = "accessibility.catalog.loading"
+    case accessibilityHomeHistory = "accessibility.home.history"
 }
