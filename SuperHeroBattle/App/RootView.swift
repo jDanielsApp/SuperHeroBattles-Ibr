@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct RootView: View {
+    let container: AppContainer
+
     @AppStorage("app.language") private var languageRawValue = AppLanguage.system.rawValue
 
     private var language: AppLanguage {
@@ -13,7 +15,7 @@ struct RootView: View {
                 .navigationDestination(for: AppRoute.self) { route in
                     switch route {
                     case .characterGuide:
-                        CharacterGuideView()
+                        CharacterGuideView(searchHeroes: container.searchHeroes)
                     case .duelMode:
                         DuelModeView()
                     case .settings:
@@ -28,5 +30,5 @@ struct RootView: View {
 }
 
 #Preview {
-    RootView()
+    RootView(container: AppContainer())
 }

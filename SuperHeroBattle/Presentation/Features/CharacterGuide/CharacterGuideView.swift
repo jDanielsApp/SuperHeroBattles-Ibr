@@ -1,20 +1,18 @@
 import SwiftUI
 
 struct CharacterGuideView: View {
+    let searchHeroes: SearchHeroesUseCase
+
     var body: some View {
-        FeaturePlaceholderView(
-            titleKey: .guideTitle,
-            headlineKey: .guidePlaceholderTitle,
-            messageKey: .guidePlaceholderMessage,
-            systemImage: "person.3.sequence.fill",
-            accent: ComicPalette.blue
-        )
+        HeroSearchView(searchHeroes: searchHeroes)
     }
 }
 
 #Preview {
     NavigationStack {
-        CharacterGuideView()
+        CharacterGuideView(
+            searchHeroes: SearchHeroesUseCase(repository: UnconfiguredHeroRepository())
+        )
     }
     .preferredColorScheme(.dark)
 }

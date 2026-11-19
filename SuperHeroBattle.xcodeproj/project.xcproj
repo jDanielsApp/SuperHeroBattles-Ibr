@@ -18,8 +18,7 @@
       "version": {
         "up-to-next-major-version": "20.0.6",
       },
-    },
-    {
+    }, {
       "kind": "remote",
       "repository": "https://github.com/airbnb/lottie-ios.git",
       "version": {
@@ -39,10 +38,10 @@
         {
           "target": "SuperHeroBattle",
           "exclusions": [
-            "Resources/Info.plist",
             "Config/Base.xcconfig",
             "Config/Secrets.example.xcconfig",
             "Config/Secrets.xcconfig",
+            "Resources/Info.plist",
           ],
         },
       ],
@@ -76,13 +75,12 @@
       ],
       "package-product-members": [
         {
-          "package": "realm-swift",
-          "product-name": "RealmSwift",
-          "build-phase": { "build-phase": "frameworks" },
-        },
-        {
           "package": "lottie-ios",
           "product-name": "Lottie",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "realm-swift",
+          "product-name": "RealmSwift",
           "build-phase": { "build-phase": "frameworks" },
         },
       ],

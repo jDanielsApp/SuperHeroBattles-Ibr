@@ -15,8 +15,24 @@ nonisolated enum LocalizableStringKey: String, CaseIterable, Sendable {
     case homeSettings = "home.settings"
 
     case guideTitle = "guide.title"
-    case guidePlaceholderTitle = "guide.placeholder.title"
-    case guidePlaceholderMessage = "guide.placeholder.message"
+
+    case searchPlaceholder = "search.placeholder"
+    case searchAction = "search.action"
+    case searchClear = "search.clear"
+    case searchIdleTitle = "search.idle.title"
+    case searchIdleMessage = "search.idle.message"
+    case searchLoading = "search.loading"
+    case searchEmptyTitle = "search.empty.title"
+    case searchEmptyMessage = "search.empty.message"
+    case searchErrorTitle = "search.error.title"
+    case searchErrorRetry = "search.error.retry"
+    case searchErrorNotConfigured = "search.error.notConfigured"
+    case searchErrorOffline = "search.error.offline"
+    case searchErrorUnauthorized = "search.error.unauthorized"
+    case searchErrorRateLimited = "search.error.rateLimited"
+    case searchErrorServer = "search.error.server"
+    case searchErrorUnexpected = "search.error.unexpected"
+    case searchPublisherUnknown = "search.publisher.unknown"
 
     case duelsTitle = "duels.title"
     case duelsPlaceholderTitle = "duels.placeholder.title"
@@ -35,4 +51,9 @@ nonisolated enum LocalizableStringKey: String, CaseIterable, Sendable {
     case accessibilityHomeGuide = "accessibility.home.guide"
     case accessibilityHomeDuels = "accessibility.home.duels"
     case accessibilityHomeSettings = "accessibility.home.settings"
+
+    case accessibilitySearchField = "accessibility.search.field"
+    case accessibilitySearchSubmit = "accessibility.search.submit"
+    case accessibilitySearchClear = "accessibility.search.clear"
+    case accessibilitySearchLoading = "accessibility.search.loading"
 }
