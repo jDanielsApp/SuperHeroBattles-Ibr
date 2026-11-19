@@ -194,6 +194,16 @@ Tras verificar la IA real en un iPhone con iOS 26.5, se afinó la generación:
 - `GenerationOptions(temperature: 0.8, maximumResponseTokens: 400)`. `ContextOptions` es solo iOS 27 y no se usa para mantener compatibilidad con iOS 26.
 - Verificación en simulador: la inferencia sigue fallando por falta de assets del host (error documentado arriba); la ruta de producción cae a plantilla correctamente. La verificación con IA real se hace en dispositivo físico con Apple Intelligence.
 
+### Manejo del guardrail de seguridad (prompt v3)
+
+Tras probar en un iPhone real con iOS 26.5 apareció `Safety guardrails were triggered`: el modelo ejecutaba pero la política de contenido rechazaba la generación (antes de esto, el error de simulador era de assets, no de contenido).
+
+- `NarrationError.guardrail(String)` y `NarrationErrorClassifier`: clasifican la violación por tipo (`GenerationError.guardrailViolation` en iOS 26, `LanguageModelError.guardrailViolation` en iOS 27) con respaldo textual; la cancelación se preserva intacta.
+- Las sesiones usan `SystemLanguageModel(useCase: .general, guardrails: .permissiveContentTransformations)` para reducir falsos positivos en narración ficticia. La puerta de entrada sigue siendo `SystemLanguageModel.default.availability`, como exige AGENTS.md.
+- Reintento único: si el intento creativo cae en guardrail, se reintenta con el prompt **safe mode** (acción familiar, nada de armas ni lesiones, ejemplos neutros) en una sesión nueva, dentro del mismo presupuesto total de 20 s. Si vuelve a fallar, `NarrationError.guardrail` tipado → plantilla honesta. El resto de errores no reintenta.
+- Las `@Guide` de los beats se suavizaron (*"dazzling displays of ability"*, *"decisive teamwork"*) para ambos modos.
+- El reintento se prueba con un seam inyectable (`FoundationModelsNarrationService(attempt:)`): nunca invoca el modelo real en tests.
+
 ## Pendiente inmediato — Fase 7
 
 - Historial de combates en Realm: `CombatRecord` con snapshots inmutables, modalidad, ganador/empate y narración con su origen.
@@ -223,6 +233,8 @@ xcodebuild -project SuperHeroBattle.xcodeproj -scheme SuperHeroBattle \
 xcodebuild -project SuperHeroBattle.xcodeproj -scheme SuperHeroBattle \
   -destination 'platform=iOS Simulator,name=iPhone 17' test
 ```
+
+Resultado guardrails: build correcto, **196 unit tests + 2 UI tests en verde**, sin warnings de código. El reintento suavizado está cubierto con el seam inyectable: guardrail en el primer intento → segundo intento con prompt safe, guardrail doble → error tipado sin más reintentos, timeout y cancelación sin reintento, y clasificador probado sin el framework. Verificación real pendiente en el iPhone con iOS 26.5: si el guardrail permissivo o el safe mode evitan el rechazo, el badge mostrará "Generada con Apple Intelligence"; si no, plantilla honesta.
 
 Resultado ajuste de narración: build correcto, **186 unit tests + 2 UI tests en verde**, sin warnings de código. Cubierto con suerte determinista: contexto etiquetado por bandos (incluido el mismo héroe en ambos equipos), umbral exacto de 30 (`gap >= 30` claro, 29 reñido), prompts v2 con lore acotado y ejemplos localizados, y validador de beats que rechaza respuestas sin ambos equipos o sin el ganador correcto en el veredicto (→ plantilla).
 

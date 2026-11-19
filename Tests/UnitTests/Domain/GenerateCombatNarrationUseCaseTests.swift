@@ -51,6 +51,20 @@ final class GenerateCombatNarrationUseCaseTests: XCTestCase {
         XCTAssertFalse(result.text.isEmpty)
     }
 
+    func testGuardrailFailureFallsBackToTemplate() async throws {
+        let service = MockNarrationService(behavior: .guardrail)
+        let useCase = makeUseCase(service: service)
+
+        let result = try await useCase.execute(
+            result: makeResult(),
+            participants: makeParticipants(),
+            language: .english
+        )
+
+        XCTAssertEqual(result.source, .template)
+        XCTAssertFalse(result.text.isEmpty)
+    }
+
     func testCancellationPropagatesWithoutFallback() async {
         let service = MockNarrationService(behavior: .cancellation)
         let useCase = makeUseCase(service: service)
@@ -117,10 +131,10 @@ final class GenerateCombatNarrationUseCaseTests: XCTestCase {
     }
 
     func testInstructionsAreVersionedAndForbidChangingTheResult() {
-        let instructions = NarrationPrompts.instructions(language: .spanish)
+        let instructions = NarrationPrompts.instructions(language: .spanish, safeMode: false)
 
-        XCTAssertEqual(NarrationPrompts.version, 2)
-        XCTAssertTrue(instructions.contains("prompt version: 2"))
+        XCTAssertEqual(NarrationPrompts.version, 3)
+        XCTAssertTrue(instructions.contains("prompt version: 3"))
         XCTAssertTrue(instructions.contains("Never change the winner"))
         XCTAssertTrue(instructions.contains("Write in Spanish"))
         XCTAssertTrue(instructions.contains("characteristic flourish"), "Debe permitirse un detalle del lore conocido")

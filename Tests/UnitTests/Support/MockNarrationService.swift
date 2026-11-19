@@ -6,6 +6,7 @@ nonisolated final class MockNarrationService: CombatNarrationService, @unchecked
     nonisolated enum Behavior: Sendable {
         case narrative(CombatNarrative)
         case failure
+        case guardrail
         case cancellation
     }
 
@@ -52,6 +53,8 @@ nonisolated final class MockNarrationService: CombatNarrationService, @unchecked
             return narrative
         case .failure:
             throw NarrationError.emptyResponse
+        case .guardrail:
+            throw NarrationError.guardrail("guardrailViolation (test)")
         case .cancellation:
             throw CancellationError()
         }
