@@ -6,14 +6,15 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 
 ## Resumen
 
-- **Fase actual:** Fase 2 cerrada; Fase 3 (catálogo, filtros, detalle e imágenes) pendiente de iniciar.
+- **Fase actual:** Fase 2 cerrada; Fase 3 (catálogo paginado, filtros, detalle e imágenes) pendiente de iniciar.
 - **Última fase cerrada:** Fase 2 — API, búsqueda, caché y cancelación.
+- **Herramienta nueva:** índice público de IDs (`data/character_ids.json`) con actualización semanal mediante GitHub Actions.
 - **Estado del build:** compila y los tests pasan en Xcode 27.2 / iOS Simulator 27.0.
 - **Dependencias:** RealmSwift 20.0.6 y Lottie 4.6.1 resueltas con SwiftPM.
 
 ## Decisiones confirmadas
 
-1. Catálogo inicial: semilla de ~30 nombres de héroes descargados desde la API oficial en el primer arranque, con concurrencia limitada, persistencia en Realm y progreso/reintento en la Guía. Sin datos inventados.
+1. Catálogo paginado por IDs: `data/character_ids.json` es la fuente de verdad y se empaqueta con la app. Al entrar en la Guía se cargan los 30 primeros IDs, se piden sus fichas con concurrencia limitada y, al llegar al final, se cargan los siguientes 30. Los filtros actúan solo sobre los héroes ya cargados.
 2. Lottie: paquete y wrapper SwiftUI integrados. Las animaciones `.json` las aporta el usuario; mientras no existan, se usa fallback estático.
 3. Token de SuperHeroAPI: configurado en `Secrets.xcconfig` (ignorado por git) y verificado contra la API real. Nunca se imprime ni se commitea.
 4. Localización clásica con `Localizable.strings` en inglés y español. Sin String Catalogs.
@@ -28,7 +29,7 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 | 0. Saneamiento y decisiones | Completada | Documentación movida, Lottie añadido, localización clásica, configs excluidos del bundle |
 | 1. Arquitectura, dominio y navegación | Completada | Entidades, protocolos, casos de uso base, DI, Home y placeholders |
 | 2. API, búsqueda, caché y cancelación | Completada | Cliente HTTP, búsqueda explícita, caché TTL y cancelación con tests |
-| 3. Catálogo, filtros, detalle e imágenes | Pendiente | Siguiente fase; incluye seed inicial |
+| 3. Catálogo, filtros, detalle e imágenes | Pendiente | Siguiente fase; catálogo paginado por IDs |
 | 4. Selección de equipos | Pendiente | |
 | 5. Motor de combate | Pendiente | |
 | 6. Apple Foundation Models | Pendiente | |
@@ -88,11 +89,25 @@ Decisiones de la fase:
 
 Tests: **84 unit tests + 1 UI test**, todos en verde.
 
+## Herramienta — índice de IDs de SuperHeroAPI
+
+- `scripts/download_ids.py` descarga `https://superheroapi.com/ids.html` (sin token), recorre sus tres tablas y extrae los IDs numéricos.
+- Salida: `data/character_ids.json`, una lista de enteros deduplicados y ordenados. Actualmente contiene **731 IDs** (1…731).
+- Validaciones: mínimo de 500 IDs en la primera ejecución, fallo si el JSON anterior está corrupto y fallo si el recuento cae más del 20 %.
+- Escritura atómica; si no hay cambios, no reescribe el archivo.
+- `.github/workflows/update-character-ids.yml` se ejecuta los lunes a las 06:17 UTC y mediante `workflow_dispatch`. Solo commitea `data/character_ids.json` con `github-actions[bot]`.
+- Dependencias fijadas en `requirements.txt`: `requests==2.32.5` y `beautifulsoup4==4.15.0`.
+- Pruebas locales ejecutadas: ejecución real (731 IDs), segunda ejecución sin cambios y fallos simulados (sin tablas, menos de 500 IDs, caída >20 %, JSON corrupto, HTTP 404). En todos los fallos el JSON previo queda intacto y el script devuelve código distinto de cero.
+
 ## Pendiente inmediato — Fase 3
 
-- Semilla inicial del catálogo con ~30 nombres reales, concurrencia limitada, persistencia en Realm y progreso/reintento.
+- Empaquetar `data/character_ids.json` en la app como recurso y leerlo al arrancar.
+- `CharacterIDProviding` y `BundledCharacterIDProvider` para exponer los IDs.
+- `LoadHeroesByIDsUseCase`: caché Realm primero, remoto solo para IDs ausentes, concurrencia limitada y orden por ID.
 - Modelos Realm de catálogo e historial, mapeadores y migraciones en un único punto.
-- Filtros locales por editorial, alineación, género y rango de PowerStats.
+- Paginación de 30 en la Guía con skeletons, precarga y footer de reintento.
+- Búsqueda unificada: catálogo por defecto, búsqueda al enviar y catálogo al limpiar.
+- Filtros locales sobre los héroes ya cargados por editorial, alineación, género y rango de PowerStats.
 - Pantalla de detalle de héroe con PowerStats accesibles.
 - Caché de imágenes, cabeceras para el host externo y fallback para héroes sin retrato.
 
@@ -100,7 +115,9 @@ Tests: **84 unit tests + 1 UI test**, todos en verde.
 
 - **Token de SuperHeroAPI:** configurado localmente en `Secrets.xcconfig` y verificado con una búsqueda real. El archivo está ignorado por git y no se incluye en el bundle.
 - **Imágenes de SuperHeroAPI:** el host `superherodb.com` responde HTTP 403 a peticiones directas, incluso con User-Agent y Referer de navegador. La app muestra el placeholder correctamente, pero en Fase 3 habrá que resolver la carga de imágenes (cabeceras específicas, proxy/CDN o fuente alternativa) antes de considerar la caché de imágenes terminada.
-- SuperHeroAPI no tiene endpoint de catálogo completo ni paginación; el seed inicial se resolverá con búsquedas controladas en Fase 3.
+- SuperHeroAPI no tiene endpoint de catálogo completo ni paginación; el catálogo se resuelve con el índice de IDs y llamadas por ID bajo demanda.
+- El workflow programado se desactiva tras 60 días sin actividad en repositorios públicos; conviene ejecutar `workflow_dispatch` periódicamente. Si la rama `main` exige PR, el push del bot fallará y habrá que permitir escritura a Actions o cambiar el flujo a PR.
+- Los tests del script no cubren el entorno real de GitHub Actions hasta que se ejecute el primer `workflow_dispatch` en el repositorio remoto.
 - Las imágenes dependen de un host externo; habrá placeholder y fallback.
 - Foundation Models puede no estar disponible en simulador; el fallback local es obligatorio.
 - El wrapper Lottie y los assets quedan para Fase 8.
