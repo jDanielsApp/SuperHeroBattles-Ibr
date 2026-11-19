@@ -6,8 +6,8 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 
 ## Resumen
 
-- **Fase actual:** Fase 7 cerrada; Fase 8 (diseño comic, Lottie, idiomas y accesibilidad) pendiente de iniciar.
-- **Última fase cerrada:** Fase 7 — historial de combates en Realm con guardado automático.
+- **Fase actual:** Fase 8 cerrada; Fase 9 (calidad final) pendiente de iniciar.
+- **Última fase cerrada:** Fase 8 — wrapper de Lottie con fallbacks, pulido comic y accesibilidad de movimiento.
 - **Herramienta nueva:** índice público de IDs (`data/character_ids.json`) con actualización semanal mediante GitHub Actions.
 - **Estado del build:** compila y los tests pasan en Xcode 27.2 / iOS Simulator 27.0.
 - **Dependencias:** RealmSwift 20.0.6 y Lottie 4.6.1 resueltas con SwiftPM.
@@ -34,7 +34,7 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 | 5. Motor de combate | Completada | Base, suerte 7-77, feeling +33 por pareja, ganador/empate y trazabilidad completa |
 | 6. Apple Foundation Models | Completada (simulador sin assets) | Prompts versionados, `@Generable`, timeout 20s, fallback de plantilla honesto y badge de origen |
 | 7. Combate, resultados e historial | Completada | Historial Realm schemaVersion 2, guardado tras narración, listado con borrado/vaciado y detalle |
-| 8. Diseño comic, Lottie, idiomas y accesibilidad | Pendiente | Wrapper y assets Lottie |
+| 8. Diseño comic, Lottie, idiomas y accesibilidad | Completada | Wrapper con fallbacks y Reduce Motion, halftone, ComicCTALabel, cabecera de choque y assets `combat_intro`/`combat_winner` activos |
 | 9. Calidad final | Pendiente | |
 
 ## Fase 0 — completada
@@ -236,11 +236,24 @@ Decisiones de la fase:
 - El estado vacío combinado se expone como `StaticText` en la jerarquía de accesibilidad; los UI tests lo consultan así.
 - Las confirmaciones (guardar, borrado individual y vaciado) son **alerts clásicos centrados** (no `confirmationDialog` tipo action sheet, que se mostraba incorrectamente); los UI tests cubren presentación, cancelación sin pérdida y acción destructiva.
 
-## Pendiente inmediato — Fase 8
+## Fase 8 — completada
 
-- Animaciones Lottie para inicio de combate, transiciones y presentación del ganador (assets pendientes de aportar).
-- Reduce Motion con fallback estático ya preparado en el wrapper.
-- Revisión final de accesibilidad y estética comic en todas las pantallas nuevas.
+- [x] `Core/Lottie/ComicLottieView.swift`: primer uso real del paquete Lottie (`LottieView` SwiftUI). Lógica de decisión pura y testeable (`ComicLottie.decision`): asset ausente o Reduce Motion → fallback estático; asset presente y movimiento permitido → animación. Fallbacks intercambiables por vista y decorativos (`accessibilityHidden`).
+- [x] `ComicLottieLoopMode` propio (`playOnce`/`loop`): ningún tipo de Lottie sale de `Core/Lottie` (encapsulación de AGENTS.md).
+- [x] Cabecera de choque fija y decorativa en el combate: slot `combat_intro` con ráfaga comic de respaldo (rayos + "VS" + emblemas A/B), sin temporizadores que rompan los UI tests.
+- [x] Slot `combat_winner` para el trofeo del banner de ganador (respaldo: `trophy.fill` actual) y entrada spring del banner desactivada con Reduce Motion.
+- [x] `ComicBackground` con tramas de imprenta (halftone) dibujadas en un único `Canvas`, opacidad baja.
+- [x] `ComicCTALabel` compartido para los CTAs amarillos: "Iniciar combate" y "Guardar en el historial" dejan de estar duplicados a mano.
+- [x] Accesibilidad: `.isHeader` en títulos de sección para el rotor de VoiceOver; Reduce Motion cubierto en todo lo nuevo; areas táctiles y contraste revisados.
+- [x] Tests de la matriz de decisión (asset × motion) sin depender del paquete Lottie.
+
+Assets incluidos en `Resources/Lottie/` (folder reference, se empaquetan solos): `combat_intro.json` (512×512, bucle de ~2,5 s para la cabecera de choque) y `combat_winner.json` (1000×1000, una vez ~4 s para el trofeo). El slot de intro es cuadrado (104×104) para no deformar los assets cuadrados con `.resizable()`. Verificado objetivamente: capturas temprana/tardía de la pantalla de combate difieren (animación en movimiento) y la suite completa sigue en verde. Sin assets o con Reduce Motion, los fallbacks comic siguen gobernando solos; añadir más slots en el futuro solo requiere soltar el `.json` y colocar el slot en código.
+
+## Pendiente inmediato — Fase 9
+
+- Auditoría final de calidad: repaso de warnings, cobertura y accesibilidad en dispositivo.
+- Revisión del estado de la caché de imágenes (sigue bloqueada por el 403 del host).
+- Preparación de la entrega: estado de docs y README definitivos.
 
 ## Pendientes y riesgos
 
@@ -264,6 +277,8 @@ xcodebuild -project SuperHeroBattle.xcodeproj -scheme SuperHeroBattle \
 xcodebuild -project SuperHeroBattle.xcodeproj -scheme SuperHeroBattle \
   -destination 'platform=iOS Simulator,name=iPhone 17' test
 ```
+
+Resultado Fase 8: build correcto, **227 unit tests + 3 UI tests en verde** en iPhone 17 (iOS 27.0), sin warnings de código. La matriz de decisión del wrapper está cubierta sin invocar Lottie (asset presente/ausente × movimiento), los fallbacks no alteran ningún identificador de UI test y la suite de flujos completa sigue en verde.
 
 Resultado Fase 7: build correcto, **222 unit tests + 3 UI tests en verde** en iPhone 17 (iOS 27.0), sin warnings de código. Cubierto: round-trip del registro en Realm (snapshots, narración, origen, empates), orden por fecha descendente, upsert por id, borrado individual y vaciado, guardado explícito desde el combate (habilitado con la narración, persiste con campos exactos, no guarda sin narración, reintenta tras fallo y navega a Home una sola vez), y el flujo UI completo: combate con fakes → guardar con alerta → Home → historial → alerts de vaciado y borrado individual (cancelar conserva, confirmar vacía). Realm schemaVersion 2 sin datos que migrar.
 
