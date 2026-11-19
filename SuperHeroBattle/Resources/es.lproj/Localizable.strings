@@ -11,8 +11,24 @@
 "home.settings" = "Ajustes";
 
 "guide.title" = "Guía de personajes";
-"guide.placeholder.title" = "El catálogo llega pronto";
-"guide.placeholder.message" = "La búsqueda, los filtros locales y el detalle llegarán en la siguiente fase.";
+
+"search.placeholder" = "Buscar héroes";
+"search.action" = "Buscar";
+"search.clear" = "Borrar búsqueda";
+"search.idle.title" = "Encuentra a tu héroe";
+"search.idle.message" = "Escribe un nombre para buscar en SuperHeroAPI.";
+"search.loading" = "Buscando héroes…";
+"search.empty.title" = "No se han encontrado héroes";
+"search.empty.message" = "Prueba con otro nombre.";
+"search.error.title" = "La búsqueda ha fallado";
+"search.error.retry" = "Reintentar";
+"search.error.notConfigured" = "El token de la API no está configurado.";
+"search.error.offline" = "Comprueba tu conexión e inténtalo de nuevo.";
+"search.error.unauthorized" = "La API ha rechazado las credenciales.";
+"search.error.rateLimited" = "Demasiadas peticiones. Espera un momento e inténtalo de nuevo.";
+"search.error.server" = "El servicio no está disponible ahora mismo.";
+"search.error.unexpected" = "No se ha podido leer la respuesta.";
+"search.publisher.unknown" = "Editorial desconocida";
 
 "duels.title" = "Duelos";
 "duels.placeholder.title" = "Elige a tus luchadores";
@@ -31,3 +47,8 @@
 "accessibility.home.guide" = "Abrir la guía de personajes";
 "accessibility.home.duels" = "Abrir el modo duelo";
 "accessibility.home.settings" = "Abrir ajustes";
+
+"accessibility.search.field" = "Campo de búsqueda de héroes";
+"accessibility.search.submit" = "Buscar héroes";
+"accessibility.search.clear" = "Borrar búsqueda";
+"accessibility.search.loading" = "Buscando héroes";

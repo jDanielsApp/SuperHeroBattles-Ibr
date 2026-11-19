@@ -6,7 +6,7 @@ struct SuperHeroBattleApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView()
+            RootView(container: container)
                 .environment(container)
         }
     }

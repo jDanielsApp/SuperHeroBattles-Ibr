@@ -69,6 +69,7 @@ struct HomeView: View {
                 )
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("home.guide")
 
             NavigationLink(value: AppRoute.duelMode) {
                 ComicCard(

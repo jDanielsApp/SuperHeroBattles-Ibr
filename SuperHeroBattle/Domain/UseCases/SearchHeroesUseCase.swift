@@ -8,7 +8,7 @@ nonisolated struct SearchHeroesUseCase: Sendable {
     }
 
     func execute(query: String) async throws -> [Hero] {
-        let query = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        let query = SearchQueryNormalizer.normalizedQuery(query)
         guard !query.isEmpty else { return [] }
 
         try Task.checkCancellation()
