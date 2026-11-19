@@ -6,8 +6,8 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 
 ## Resumen
 
-- **Fase actual:** Fase 6 cerrada; Fase 7 (historial de combates en Realm) pendiente de iniciar.
-- **Última fase cerrada:** Fase 6 — narración con Apple Foundation Models y fallback determinista.
+- **Fase actual:** Fase 7 cerrada; Fase 8 (diseño comic, Lottie, idiomas y accesibilidad) pendiente de iniciar.
+- **Última fase cerrada:** Fase 7 — historial de combates en Realm con guardado automático.
 - **Herramienta nueva:** índice público de IDs (`data/character_ids.json`) con actualización semanal mediante GitHub Actions.
 - **Estado del build:** compila y los tests pasan en Xcode 27.2 / iOS Simulator 27.0.
 - **Dependencias:** RealmSwift 20.0.6 y Lottie 4.6.1 resueltas con SwiftPM.
@@ -33,7 +33,7 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 | 4. Selección de equipos | Completada | Modalidades 1v1/2v2/3v3, huecos con elegir/aleatorio/quitar, Guía reutilizada como selector |
 | 5. Motor de combate | Completada | Base, suerte 7-77, feeling +33 por pareja, ganador/empate y trazabilidad completa |
 | 6. Apple Foundation Models | Completada (simulador sin assets) | Prompts versionados, `@Generable`, timeout 20s, fallback de plantilla honesto y badge de origen |
-| 7. Combate, resultados e historial | Pendiente | |
+| 7. Combate, resultados e historial | Completada | Historial Realm schemaVersion 2, guardado tras narración, listado con borrado/vaciado y detalle |
 | 8. Diseño comic, Lottie, idiomas y accesibilidad | Pendiente | Wrapper y assets Lottie |
 | 9. Calidad final | Pendiente | |
 
@@ -215,12 +215,32 @@ Verificado en iPhone con iOS 26.5 con logs de diagnóstico temporales (retirados
 - Regla dura en ambos prompts (v4): los compañeros de un mismo equipo nunca se atacan; cooperan y se cubren, y los enfrentamientos son solo entre bandos. Reforzada en las `@Guide` de `exchange` y `climax` y en el beat de apertura (nombra ambos equipos explícitamente).
 - Resumen de la verificación final con IA real: narración generada con Apple Intelligence en español, combate 2v2 reñido (gap 20), héroes bien emparejados por bandos y ganador proclamado en el desenlace.
 
-## Pendiente inmediato — Fase 7
+## Fase 7 — completada
 
-- Historial de combates en Realm: `CombatRecord` con snapshots inmutables, modalidad, ganador/empate y narración con su origen.
-- Pantalla de historial con listado, borrado individual y vaciado.
-- Conectar la resolución del combate con el guardado automático del registro.
-- Realm `CombatObject` + mapeadores y migración (schemaVersion 2) en el punto único.
+- [x] `HeroSnapshot` ahora es `Codable` (y `HeroAlignment`, que no lo sintetiza automáticamente); `CombatRecord` y `CombatOutcome` son `Hashable` para navegar por valor.
+- [x] `CombatHistoryRepository.deleteAll()` para el vaciado y `DeleteCombatHistoryUseCase.executeAll()`.
+- [x] `CombatRecordSnapshot` (Codable): descompone `CombatOutcome` en `outcomeKind` + `winnerSide` y preserva narración y origen.
+- [x] `CombatObject` en Realm (id/date/mode indexadas + payload JSON) y **schemaVersion 2** documentada en `RealmStore`.
+- [x] `RealmCombatHistoryRepository`: confinado al actor principal, listado por fecha descendente, respaldo en memoria si Realm no abre.
+- [x] `CombatViewModel` guarda **explícitamente**: botón "Guardar en el historial" habilitado cuando la narración está publicada (el registro exige narración y su origen), alerta de confirmación y vuelta a Home tras guardar. Snapshots, modalidad, ganador/empate, narración y origen, con fecha del `TimeProvider` inyectable. Sin suerte, feeling ni cálculos. Un fallo de Realm es silencioso y permite reintentar sin navegar.
+- [x] `HistoryView` + `CombatHistoryViewModel`: tarjeta en Home, listado, estado vacío, borrado individual **con alerta de confirmación** (mensaje con los dos equipos), vaciado con alerta y reintento ante fallo de carga.
+- [x] `CombatRecordDetailView`: fecha, modalidad, banner de ganador/empate, equipos con retratos y narración persistida con badge de origen.
+- [x] Localización en inglés y español con paridad; accesibilidad con etiquetas y Dynamic Type.
+- [x] UI test con fakes: combate completo → tres niveles atrás → historial con el registro → borrado → estado vacío.
+
+Decisiones de la fase:
+
+- El guardado es **explícito**: el usuario pulsa Guardar, confirma el alerta y navega a Home; sin pulsarlo no se historifica nada (el registro exige narración y su origen, por lo que el botón se habilita al publicarse la narración).
+- El guardado es silencioso ante fallos: el combate sigue en pantalla y el usuario puede reintentar.
+- `RootView` gestiona la pila con `NavigationPath` para volver a la raíz tras guardar.
+- El estado vacío combinado se expone como `StaticText` en la jerarquía de accesibilidad; los UI tests lo consultan así.
+- Las confirmaciones (guardar, borrado individual y vaciado) son **alerts clásicos centrados** (no `confirmationDialog` tipo action sheet, que se mostraba incorrectamente); los UI tests cubren presentación, cancelación sin pérdida y acción destructiva.
+
+## Pendiente inmediato — Fase 8
+
+- Animaciones Lottie para inicio de combate, transiciones y presentación del ganador (assets pendientes de aportar).
+- Reduce Motion con fallback estático ya preparado en el wrapper.
+- Revisión final de accesibilidad y estética comic en todas las pantallas nuevas.
 
 ## Pendientes y riesgos
 
@@ -244,6 +264,8 @@ xcodebuild -project SuperHeroBattle.xcodeproj -scheme SuperHeroBattle \
 xcodebuild -project SuperHeroBattle.xcodeproj -scheme SuperHeroBattle \
   -destination 'platform=iOS Simulator,name=iPhone 17' test
 ```
+
+Resultado Fase 7: build correcto, **222 unit tests + 3 UI tests en verde** en iPhone 17 (iOS 27.0), sin warnings de código. Cubierto: round-trip del registro en Realm (snapshots, narración, origen, empates), orden por fecha descendente, upsert por id, borrado individual y vaciado, guardado explícito desde el combate (habilitado con la narración, persiste con campos exactos, no guarda sin narración, reintenta tras fallo y navega a Home una sola vez), y el flujo UI completo: combate con fakes → guardar con alerta → Home → historial → alerts de vaciado y borrado individual (cancelar conserva, confirmar vacía). Realm schemaVersion 2 sin datos que migrar.
 
 Resultado ajuste tras verificación real (v4): build correcto, **206 unit tests + 2 UI tests en verde**, sin warnings de código y sin logs de diagnóstico en el árbol. Cobierta la validación por héroes (incluido el caso real del dispositivo), el ganador por héroe del bando vencedor, el rechazo si el héroe es del perdedor, las temperaturas 0.8/0.5 por intento y la regla de compañeros en ambos prompts.
 

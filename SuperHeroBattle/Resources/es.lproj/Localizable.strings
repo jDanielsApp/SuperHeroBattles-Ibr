@@ -132,3 +132,29 @@
 "accessibility.search.loading" = "Buscando héroes";
 "accessibility.catalog.loading" = "Cargando héroes del catálogo";
 "common.cancel" = "Cancelar";
+
+"home.history.title" = "Historial de combates";
+"home.history.subtitle" = "Repasa tus combates guardados.";
+"history.title" = "Historial de combates";
+"history.loading" = "Cargando combates…";
+"history.empty.title" = "Aún no hay combates";
+"history.empty.message" = "Termina un combate y quedará guardado aquí.";
+"history.failure.title" = "Historial no disponible";
+"history.failure.message" = "No se pudieron cargar los combates guardados.";
+"history.delete" = "Eliminar combate";
+"history.clear" = "Vaciar historial";
+"history.clear.confirm.title" = "¿Vaciar todo el historial?";
+"history.clear.confirm" = "Vaciar";
+"history.clear.confirm.message" = "Se eliminarán todos los combates guardados. Esta acción no se puede deshacer.";
+"history.detail.title" = "Detalle del combate";
+"history.winner" = "Ganador: %@";
+"accessibility.home.history" = "Historial de combates";
+
+"history.delete.confirm.title" = "¿Eliminar este combate?";
+"history.delete.confirm" = "Eliminar";
+"history.delete.confirm.message" = "Se eliminará el combate de %@ contra %@. Esta acción no se puede deshacer.";
+"combat.save.action" = "Guardar en el historial";
+"combat.save.hint" = "Disponible cuando la narración esté lista.";
+"combat.save.confirm.title" = "¿Guardar este combate?";
+"combat.save.confirm" = "Guardar";
+"combat.save.confirm.message" = "El combate con su resultado y narración quedará guardado en tu historial.";

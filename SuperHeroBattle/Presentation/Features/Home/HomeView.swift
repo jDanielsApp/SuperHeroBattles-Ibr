@@ -83,6 +83,19 @@ struct HomeView: View {
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("home.duels")
+
+            NavigationLink(value: AppRoute.history) {
+                ComicCard(
+                    titleKey: .homeHistoryTitle,
+                    subtitleKey: .homeHistorySubtitle,
+                    systemImage: "clock.arrow.circlepath",
+                    accent: ComicPalette.blue,
+                    isPrimary: false,
+                    accessibilityKey: .accessibilityHomeHistory
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("home.history")
         }
     }
 

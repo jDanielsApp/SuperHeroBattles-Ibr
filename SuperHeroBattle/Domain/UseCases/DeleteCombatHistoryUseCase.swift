@@ -11,4 +11,10 @@ nonisolated struct DeleteCombatHistoryUseCase: Sendable {
         try Task.checkCancellation()
         try await repository.delete(id: id)
     }
+
+    /// Vacia el historial completo.
+    func executeAll() async throws {
+        try Task.checkCancellation()
+        try await repository.deleteAll()
+    }
 }

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Registro inmutable del historial. No conserva suerte, feeling ni cálculos intermedios.
-nonisolated struct CombatRecord: Identifiable, Equatable, Sendable {
+nonisolated struct CombatRecord: Identifiable, Equatable, Hashable, Sendable {
     let id: UUID
     let date: Date
     let mode: CombatMode

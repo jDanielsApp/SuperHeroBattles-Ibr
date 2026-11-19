@@ -1,7 +1,7 @@
 import Foundation
 
 /// Copia inmutable de un personaje para persistir el historial sin depender de la API.
-nonisolated struct HeroSnapshot: Identifiable, Hashable, Sendable {
+nonisolated struct HeroSnapshot: Identifiable, Hashable, Codable, Sendable {
     let id: String
     let name: String
     let fullName: String?

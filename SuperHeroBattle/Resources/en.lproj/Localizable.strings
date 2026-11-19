@@ -132,3 +132,29 @@
 "accessibility.search.loading" = "Searching heroes";
 "accessibility.catalog.loading" = "Loading catalog heroes";
 "common.cancel" = "Cancel";
+
+"home.history.title" = "Combat history";
+"home.history.subtitle" = "Review your saved battles.";
+"history.title" = "Combat history";
+"history.loading" = "Loading battles…";
+"history.empty.title" = "No battles yet";
+"history.empty.message" = "Finish a battle and it will be saved here.";
+"history.failure.title" = "History unavailable";
+"history.failure.message" = "Saved battles could not be loaded.";
+"history.delete" = "Delete battle";
+"history.clear" = "Clear history";
+"history.clear.confirm.title" = "Clear all history?";
+"history.clear.confirm" = "Clear";
+"history.clear.confirm.message" = "Every saved battle will be removed. This action cannot be undone.";
+"history.detail.title" = "Battle detail";
+"history.winner" = "Winner: %@";
+"accessibility.home.history" = "Combat history";
+
+"history.delete.confirm.title" = "Delete this battle?";
+"history.delete.confirm" = "Delete";
+"history.delete.confirm.message" = "The battle of %@ against %@ will be removed. This action cannot be undone.";
+"combat.save.action" = "Save to history";
+"combat.save.hint" = "Available once the narration is ready.";
+"combat.save.confirm.title" = "Save this battle?";
+"combat.save.confirm" = "Save";
+"combat.save.confirm.message" = "The battle with its result and narration will be saved to your history.";

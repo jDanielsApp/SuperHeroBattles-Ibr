@@ -15,8 +15,12 @@ final class AppContainer {
     let buildBattleParticipants: BuildBattleParticipantsUseCase
     let resolveCombat: ResolveCombatUseCase
     let generateCombatNarration: GenerateCombatNarrationUseCase
+    let saveCombatHistory: SaveCombatHistoryUseCase
+    let getCombatHistory: GetCombatHistoryUseCase
+    let deleteCombatHistory: DeleteCombatHistoryUseCase
     let characterIDs: any CharacterIDProviding
     let catalogRepository: any HeroCatalogRepository
+    let historyRepository: any CombatHistoryRepository
 
     init() {
         let usesUITestFakes = ProcessInfo.processInfo.arguments.contains(Self.uiTestFakesArgument)
@@ -64,6 +68,14 @@ final class AppContainer {
             fallback: templateNarration
         )
 
+        let history = usesUITestFakes
+            ? InMemoryCombatHistoryRepository()
+            : Self.makeHistoryRepository()
+        saveCombatHistory = SaveCombatHistoryUseCase(repository: history)
+        getCombatHistory = GetCombatHistoryUseCase(repository: history)
+        deleteCombatHistory = DeleteCombatHistoryUseCase(repository: history)
+        historyRepository = history
+
         characterIDs = usesUITestFakes
             ? FixedCharacterIDProvider(ids: FixedRosterHeroRepository.roster.map(\.id))
             : BundledCharacterIDProvider()
@@ -94,13 +106,23 @@ final class AppContainer {
 
     func makeCombatViewModel(
         participants: BattleParticipants,
-        language: NarrationLanguage
+        language: NarrationLanguage,
+        onSaved: (@MainActor () -> Void)? = nil
     ) -> CombatViewModel {
         CombatViewModel(
             participants: participants,
             resolveCombat: resolveCombat,
             generateNarration: generateCombatNarration,
-            narrationLanguage: language
+            narrationLanguage: language,
+            saveCombatHistory: saveCombatHistory,
+            onSaved: onSaved
+        )
+    }
+
+    func makeCombatHistoryViewModel() -> CombatHistoryViewModel {
+        CombatHistoryViewModel(
+            getHistory: getCombatHistory,
+            deleteHistory: deleteCombatHistory
         )
     }
 
@@ -111,6 +133,16 @@ final class AppContainer {
             return try RealmHeroCatalogRepository.live()
         } catch {
             return InMemoryHeroCatalogRepository()
+        }
+    }
+
+    /// Mismo criterio para el historial: Realm como almacenamiento principal
+    /// y memoria como respaldo de sesión si no se puede abrir.
+    private static func makeHistoryRepository() -> any CombatHistoryRepository {
+        do {
+            return try RealmCombatHistoryRepository.live()
+        } catch {
+            return InMemoryCombatHistoryRepository()
         }
     }
 }
