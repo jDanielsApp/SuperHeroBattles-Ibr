@@ -3,8 +3,12 @@ import SwiftUI
 /// Imagen remota con placeholder y estados de carga/error.
 struct HeroImageView: View {
     let url: URL?
+    let size: CGFloat
 
-    private let size: CGFloat = 64
+    init(url: URL?, size: CGFloat = 64) {
+        self.url = url
+        self.size = size
+    }
 
     var body: some View {
         Group {
@@ -43,7 +47,7 @@ struct HeroImageView: View {
 
     private var placeholder: some View {
         Image(systemName: "person.fill")
-            .font(.system(size: 28, weight: .black))
+            .font(.system(size: size * 0.44, weight: .black))
             .foregroundStyle(ComicPalette.paper.opacity(0.28))
             .frame(width: size, height: size)
     }

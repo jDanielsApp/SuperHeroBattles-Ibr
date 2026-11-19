@@ -189,6 +189,8 @@ Inyección de dependencias:
 - No inventes endpoints: SuperHeroAPI solo ofrece búsqueda por nombre y consulta por ID. No existe un endpoint de catálogo completo.
 - El catálogo se construye a partir de `data/character_ids.json`, un índice público de IDs generado por `scripts/download_ids.py` y actualizado semanalmente por GitHub Actions. La app conoce todos los IDs al arrancar y pide las fichas por ID bajo demanda, nunca mediante búsquedas masivas.
 - El índice de IDs solo contiene enteros ordenados y sin duplicados; no incluye nombres, fichas ni imágenes. No requiere token y no debe commitearse ningún dato sensible junto a él.
+- La Guía carga páginas de 30 IDs con concurrencia máxima de 6 para las fichas. Consulta primero Realm, pide solo los IDs ausentes, omite los `notFound` y no avanza el cursor si la página falla.
+- La caché de imágenes del host externo sigue pendiente: `superherodb.com` responde 403 y la app usa el placeholder.
 
 ## 8. Persistencia con Realm
 
