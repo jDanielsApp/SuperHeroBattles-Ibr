@@ -229,7 +229,7 @@ Inyección de dependencias:
 - No dependas de red, hora del sistema ni estado global compartido. Inyecta `TimeProvider` y RNG cuando corresponda.
 - Prueba cancelación: una búsqueda cancelada no publica resultados y una respuesta antigua no sobrescribe una reciente.
 - Prueba la caché con reloj falso: hit, expiración, normalización, aislamiento por query y actualización tras una respuesta correcta.
-- Los UI tests deben ser pocos y estables: flujo principal de selección y combate, con fakes mediante argumentos de lanzamiento.
+- Los UI tests deben ser pocos y estables: flujo principal de selección y combate, con fakes mediante argumentos de lanzamiento (`-uitest-fakes` activa `FixedRosterHeroRepository`, `FixedCharacterIDProvider` y catálogo en memoria, sin red ni token).
 - Toda corrección de bug debe incluir un test que lo reproduzca.
 
 ## 11. Secretos y configuración

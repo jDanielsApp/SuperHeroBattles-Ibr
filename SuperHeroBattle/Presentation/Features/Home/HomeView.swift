@@ -82,6 +82,7 @@ struct HomeView: View {
                 )
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("home.duels")
         }
     }
 

@@ -73,8 +73,30 @@
 "search.publisher.unknown" = "Editorial desconocida";
 
 "duels.title" = "Duelos";
-"duels.placeholder.title" = "Elige a tus luchadores";
-"duels.placeholder.message" = "La selección de equipos y el motor de combate llegarán en las próximas fases.";
+"duels.mode.oneVsOne.title" = "1 vs 1";
+"duels.mode.oneVsOne.subtitle" = "El cara a cara clásico entre dos personajes.";
+"duels.mode.twoVsTwo.title" = "2 vs 2";
+"duels.mode.twoVsTwo.subtitle" = "Combate por parejas con bonificación de feeling.";
+"duels.mode.threeVsThree.title" = "3 vs 3";
+"duels.mode.threeVsThree.subtitle" = "Combate de escuadras completas. Máximo caos.";
+"accessibility.duels.mode.oneVsOne" = "Uno contra uno";
+"accessibility.duels.mode.twoVsTwo" = "Dos contra dos";
+"accessibility.duels.mode.threeVsThree" = "Tres contra tres";
+"team.selection.title" = "Selección de equipos";
+"team.selection.teamA" = "Equipo A";
+"team.selection.teamB" = "Equipo B";
+"team.selection.slot.empty" = "Hueco vacío";
+"team.selection.slot.choose" = "Elegir";
+"team.selection.slot.random" = "Aleatorio";
+"team.selection.slot.replace" = "Sustituir";
+"team.selection.slot.remove" = "Quitar";
+"team.selection.error.duplicate" = "Ese héroe ya está en este equipo.";
+"team.selection.error.noHeroes" = "Aún no hay héroes descargados. Abre un hueco, carga la guía e inténtalo de nuevo.";
+"team.selection.error.invalidSlot" = "Ese hueco no es válido.";
+"team.selection.start" = "Iniciar combate";
+"team.selection.start.hint" = "Disponible cuando ambos equipos estén completos.";
+"combat.placeholder.title" = "Combate listo";
+"combat.placeholder.message" = "Los equipos están confirmados. El motor de combate llega en la siguiente fase.";
 
 "settings.title" = "Ajustes";
 "settings.language" = "Idioma";
@@ -95,3 +117,4 @@
 "accessibility.search.clear" = "Borrar búsqueda";
 "accessibility.search.loading" = "Buscando héroes";
 "accessibility.catalog.loading" = "Cargando héroes del catálogo";
+"common.cancel" = "Cancelar";

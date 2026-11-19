@@ -1,5 +1,8 @@
 import Foundation
 
+/// Callback de selección de héroe. Activa el modo picker de la Guía.
+typealias HeroSelectionHandler = @MainActor (Hero) -> Void
+
 /// Estado de la Guía: catálogo paginado por IDs y búsqueda explícita.
 @MainActor
 @Observable
@@ -8,6 +11,10 @@ final class CharacterGuideViewModel {
     static let prefetchThreshold = 5
 
     let search: HeroSearchViewModel
+
+    /// Handler opcional de selección. Cuando es non-nil la Guía funciona
+    /// como selector: las filas eligen un héroe en lugar de navegar al detalle.
+    let onHeroSelected: HeroSelectionHandler?
 
     private(set) var isSearching = false
     private(set) var catalogHeroes: [Hero] = []
@@ -36,12 +43,18 @@ final class CharacterGuideViewModel {
         characterIDs: any CharacterIDProviding,
         loadHeroes: LoadHeroesByIDsUseCase,
         searchHeroes: SearchHeroesUseCase,
-        filterHeroes: FilterHeroesUseCase = FilterHeroesUseCase()
+        filterHeroes: FilterHeroesUseCase = FilterHeroesUseCase(),
+        onHeroSelected: HeroSelectionHandler? = nil
     ) {
         self.characterIDs = characterIDs
         self.loadHeroes = loadHeroes
         self.filterHeroes = filterHeroes
+        self.onHeroSelected = onHeroSelected
         self.search = HeroSearchViewModel(searchHeroes: searchHeroes)
+    }
+
+    var isPickMode: Bool {
+        onHeroSelected != nil
     }
 
     var filteredHeroes: [Hero] {

@@ -112,6 +112,28 @@ final class CharacterGuideViewModelTests: XCTestCase {
     }
 
     @MainActor
+    func testPickModeForwardsSelectedHeroToHandler() async {
+        var received: [Hero] = []
+        let viewModel = makeViewModel(ids: ["1"], onHeroSelected: { received.append($0) })
+        let hero = Hero(id: "42", name: "Picked Hero")
+
+        XCTAssertTrue(viewModel.isPickMode)
+        XCTAssertNotNil(viewModel.onHeroSelected)
+
+        viewModel.onHeroSelected?(hero)
+
+        XCTAssertEqual(received.map(\.id), ["42"])
+    }
+
+    @MainActor
+    func testBrowseModeHasNoSelectionHandler() async {
+        let viewModel = makeViewModel(ids: ["1"])
+
+        XCTAssertFalse(viewModel.isPickMode)
+        XCTAssertNil(viewModel.onHeroSelected)
+    }
+
+    @MainActor
     func testSearchModeAndClearReturnToCatalog() async {
         let ids = makeIDs(count: 35)
         let heroes = makeHeroes(ids: ids)
@@ -158,7 +180,8 @@ final class CharacterGuideViewModelTests: XCTestCase {
     private func makeViewModel(
         ids: [String] = [],
         heroes: [Hero]? = nil,
-        provider: StubCharacterIDProvider? = nil
+        provider: StubCharacterIDProvider? = nil,
+        onHeroSelected: HeroSelectionHandler? = nil
     ) -> CharacterGuideViewModel {
         let resolvedHeroes = heroes ?? makeHeroes(ids: ids)
         let remote = StubHeroRepository(outcome: .success(resolvedHeroes))
@@ -168,7 +191,8 @@ final class CharacterGuideViewModelTests: XCTestCase {
                 catalog: InMemoryHeroCatalogRepository(),
                 remote: remote
             ),
-            searchHeroes: SearchHeroesUseCase(repository: remote)
+            searchHeroes: SearchHeroesUseCase(repository: remote),
+            onHeroSelected: onHeroSelected
         )
     }
 
