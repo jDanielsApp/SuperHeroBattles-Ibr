@@ -143,7 +143,7 @@ actor GatedHeroRepository: HeroRepository {
             throw failure
         }
 
-        guard let hero = heroes[id] else {
+        guard heroes[id] != nil else {
             active -= 1
             throw HeroRepositoryError.notFound
         }

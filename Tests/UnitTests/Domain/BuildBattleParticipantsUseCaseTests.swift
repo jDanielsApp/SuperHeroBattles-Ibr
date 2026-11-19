@@ -20,7 +20,7 @@ final class BuildBattleParticipantsUseCaseTests: XCTestCase {
     }
 
     func testIncompleteTeamAThrowsNamingTheSide() throws {
-        var teamA = TeamDraft(side: .teamA, mode: .oneVsOne)
+        let teamA = TeamDraft(side: .teamA, mode: .oneVsOne)
         var teamB = TeamDraft(side: .teamB, mode: .oneVsOne)
         try teamB.assign(makeHero(id: "2"), at: 0)
 
@@ -31,7 +31,7 @@ final class BuildBattleParticipantsUseCaseTests: XCTestCase {
 
     func testIncompleteTeamBThrowsNamingTheSide() throws {
         var teamA = TeamDraft(side: .teamA, mode: .oneVsOne)
-        var teamB = TeamDraft(side: .teamB, mode: .oneVsOne)
+        let teamB = TeamDraft(side: .teamB, mode: .oneVsOne)
         try teamA.assign(makeHero(id: "1"), at: 0)
 
         XCTAssertThrowsError(try useCase.execute(teamA: teamA, teamB: teamB)) { error in

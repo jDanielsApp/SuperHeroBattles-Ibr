@@ -28,7 +28,9 @@ struct RootView: View {
                             container: container
                         )
                     case let .combat(participants):
-                        CombatPlaceholderView(participants: participants)
+                        CombatView(
+                            viewModel: container.makeCombatViewModel(participants: participants)
+                        )
                     }
                 }
         }

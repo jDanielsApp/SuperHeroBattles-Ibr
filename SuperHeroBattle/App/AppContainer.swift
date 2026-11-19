@@ -13,6 +13,7 @@ final class AppContainer {
     let generateRandomHero: GenerateRandomHeroUseCase
     let selectHero: SelectHeroUseCase
     let buildBattleParticipants: BuildBattleParticipantsUseCase
+    let resolveCombat: ResolveCombatUseCase
     let characterIDs: any CharacterIDProviding
     let catalogRepository: any HeroCatalogRepository
 
@@ -47,6 +48,9 @@ final class AppContainer {
         generateRandomHero = GenerateRandomHeroUseCase(catalog: catalog)
         selectHero = SelectHeroUseCase()
         buildBattleParticipants = BuildBattleParticipantsUseCase()
+        resolveCombat = ResolveCombatUseCase(
+            engine: CombatEngine(luckProvider: SystemLuckProvider())
+        )
         characterIDs = usesUITestFakes
             ? FixedCharacterIDProvider(ids: FixedRosterHeroRepository.roster.map(\.id))
             : BundledCharacterIDProvider()
@@ -73,6 +77,10 @@ final class AppContainer {
             preloadHeroes: loadHeroesByIDs,
             characterIDs: characterIDs
         )
+    }
+
+    func makeCombatViewModel(participants: BattleParticipants) -> CombatViewModel {
+        CombatViewModel(participants: participants, resolveCombat: resolveCombat)
     }
 
     /// Realm es la caché principal. Si no se puede abrir, la app sigue

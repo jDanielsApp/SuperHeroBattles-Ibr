@@ -100,8 +100,14 @@ nonisolated enum LocalizableStringKey: String, CaseIterable, Sendable {
     case teamSelectionStart = "team.selection.start"
     case teamSelectionStartHint = "team.selection.start.hint"
 
-    case combatPlaceholderTitle = "combat.placeholder.title"
-    case combatPlaceholderMessage = "combat.placeholder.message"
+    case combatResultTitle = "combat.result.title"
+    case combatResultWinner = "combat.result.winner"
+    case combatResultDraw = "combat.result.draw"
+    case combatResultBase = "combat.result.base"
+    case combatResultLuck = "combat.result.luck"
+    case combatResultTotal = "combat.result.total"
+    case combatResultAffinity = "combat.result.affinity"
+    case combatResultAffinityNone = "combat.result.affinity.none"
 
     case commonCancel = "common.cancel"
 
