@@ -50,6 +50,13 @@ final class CombatViewModel {
         narration != nil && !isSaved && !isSaving
     }
 
+    /// ¿Está publicada la narración? Gobierna la revelación del ganador y
+    /// de las puntuaciones reales: hasta entonces la pantalla mantiene el
+    /// suspense y el resultado matemático sigue siendo inmutable.
+    var isNarrationPublished: Bool {
+        narration != nil
+    }
+
     /// Genera la narración una vez por resultado. La cancelación no publica:
     /// la guarda de generación evita que una tarea antigua toque el estado.
     func loadNarration() async {

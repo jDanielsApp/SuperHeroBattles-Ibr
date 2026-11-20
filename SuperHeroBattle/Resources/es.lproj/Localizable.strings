@@ -102,7 +102,8 @@
 "combat.result.luck" = "Suerte";
 "combat.result.total" = "Total";
 "combat.result.affinity" = "Feeling";
-"combat.result.affinity.none" = "Sin coincidencias de feeling.";
+"combat.outcome.pending" = "El combate se está librando…";
+"combat.score.pending" = "Puntuación pendiente de narración";
 "combat.narration.title" = "Narración cinematográfica";
 "combat.narration.loading" = "Generando narración…";
 "combat.narration.source.foundationModels" = "Generada con Apple Intelligence";

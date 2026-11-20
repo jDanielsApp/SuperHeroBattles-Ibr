@@ -54,6 +54,33 @@ final class CombatViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.result.teamB.totalScore, originalTotals.1)
     }
 
+    func testNarrationPublicationControlsTheSuspenseReveal() async {
+        let narrative = CombatNarrative(text: "Narración simulada", source: .foundationModels)
+        let service = MockNarrationService(behavior: .narrative(narrative))
+        let viewModel = makeViewModel(service: service, language: .spanish)
+
+        // Antes de publicar la narración el combate queda en suspense.
+        XCTAssertFalse(viewModel.isNarrationPublished)
+        XCTAssertFalse(viewModel.canSave)
+
+        await viewModel.loadNarration()
+
+        // Publicada la narración, ganador y puntuaciones se revelan.
+        XCTAssertTrue(viewModel.isNarrationPublished)
+        XCTAssertTrue(viewModel.canSave)
+    }
+
+    func testFailedNarrationKeepsTheSuspenseUnrevealed() async {
+        let service = MockNarrationService(behavior: .cancellation)
+        let viewModel = makeViewModel(service: service, language: .spanish)
+
+        await viewModel.loadNarration()
+
+        XCTAssertNil(viewModel.narration)
+        XCTAssertFalse(viewModel.isNarrationPublished)
+        XCTAssertFalse(viewModel.canSave)
+    }
+
     func testNarrationIsGeneratedOnlyOnce() async {
         let narrative = CombatNarrative(text: "Narración simulada", source: .foundationModels)
         let service = MockNarrationService(behavior: .narrative(narrative))
