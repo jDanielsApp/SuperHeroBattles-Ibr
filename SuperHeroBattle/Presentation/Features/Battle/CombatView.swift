@@ -18,41 +18,23 @@ struct CombatView: View {
 
     @Environment(\.locale) private var locale
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    /// iPhone Duo abierto (o iPad): la narración va a la derecha del resto.
+    private var isWideLayout: Bool {
+        horizontalSizeClass == .regular
+    }
 
     var body: some View {
         ZStack {
             ComicBackground()
 
             ScrollView {
-                VStack(spacing: 18) {
-                    // La cabecera de choque se retira cuando hay narración.
-                    if !viewModel.isNarrationPublished {
-                        introBanner
-                            .transition(introTransition)
-                    }
-
-                    CombatOutcomeBanner(
-                        outcome: viewModel.result.outcome,
-                        isRevealed: viewModel.isNarrationPublished
-                    )
-
-                    teamSection(viewModel.result.teamA)
-
-                    ComicVersusDivider()
-
-                    teamSection(viewModel.result.teamB)
-
-                    CombatNarrationSection(
-                        narration: viewModel.narration,
-                        isLoading: viewModel.isGeneratingNarration
-                    )
-
-                    saveSection
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 12)
-                .padding(.bottom, 16)
-                .animation(revealAnimation, value: viewModel.isNarrationPublished)
+                arrangedContent
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                    .padding(.bottom, 16)
+                    .animation(revealAnimation, value: viewModel.isNarrationPublished)
             }
         }
         .navigationTitle(L10n.localizedKey(.combatResultTitle))
@@ -60,6 +42,62 @@ struct CombatView: View {
         .task {
             await viewModel.loadNarration()
         }
+    }
+
+    // MARK: - Reparto de paneles
+
+    /// Pantalla interior del Duo: `ArrangementView` reparte el resto y la
+    /// narración respetando la región de pliegue. En compact (o iOS 26) el
+    /// reparto manual mantiene la columna actual: narración y guardado al
+    /// final.
+    @ViewBuilder
+    private var arrangedContent: some View {
+        if #available(iOS 27.1, *), isWideLayout {
+            ArrangementView {
+                VStack(spacing: 18) {
+                    restBlocks
+                    saveSection
+                }
+            } secondary: {
+                narrationSection
+            }
+            .arrangementViewStyle(.split)
+        } else {
+            CombatArrangementLayout(
+                leading: { restBlocks },
+                trailing: { narrationSection },
+                footer: { saveSection }
+            )
+        }
+    }
+
+    /// Bloques de resultado: cabecera en suspense, veredicto y equipos.
+    private var restBlocks: some View {
+        VStack(spacing: 18) {
+            // La cabecera de choque se retira cuando hay narración.
+            if !viewModel.isNarrationPublished {
+                introBanner
+                    .transition(introTransition)
+            }
+
+            CombatOutcomeBanner(
+                outcome: viewModel.result.outcome,
+                isRevealed: viewModel.isNarrationPublished
+            )
+
+            teamSection(viewModel.result.teamA)
+
+            ComicVersusDivider()
+
+            teamSection(viewModel.result.teamB)
+        }
+    }
+
+    private var narrationSection: some View {
+        CombatNarrationSection(
+            narration: viewModel.narration,
+            isLoading: viewModel.isGeneratingNarration
+        )
     }
 
     // MARK: - Suspense

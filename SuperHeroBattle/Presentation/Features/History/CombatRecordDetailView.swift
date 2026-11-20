@@ -11,6 +11,12 @@ struct CombatRecordDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    /// iPhone Duo abierto (o iPad): la narración va a la derecha del resto.
+    private var isWideLayout: Bool {
+        horizontalSizeClass == .regular
+    }
 
     init(viewModel: CombatRecordDetailViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -21,23 +27,10 @@ struct CombatRecordDetailView: View {
             ComicBackground()
 
             ScrollView {
-                VStack(spacing: 18) {
-                    dateHeader
-
-                    CombatOutcomeBanner(
-                        outcome: viewModel.record.outcome,
-                        isRevealed: true,
-                        outcomeIdentifier: "history.detail.outcome"
-                    )
-
-                    teamSection(.teamA, snapshots: viewModel.record.teamA)
-                    ComicVersusDivider()
-                    teamSection(.teamB, snapshots: viewModel.record.teamB)
-                    narrationSection
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 12)
-                .padding(.bottom, 16)
+                arrangedContent
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                    .padding(.bottom, 16)
             }
         }
         .navigationTitle(L10n.localizedKey(.historyDetailTitle))
@@ -73,6 +66,47 @@ struct CombatRecordDetailView: View {
             .accessibilityIdentifier("history.delete.cancel")
         } message: {
             Text(deletionMessage)
+        }
+    }
+
+    // MARK: - Reparto de paneles
+
+    /// Pantalla interior del Duo: `ArrangementView` reparte el resto y la
+    /// narración respetando la región de pliegue. En compact (o iOS 26) el
+    /// reparto manual mantiene la columna actual.
+    @ViewBuilder
+    private var arrangedContent: some View {
+        if #available(iOS 27.1, *), isWideLayout {
+            ArrangementView {
+                restBlocks
+            } secondary: {
+                narrationSection
+            }
+            .arrangementViewStyle(.split)
+        } else {
+            CombatArrangementLayout(
+                leading: { restBlocks },
+                trailing: { narrationSection }
+            )
+        }
+    }
+
+    /// Bloques del registro: fecha, veredicto y equipos.
+    private var restBlocks: some View {
+        VStack(spacing: 18) {
+            dateHeader
+
+            CombatOutcomeBanner(
+                outcome: viewModel.record.outcome,
+                isRevealed: true,
+                outcomeIdentifier: "history.detail.outcome"
+            )
+
+            teamSection(.teamA, snapshots: viewModel.record.teamA)
+
+            ComicVersusDivider()
+
+            teamSection(.teamB, snapshots: viewModel.record.teamB)
         }
     }
 
