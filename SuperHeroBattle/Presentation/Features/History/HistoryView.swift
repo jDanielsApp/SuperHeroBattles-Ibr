@@ -195,6 +195,7 @@ struct HistoryView: View {
                 recordRowContent(record)
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("history.row")
 
             Button {
                 recordPendingDeletion = record

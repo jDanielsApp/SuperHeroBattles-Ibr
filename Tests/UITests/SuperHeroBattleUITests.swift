@@ -189,6 +189,110 @@ final class SuperHeroBattleUITests: XCTestCase {
         )
     }
 
+    /// Smoke test de pantallas de detalle y ajustes: sin lógica de negocio,
+    /// solo verifica que son alcanzables desde la navegación principal.
+    @MainActor
+    func testHeroDetailAndSettingsAreReachable() throws {
+        let app = XCUIApplication()
+        app.launchArguments += ["-uitest-fakes"]
+        app.launch()
+
+        // Detalle de héroe desde la Guía.
+        let guide = app.buttons["home.guide"]
+        XCTAssertTrue(guide.waitForExistence(timeout: 5))
+        guide.tap()
+
+        let firstHero = app.staticTexts["UITest Hero 1"]
+        XCTAssertTrue(
+            firstHero.waitForExistence(timeout: 10),
+            "La Guía no cargó el primer héroe del roster falso"
+        )
+        firstHero.tap()
+
+        XCTAssertTrue(
+            app.otherElements["hero.detail.powerstats"].waitForExistence(timeout: 5)
+                || app.staticTexts["hero.detail.powerstats"].waitForExistence(timeout: 5),
+            "No se abrió el detalle del héroe"
+        )
+
+        // Volver a Home: dos niveles atrás (detalle → Guía → Home).
+        for _ in 0..<2 {
+            let back = app.navigationBars.buttons.element(boundBy: 0)
+            XCTAssertTrue(back.waitForExistence(timeout: 5))
+            back.tap()
+        }
+
+        // Ajustes desde la barra de Home.
+        let settings = app.buttons["home.settings"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 5))
+        settings.tap()
+
+        XCTAssertTrue(
+            app.descendants(matching: .any)["settings.root"].waitForExistence(timeout: 5),
+            "No se abrió la pantalla de ajustes"
+        )
+    }
+
+    /// Smoke test del detalle de combate guardado en el historial.
+    @MainActor
+    func testHistoryDetailIsReachable() throws {
+        let app = XCUIApplication()
+        app.launchArguments += ["-uitest-fakes"]
+        app.launch()
+
+        // Combate 1v1 rápido con fakes.
+        let duels = app.buttons["home.duels"]
+        XCTAssertTrue(duels.waitForExistence(timeout: 5))
+        duels.tap()
+
+        let mode = app.buttons["duels.mode.1v1"]
+        XCTAssertTrue(mode.waitForExistence(timeout: 5))
+        mode.tap()
+
+        for side in ["teamA", "teamB"] {
+            let random = app.buttons["team.slot.random.\(side)-0"]
+            XCTAssertTrue(random.waitForExistence(timeout: 5))
+            random.tap()
+            XCTAssertTrue(
+                app.buttons["team.slot.replace.\(side)-0"].waitForExistence(timeout: 10)
+            )
+        }
+
+        let start = app.buttons["team.selection.start"]
+        XCTAssertTrue(start.waitForExistence(timeout: 5))
+        start.tap()
+
+        XCTAssertTrue(app.staticTexts["combat.outcome"].waitForExistence(timeout: 5))
+
+        // Guardar y volver a Home.
+        let save = app.buttons["combat.save"]
+        XCTAssertTrue(save.waitForExistence(timeout: 5))
+        XCTAssertTrue(waitForEnabled(save, timeout: 10))
+        save.tap()
+        app.alerts.buttons["combat.save.confirm"].firstMatch.tap()
+
+        let history = app.buttons["home.history"]
+        XCTAssertTrue(history.waitForExistence(timeout: 10))
+        history.tap()
+
+        // Abrir el detalle del registro.
+        let row = app.buttons["history.row"].firstMatch
+        XCTAssertTrue(
+            row.waitForExistence(timeout: 10),
+            "El combate no se guardó en el historial"
+        )
+        row.tap()
+
+        XCTAssertTrue(
+            app.staticTexts["history.detail.outcome"].waitForExistence(timeout: 5),
+            "No se abrió el detalle del combate guardado"
+        )
+        XCTAssertTrue(
+            app.staticTexts["history.detail.narration"].waitForExistence(timeout: 5),
+            "Falta la narración en el detalle del combate"
+        )
+    }
+
     /// Espera a que un elemento existente esté habilitado.
     @MainActor
     private func waitForEnabled(

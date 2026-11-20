@@ -6,10 +6,10 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 
 ## Resumen
 
-- **Fase actual:** Fase 8 cerrada; Fase 9 (calidad final) pendiente de iniciar.
-- **Última fase cerrada:** Fase 8 — wrapper de Lottie con fallbacks, pulido comic y accesibilidad de movimiento.
+- **Fase actual:** Fase 9 cerrada. **Proyecto completado.**
+- **Última fase cerrada:** Fase 9 — calidad final: limpieza, cobertura 84,9 %, build Release verificado y documentación de entrega.
 - **Herramienta nueva:** índice público de IDs (`data/character_ids.json`) con actualización semanal mediante GitHub Actions.
-- **Estado del build:** compila y los tests pasan en Xcode 27.2 / iOS Simulator 27.0.
+- **Estado del build:** compila en Debug y Release sin warnings de código; **233 unit tests + 5 UI tests** en verde en Xcode 27.2 / iOS Simulator 27.0; cobertura del 84,9 % en la app.
 - **Dependencias:** RealmSwift 20.0.6 y Lottie 4.6.1 resueltas con SwiftPM.
 
 ## Decisiones confirmadas
@@ -35,7 +35,7 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 | 6. Apple Foundation Models | Completada (simulador sin assets) | Prompts versionados, `@Generable`, timeout 20s, fallback de plantilla honesto y badge de origen |
 | 7. Combate, resultados e historial | Completada | Historial Realm schemaVersion 2, guardado tras narración, listado con borrado/vaciado y detalle |
 | 8. Diseño comic, Lottie, idiomas y accesibilidad | Completada | Wrapper con fallbacks y Reduce Motion, halftone, ComicCTALabel, cabecera de choque y assets `combat_intro`/`combat_winner` activos |
-| 9. Calidad final | Pendiente | |
+| 9. Calidad final | Completada | Limpieza de código muerto, cobertura 84,9 %, smoke tests de pantallas, build Release y docs de entrega |
 
 ## Fase 0 — completada
 
@@ -255,17 +255,31 @@ Assets incluidos en `Resources/Lottie/` (folder reference, se empaquetan solos):
 - Revisión del estado de la caché de imágenes (sigue bloqueada por el 403 del host).
 - Preparación de la entrega: estado de docs y README definitivos.
 
+## Fase 9 — completada
+
+- [x] **Limpieza**: eliminados `GetHeroesCatalogUseCase` (sustituido por `LoadHeroesByIDsUseCase`) y `TeamSide.opponent` (sin usos). `GetHeroDetailUseCase` se conserva para futuras mejoras del detalle, ahora con tests propios (búsqueda por ID, notFound, error de transporte y cancelación).
+- [x] **Cobertura**: informe con `xcrun xccov`: del 72,8 % inicial al **84,9 % final**. Tests dirigidos a los huecos reales: dos smoke tests UI cubren las pantallas que ningún flujo alcanzaba (detalle de héroe con PowerStats, detalle de combate guardado y Ajustes) y `UnconfiguredHeroRepository` cubre la ruta real de producción sin token.
+- [x] **Identificadores de accesibilidad** añadidos para testabilidad: `hero.detail.powerstats`, `home.settings`, `settings.root` y `history.row`.
+- [x] **Build Release** verificado en simulador: compila sin warnings de código y el bundle no contiene `*.xcconfig` ni secretos; `character_ids.json`, `combat_intro.json`, `combat_winner.json`, `en.lproj` y `es.lproj` presentes.
+- [x] **Sin TODO/FIXME** en el código; paridad de claves `en`/`es` verificada por test.
+- [x] **Documentación de entrega**: README definitivo y este registro cerrado.
+
+Hallazgos documentados de la auditoría:
+
+- `FeaturePlaceholderView` (127 líneas) quedó **sin referencias** tras reescribir `DuelModeView` en Fase 4. Se conserva como componente reutilizable para pantallas futuras; si no se usa, es candidato a eliminación.
+- La cobertura restante se concentra en ramas defensivas (payload corrupto, migraciones) y en vistas SwiftUI puras sin lógica extraíble; no se persigue el 100 % por decisión de alcance.
+- `FoundationModelsNarrationService` marca ~37 % por diseño: los tests usan el seam inyectable y nunca invocan el modelo real (exigencia de AGENTS.md); la ruta real se verificó en dispositivo en Fase 6.
+
 ## Pendientes y riesgos
 
-- **Token de SuperHeroAPI:** configurado localmente en `Secrets.xcconfig` y verificado con una búsqueda real. El archivo está ignorado por git y no se incluye en el bundle.
+- **Token de SuperHeroAPI:** configurado localmente en `Secrets.xcconfig` y verificado con una búsqueda real. El archivo está ignorado por git y no se incluye en el bundle (verificado también en Release).
 - **Imágenes de SuperHeroAPI:** el host `superherodb.com` responde HTTP 403 a peticiones directas, incluso con User-Agent y Referer de navegador. Catálogo y detalle muestran el placeholder correctamente, pero la caché de imágenes sigue pendiente (cabeceras específicas, proxy/CDN o fuente alternativa).
+- `FeaturePlaceholderView` quedó sin referencias tras la Fase 4; se conserva como componente reutilizable, candidato a eliminación si no se usa.
 - SuperHeroAPI no tiene endpoint de catálogo completo ni paginación; el catálogo se resuelve con el índice de IDs y llamadas por ID bajo demanda.
 - El workflow programado se desactiva tras 60 días sin actividad en repositorios públicos; conviene ejecutar `workflow_dispatch` periódicamente. Si la rama `main` exige PR, el push del bot fallará y habrá que permitir escritura a Actions o cambiar el flujo a PR.
 - Los tests del script no cubren el entorno real de GitHub Actions hasta que se ejecute el primer `workflow_dispatch` en el repositorio remoto.
-- Foundation Models puede no estar disponible en simulador; el fallback local es obligatorio.
-- El wrapper Lottie y los assets quedan para Fase 8.
-- El selector de idioma ya persiste la preferencia, pero la revisión completa de accesibilidad e idioma se cierra en Fase 8.
-- Reintento automático con backoff y coalescencia de peticiones idénticas quedan fuera de Fase 2 por decisión de alcance.
+- Foundation Models no está disponible en el simulador de este Mac (assets del modelo ausentes en el host); el fallback de plantilla cubre el flujo y la ruta IA se verificó en un iPhone real con iOS 26.5.
+- Reintento automático con backoff y coalescencia de peticiones idénticas quedaron fuera por decisión de alcance.
 
 ## Verificación ejecutada
 
@@ -277,6 +291,8 @@ xcodebuild -project SuperHeroBattle.xcodeproj -scheme SuperHeroBattle \
 xcodebuild -project SuperHeroBattle.xcodeproj -scheme SuperHeroBattle \
   -destination 'platform=iOS Simulator,name=iPhone 17' test
 ```
+
+Resultado Fase 9: build Debug y Release correctos sin warnings de código, **233 unit tests + 5 UI tests en verde** y cobertura del **84,9 %** en la app (desde el 72,8 % del inicio de la fase). Smoke tests nuevos cubren detalle de héroe, detalle de combate guardado y Ajustes; `GetHeroDetailUseCase` y `UnconfiguredHeroRepository` tienen cobertura directa. Bundle de Release verificado sin `*.xcconfig` ni secretos.
 
 Resultado Fase 8: build correcto, **227 unit tests + 3 UI tests en verde** en iPhone 17 (iOS 27.0), sin warnings de código. La matriz de decisión del wrapper está cubierta sin invocar Lottie (asset presente/ausente × movimiento), los fallbacks no alteran ningún identificador de UI test y la suite de flujos completa sigue en verde.
 
