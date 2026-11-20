@@ -1,8 +1,8 @@
 import Foundation
 
 nonisolated enum HTTPClientError: Error, Equatable, Sendable {
-    /// Error de conexión, DNS, TLS o timeout. La UI lo traduce a "sin conexión".
+    /// Connection, DNS, TLS, or timeout error. The UI presents it as "no connection".
     case transport
-    /// La respuesta no es un `HTTPURLResponse` válido.
+    /// The response is not a valid `HTTPURLResponse`.
     case invalidResponse
 }

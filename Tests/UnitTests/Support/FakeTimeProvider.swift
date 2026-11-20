@@ -1,7 +1,7 @@
 import Foundation
 @testable import SuperHeroBattle
 
-/// Reloj controlable para tests de caché.
+/// Controllable clock for cache tests.
 nonisolated final class FakeTimeProvider: TimeProvider, @unchecked Sendable {
     private let lock = NSLock()
     private var current: Date

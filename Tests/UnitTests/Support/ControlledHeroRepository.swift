@@ -2,7 +2,7 @@ import Foundation
 import XCTest
 @testable import SuperHeroBattle
 
-/// Repositorio controlable: la búsqueda queda suspendida hasta que el test la completa.
+/// Controllable repository: searches stay suspended until the test completes them.
 nonisolated final class ControlledHeroRepository: HeroRepository, @unchecked Sendable {
     typealias SearchResult = Result<[Hero], Error>
 

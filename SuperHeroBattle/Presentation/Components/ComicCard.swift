@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Tarjeta de acción con estética de viñeta.
+/// Action card with a comic panel aesthetic.
 struct ComicCard: View {
     let titleKey: LocalizableStringKey
     let subtitleKey: LocalizableStringKey
@@ -8,7 +8,7 @@ struct ComicCard: View {
     let accent: Color
     let isPrimary: Bool
     let accessibilityKey: LocalizableStringKey
-    /// Etiqueta "VS" de la esquina; independiente del énfasis de `isPrimary`.
+    /// Corner "VS" badge; independent of the `isPrimary` emphasis.
     var showsVersusBadge = true
 
     var body: some View {

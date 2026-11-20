@@ -1,6 +1,6 @@
 import Foundation
 
-/// Claves de los `Localizable.strings` clásicos. No se usan String Catalogs.
+/// Keys for the classic `Localizable.strings` files. String Catalogs are not used.
 nonisolated enum LocalizableStringKey: String, CaseIterable, Sendable {
     case appName = "app.name"
 

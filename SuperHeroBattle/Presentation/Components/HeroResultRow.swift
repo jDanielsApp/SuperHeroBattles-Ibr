@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Fila de resultado de búsqueda.
+/// Search result row.
 struct HeroResultRow: View {
     let hero: Hero
 

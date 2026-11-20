@@ -1,7 +1,7 @@
 import Foundation
 
-/// Catálogo en memoria usado como respaldo cuando Realm no está disponible
-/// y como implementación de apoyo en tests.
+/// In-memory catalog used as a fallback when Realm is unavailable
+/// and as a supporting implementation in tests.
 actor InMemoryHeroCatalogRepository: HeroCatalogRepository {
     private var storage: [String: Hero] = [:]
 

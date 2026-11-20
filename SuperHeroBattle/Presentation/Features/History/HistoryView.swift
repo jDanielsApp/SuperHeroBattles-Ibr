@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Historial de combates guardados: listado con borrado desde el detalle y
-/// vaciado completo.
+/// History of saved combats: a list with deletion from the detail and
+/// full clearing.
 struct HistoryView: View {
     @State private var viewModel: CombatHistoryViewModel
     @State private var isPresentingClearConfirmation = false
@@ -168,8 +168,8 @@ struct HistoryView: View {
         .accessibilityIdentifier("history.list")
     }
 
-    /// Fila completa: presionar el combate abre su detalle, donde vive el
-    /// borrado individual.
+    /// Full row: tapping the combat opens its detail, where individual
+    /// deletion lives.
     private func recordRow(_ record: CombatRecord) -> some View {
         NavigationLink(value: AppRoute.combatRecord(record)) {
             recordRowContent(record)

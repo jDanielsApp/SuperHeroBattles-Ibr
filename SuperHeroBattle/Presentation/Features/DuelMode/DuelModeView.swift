@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Selección de la modalidad de combate: 1 vs 1, 2 vs 2 o 3 vs 3.
+/// Combat mode selection: 1 vs 1, 2 vs 2, or 3 vs 3.
 struct DuelModeView: View {
     var body: some View {
         ZStack {

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Selección de equipos para la modalidad elegida.
+/// Team selection for the chosen combat mode.
 struct TeamSelectionView: View {
     @State private var viewModel: TeamSelectionViewModel
     let container: AppContainer
@@ -9,7 +9,7 @@ struct TeamSelectionView: View {
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
-    /// iPhone Duo abierto (o iPad): los equipos van lado a lado.
+    /// Open iPhone Duo (or iPad): the teams sit side by side.
     private var isWideLayout: Bool {
         horizontalSizeClass == .regular
     }
@@ -19,7 +19,7 @@ struct TeamSelectionView: View {
         self.container = container
     }
 
-    /// Hueco que está esperando selección manual en la hoja de la Guía.
+    /// The slot awaiting manual selection in the Guide sheet.
     private struct PickerTarget: Identifiable {
         let side: TeamSide
         let slot: Int
@@ -50,10 +50,10 @@ struct TeamSelectionView: View {
         }
     }
 
-    // MARK: - Reparto de pantalla
+    // MARK: - Layout
 
-    /// Compact (pantalla exterior del Duo, iPhone): columna actual en un
-    /// único scroll, con el divisor "VS" y el CTA al final.
+    /// Compact (Duo outer screen, iPhone): the current column layout in
+    /// a single scroll, with the "VS" divider and the CTA at the end.
     private var compactLayout: some View {
         ScrollView {
             VStack(spacing: 18) {
@@ -73,11 +73,11 @@ struct TeamSelectionView: View {
         }
     }
 
-    /// Pantalla interior del Duo: `ArrangementView` decide el eje con la
-    /// geometría real —equipos lado a lado en horizontal y apilados en
-    /// vertical— y cada equipo scrollea dentro de su panel, con el CTA
-    /// fijo debajo. El arrangement nunca va dentro de un ScrollView: la
-    /// altura infinita del scroll rompe su decisión de eje.
+    /// Duo inner screen: `ArrangementView` picks the axis from the real
+    /// geometry — teams side by side in horizontal and stacked in
+    /// vertical — and each team scrolls within its own panel, with the
+    /// CTA fixed below. The arrangement never goes inside a ScrollView:
+    /// the scroll's infinite height breaks its axis decision.
     @available(iOS 27.1, *)
     private var wideLayout: some View {
         VStack(spacing: 0) {
@@ -100,7 +100,7 @@ struct TeamSelectionView: View {
         }
     }
 
-    /// Panel de equipo con scroll propio para su mitad del arrangement.
+    /// Team panel with its own scroll for its half of the arrangement.
     private func scrollablePanel(_ side: TeamSide) -> some View {
         ScrollView {
             teamPanel(side)
@@ -109,7 +109,7 @@ struct TeamSelectionView: View {
         }
     }
 
-    // MARK: - Cabecera
+    // MARK: - Header
 
     private var modeHeader: some View {
         HStack(spacing: 10) {
@@ -125,7 +125,7 @@ struct TeamSelectionView: View {
         }
     }
 
-    // MARK: - Paneles de equipo
+    // MARK: - Team panels
 
     private func teamPanel(_ side: TeamSide) -> some View {
         let accent = side == .teamA ? TeamPalette.teamA : TeamPalette.teamB
@@ -187,10 +187,10 @@ struct TeamSelectionView: View {
             .count
     }
 
-    // MARK: - Arranque del combate
+    // MARK: - Combat start
 
-    /// El CTA vive dentro del scroll: un footer fijo dejaría los últimos
-    /// huecos ocultos y sus acciones inaccesibles.
+    /// The CTA lives inside the scroll: a fixed footer would leave the
+    /// last slots hidden and their actions unreachable.
     @ViewBuilder
     private var startSection: some View {
         VStack(spacing: 10) {
@@ -222,7 +222,7 @@ struct TeamSelectionView: View {
         .padding(.top, 6)
     }
 
-    // MARK: - Selector manual
+    // MARK: - Manual picker
 
     private func pickerSheet(_ target: PickerTarget) -> some View {
         NavigationStack {

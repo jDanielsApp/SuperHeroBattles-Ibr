@@ -1,13 +1,13 @@
 import Foundation
 
-/// Fuente de suerte de cada combatiente. Inyectable para pruebas deterministas:
-/// la suerte es la única aleatoriedad del motor de combate.
+/// Source of each combatant's luck. Injectable for deterministic tests:
+/// luck is the combat engine's only source of randomness.
 nonisolated protocol LuckProvider: Sendable {
-    /// Tirada de suerte en el rango cerrado 7...77.
+    /// Luck roll in the closed range 7...77.
     func nextLuck() -> Int
 }
 
-/// Suerte del sistema. Usa el RNG global de Swift, que es seguro entre hilos.
+/// System luck. Uses Swift's global RNG, which is thread-safe.
 nonisolated struct SystemLuckProvider: LuckProvider {
     static let luckRange: ClosedRange<Int> = 7...77
 

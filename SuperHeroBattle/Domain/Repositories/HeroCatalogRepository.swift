@@ -1,6 +1,6 @@
 import Foundation
 
-/// Catálogo local de personajes descargados.
+/// Local catalog of downloaded characters.
 nonisolated protocol HeroCatalogRepository: Sendable {
     func allHeroes() async throws -> [Hero]
     func hero(id: String) async throws -> Hero?

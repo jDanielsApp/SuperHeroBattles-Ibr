@@ -1,23 +1,23 @@
 import Foundation
 
-/// Posición de un hueco dentro de un equipo.
+/// Position of a slot within a team.
 nonisolated struct TeamSlotLocation: Hashable, Sendable {
     let side: TeamSide
     let slot: Int
 }
 
-/// Estado de la pantalla de selección de equipos.
+/// State for the team selection screen.
 ///
-/// Reglas de la fase:
-/// - No se repiten héroes dentro de un mismo equipo.
-/// - Sí puede aparecer el mismo héroe en ambos equipos.
-/// - La selección aleatoria rellena únicamente el hueco solicitado.
+/// Rules:
+/// - No repeated heroes within one team.
+/// - The same hero MAY appear in both teams.
+/// - Random selection fills only the requested slot.
 ///
-/// Aleatoriedad: al entrar en la pantalla se sortean `teamSize × 2` IDs
-/// del índice completo de personajes y se cargan en segundo plano (caché
-/// local primero, red para los ausentes). El botón aleatorio consume ese
-/// pool precargado; agotado, sortea un ID nuevo bajo demanda y, si la red
-/// o el índice fallan, cae al catálogo local.
+/// Randomness: entering the screen draws `teamSize × 2` IDs from the
+/// full character index and loads them in the background (local cache
+/// first, network for missing ones). The random button consumes that
+/// preloaded pool; once exhausted, it draws a new ID on demand, and if
+/// the network or index fail it falls back to the local catalog.
 @MainActor
 @Observable
 final class TeamSelectionViewModel {
@@ -35,11 +35,11 @@ final class TeamSelectionViewModel {
 
     private var hasPreparedRandomPool = false
 
-    /// Héroes sorteados del índice completo, pendientes de consumir por el
-    /// botón aleatorio. No alimenta la UI directamente.
+    /// Heroes drawn from the full index, waiting to be consumed by the
+    /// random button. Does not feed the UI directly.
     @ObservationIgnored private var randomPool: [Hero] = []
 
-    /// IDs ya sorteados: nunca se repiten entre tiradas.
+    /// IDs already drawn: never repeated across draws.
     @ObservationIgnored private var drawnIDs: Set<String> = []
 
     @ObservationIgnored private var randomTask: Task<Void, Never>?
@@ -66,7 +66,7 @@ final class TeamSelectionViewModel {
         teamA.isComplete && teamB.isComplete
     }
 
-    /// Participantes listos para el combate; nil hasta que ambos equipos estén completos.
+    /// Participants ready for combat; nil until both teams are complete.
     var battleParticipants: BattleParticipants? {
         guard bothTeamsComplete else { return nil }
         return try? buildBattleParticipants.execute(teamA: teamA, teamB: teamB)
@@ -76,12 +76,12 @@ final class TeamSelectionViewModel {
         draft(for: side).hero(in: slot)
     }
 
-    /// Precarga el trabajo de aleatoriedad: sortea `teamSize × 2` IDs del
-    /// índice completo (2 en 1v1, 4 en 2v2, 6 en 3v3) y lanza su
-    /// obtención en segundo plano. Así el botón aleatorio resuelve al
-    /// instante y no depende solo de la base de datos local. Silencioso:
-    /// si falla, el propio botón caerá al sorteo bajo demanda o al
-    /// catálogo local. Solo se ejecuta una vez por pantalla.
+    /// Preloads the random work: draws `teamSize × 2` IDs from the full
+    /// index (2 in 1v1, 4 in 2v2, 6 in 3v3) and fetches them in the
+    /// background. This lets the random button resolve instantly rather
+    /// than depending only on the local database. Silent: on failure the
+    /// button itself falls back to on-demand draws or the local catalog.
+    /// Runs only once per screen.
     func prepareRandomPool() {
         guard !hasPreparedRandomPool else { return }
         hasPreparedRandomPool = true
@@ -95,7 +95,7 @@ final class TeamSelectionViewModel {
                 self.randomPool.append(contentsOf: outcome.heroes)
                 self.drawnIDs.formUnion(outcome.drawnIDs)
             } catch {
-                // Precarga silenciosa: el botón aleatorio tiene respaldos.
+                // Silent preload: the random button has fallbacks.
             }
             self.preloadTask = nil
         }
@@ -124,16 +124,16 @@ final class TeamSelectionViewModel {
         }
     }
 
-    /// Rellena únicamente el hueco solicitado con un héroe aleatorio:
-    /// consume el pool precargado desde el índice completo; agotado, sortea
-    /// un ID nuevo bajo demanda; sin red ni índice, cae al catálogo local.
-    /// El sorteo excluye solo los integrantes del equipo que se rellena.
+    /// Fills only the requested slot with a random hero: consumes the
+    /// preloaded pool from the full index; once exhausted, draws a new ID
+    /// on demand; with no network or index, falls back to the local
+    /// catalog. The draw excludes only members of the team being filled.
     func fillRandom(side: TeamSide, slot: Int) {
         guard busySlot == nil else { return }
 
         let excludedIDs = Set(draft(for: side).heroIDs)
 
-        // El pool precargado resuelve el hueco al instante.
+        // The preloaded pool resolves the slot instantly.
         if let hero = pooledHero(excluding: excludedIDs) {
             assign(hero, to: side, slot: slot)
             return
@@ -155,7 +155,7 @@ final class TeamSelectionViewModel {
         }
     }
 
-    /// Cancela el trabajo en curso al salir de la pantalla sin borrar lo publicado.
+    /// Cancels in-flight work when leaving the screen without discarding published state.
     func cancelActiveWork() {
         randomTask?.cancel()
         randomTask = nil
@@ -167,11 +167,11 @@ final class TeamSelectionViewModel {
         busySlot = nil
     }
 
-    // MARK: - Resolución del aleatorio
+    // MARK: - Random resolution
 
-    /// Cadena de resolución bajo demanda: sorteo de un ID nuevo desde el
-    /// índice completo y, si no hay red ni índice, catálogo local. La
-    /// cancelación nunca publica; una generación antigua tampoco.
+    /// On-demand resolution chain: draw a new ID from the full index and,
+    /// with no network or index, fall back to the local catalog.
+    /// Cancellation never publishes; neither does a stale generation.
     private func resolveRandomSlot(
         side: TeamSide,
         slot: Int,
@@ -189,12 +189,12 @@ final class TeamSelectionViewModel {
             randomPool.append(contentsOf: outcome.heroes)
             try Task.checkCancellation()
 
-            // El sorteo ya excluye el equipo actual; el filtro es defensivo.
+            // The draw already excludes the current team; the filter is defensive.
             candidate = outcome.heroes.first { !excludedIDs.contains($0.id) }
         } catch is CancellationError {
             return
         } catch {
-            // Red o índice caídos: se prueba el catálogo local.
+            // Network or index down: try the local catalog.
         }
 
         if candidate == nil {
@@ -210,7 +210,7 @@ final class TeamSelectionViewModel {
         guard randomGeneration == generation else { return }
 
         if let candidate {
-            // El héroe del sorteo sale del pool para no repetirlo.
+            // The drawn hero is removed from the pool so it is not repeated.
             if let index = randomPool.firstIndex(where: { $0.id == candidate.id }) {
                 randomPool.remove(at: index)
             }
@@ -223,7 +223,7 @@ final class TeamSelectionViewModel {
         randomTask = nil
     }
 
-    /// Saca del pool el primer héroe que no pertenezca al equipo indicado.
+    /// Removes from the pool the first hero not belonging to the given team.
     private func pooledHero(excluding heroIDs: Set<String>) -> Hero? {
         guard let index = randomPool.firstIndex(where: { !heroIDs.contains($0.id) }) else {
             return nil
@@ -231,7 +231,7 @@ final class TeamSelectionViewModel {
         return randomPool.remove(at: index)
     }
 
-    // MARK: - Borradores
+    // MARK: - Drafts
 
     private func draft(for side: TeamSide) -> TeamDraft {
         switch side {

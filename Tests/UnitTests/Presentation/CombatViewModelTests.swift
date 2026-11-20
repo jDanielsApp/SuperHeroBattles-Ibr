@@ -59,13 +59,13 @@ final class CombatViewModelTests: XCTestCase {
         let service = MockNarrationService(behavior: .narrative(narrative))
         let viewModel = makeViewModel(service: service, language: .spanish)
 
-        // Antes de publicar la narración el combate queda en suspense.
+        // Before the narration is published, the combat stays in suspense.
         XCTAssertFalse(viewModel.isNarrationPublished)
         XCTAssertFalse(viewModel.canSave)
 
         await viewModel.loadNarration()
 
-        // Publicada la narración, ganador y puntuaciones se revelan.
+        // Once the narration is published, the winner and scores are revealed.
         XCTAssertTrue(viewModel.isNarrationPublished)
         XCTAssertTrue(viewModel.canSave)
     }
@@ -222,7 +222,7 @@ final class CombatViewModelTests: XCTestCase {
     }
 }
 
-/// Repositorio cuyo `save` siempre falla: cubre el reintento silencioso.
+/// Repository whose `save` always fails: covers the silent retry.
 private struct FailingSaveHistoryRepository: CombatHistoryRepository {
     func save(_ record: CombatRecord) async throws {
         throw HeroRepositoryError.transport

@@ -17,8 +17,8 @@ final class SuperHeroBattleUITests: XCTestCase {
         XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 5))
     }
 
-    /// Flujo principal de selección de equipos con fakes: Duelos → 3v3 →
-    /// relleno aleatorio de ambos equipos → iniciar combate.
+    /// Main team selection flow with fakes: Duels → 3v3 →
+    /// random fill of both teams → start combat.
     @MainActor
     func testTeamSelectionRandomFlowReachesCombat() throws {
         let app = XCUIApplication()
@@ -60,7 +60,7 @@ final class SuperHeroBattleUITests: XCTestCase {
             app.staticTexts["combat.narration"].waitForExistence(timeout: 10),
             "No se mostró la narración"
         )
-        // El ganador y los totales reales se revelan con la narración publicada.
+        // The winner and the actual totals are revealed with the published narration.
         XCTAssertTrue(
             app.staticTexts["combat.outcome"].waitForExistence(timeout: 5),
             "No se reveló el ganador tras la narración"
@@ -79,8 +79,8 @@ final class SuperHeroBattleUITests: XCTestCase {
         )
     }
 
-    /// Flujo con fakes: combate completo → historial con el registro →
-    /// borrado individual desde el detalle → estado vacío.
+    /// Flow with fakes: full combat → history with the record →
+    /// individual delete from the detail → empty state.
     @MainActor
     func testCombatIsSavedAndDeletableInHistory() throws {
         let app = XCUIApplication()
@@ -118,7 +118,7 @@ final class SuperHeroBattleUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["combat.narration"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["combat.outcome"].waitForExistence(timeout: 5))
 
-        // Guardado explícito: habilitado con la narración publicada.
+        // Explicit save: enabled once the narration is published.
         let save = app.buttons["combat.save"]
         XCTAssertTrue(save.waitForExistence(timeout: 5), "Falta el botón de guardar")
         XCTAssertTrue(
@@ -135,7 +135,7 @@ final class SuperHeroBattleUITests: XCTestCase {
         )
         saveConfirm.tap()
 
-        // Tras guardar volvemos a Home sin back-taps.
+        // After saving we return to Home without back taps.
         let history = app.buttons["home.history"]
         XCTAssertTrue(
             history.waitForExistence(timeout: 10),
@@ -149,7 +149,7 @@ final class SuperHeroBattleUITests: XCTestCase {
             "El combate no se guardó en el historial"
         )
 
-        // El alerta de vaciado debe presentarse y cancelar sin destruir nada.
+        // The clear-all alert must be presented and cancelled without destroying anything.
         let clear = app.buttons["history.clear"]
         XCTAssertTrue(clear.waitForExistence(timeout: 5))
         clear.tap()
@@ -166,7 +166,7 @@ final class SuperHeroBattleUITests: XCTestCase {
             "Cancelar el vaciado no debe borrar el registro"
         )
 
-        // Borrado individual: presionar el combate abre su detalle.
+        // Individual delete: tapping the combat opens its detail.
         row.tap()
 
         let delete = app.buttons["history.detail.delete"]
@@ -182,7 +182,7 @@ final class SuperHeroBattleUITests: XCTestCase {
             "El alerta de borrado individual no se presentó"
         )
 
-        // Cancelar conserva el combate en el detalle.
+        // Cancelling keeps the combat in the detail.
         app.alerts.buttons["history.delete.cancel"].firstMatch.tap()
         XCTAssertTrue(
             app.staticTexts["history.detail.outcome"].waitForExistence(timeout: 5),
@@ -192,7 +192,7 @@ final class SuperHeroBattleUITests: XCTestCase {
         delete.tap()
         app.alerts.buttons["history.delete.confirm"].firstMatch.tap()
 
-        // Tras borrar, el detalle vuelve al listado vacío.
+        // After deleting, the detail returns to the empty list.
         let emptyState = app.staticTexts["history.empty"]
         XCTAssertTrue(
             emptyState.waitForExistence(timeout: 10),
@@ -200,15 +200,15 @@ final class SuperHeroBattleUITests: XCTestCase {
         )
     }
 
-    /// Smoke test de pantallas de detalle y ajustes: sin lógica de negocio,
-    /// solo verifica que son alcanzables desde la navegación principal.
+    /// Smoke test for the detail and settings screens: no business logic,
+    /// just verifies they are reachable from the main navigation.
     @MainActor
     func testHeroDetailAndSettingsAreReachable() throws {
         let app = XCUIApplication()
         app.launchArguments += ["-uitest-fakes"]
         app.launch()
 
-        // Detalle de héroe desde la Guía.
+        // Hero detail from the Guide.
         let guide = app.buttons["home.guide"]
         XCTAssertTrue(guide.waitForExistence(timeout: 5))
         guide.tap()
@@ -226,13 +226,13 @@ final class SuperHeroBattleUITests: XCTestCase {
             "No se abrió el detalle del héroe"
         )
 
-        // Volver a Home relanzando la app: determinista en cualquier pose
-        // del iPhone Duo, donde los controles de navegación se montan en el
-        // lateral y el botón atrás no siempre es localizable.
+        // Return to Home by relaunching the app: deterministic in any
+        // iPhone Duo pose, where navigation controls are mounted along the
+        // side edge and the back button is not always locatable.
         app.terminate()
         app.launch()
 
-        // Ajustes desde la barra de Home.
+        // Settings from the Home bar.
         let settings = app.buttons["home.settings"]
         XCTAssertTrue(settings.waitForExistence(timeout: 5))
         settings.tap()
@@ -243,14 +243,14 @@ final class SuperHeroBattleUITests: XCTestCase {
         )
     }
 
-    /// Smoke test del detalle de combate guardado en el historial.
+    /// Smoke test for the saved combat detail in the history.
     @MainActor
     func testHistoryDetailIsReachable() throws {
         let app = XCUIApplication()
         app.launchArguments += ["-uitest-fakes"]
         app.launch()
 
-        // Combate 1v1 rápido con fakes.
+        // Quick 1v1 combat with fakes.
         let duels = app.buttons["home.duels"]
         XCTAssertTrue(duels.waitForExistence(timeout: 5))
         duels.tap()
@@ -275,7 +275,7 @@ final class SuperHeroBattleUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["combat.narration"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["combat.outcome"].waitForExistence(timeout: 5))
 
-        // Guardar y volver a Home.
+        // Save and return to Home.
         let save = app.buttons["combat.save"]
         XCTAssertTrue(save.waitForExistence(timeout: 5))
         XCTAssertTrue(waitForEnabled(save, timeout: 10))
@@ -286,7 +286,7 @@ final class SuperHeroBattleUITests: XCTestCase {
         XCTAssertTrue(history.waitForExistence(timeout: 10))
         history.tap()
 
-        // Abrir el detalle del registro.
+        // Open the record detail.
         let row = app.buttons["history.row"].firstMatch
         XCTAssertTrue(
             row.waitForExistence(timeout: 10),
@@ -304,10 +304,10 @@ final class SuperHeroBattleUITests: XCTestCase {
         )
     }
 
-    /// Regresión del arrangement de la pantalla interior: el split es
-    /// adaptativo (HIG) — equipos lado a lado en horizontal y apilados en
-    /// vertical. El umbral de 600 pt separa los destinos de la suite:
-    /// iPhone (compact) y pantalla interior del Duo (regular).
+    /// Regression test for the inner screen arrangement: the split is
+    /// adaptive (HIG) — teams side by side in landscape and stacked in
+    /// portrait. The 600 pt threshold separates the suite's destinations:
+    /// iPhone (compact) and the Duo inner screen (regular).
     @MainActor
     func testTeamSelectionPanelsMatchWindowSizeClass() throws {
         let app = XCUIApplication()
@@ -338,14 +338,14 @@ final class SuperHeroBattleUITests: XCTestCase {
         let isLandscape = window.width > window.height
 
         if isRegular, isLandscape {
-            // Duo abierto en horizontal: Equipo A a la izquierda, B a la derecha.
+            // Duo open in landscape: Team A on the left, B on the right.
             XCTAssertGreaterThanOrEqual(
                 teamBRandom.frame.minX + 1,
                 teamARandom.frame.maxX,
                 "En el Duo abierto en horizontal los equipos deben quedar lado a lado"
             )
         } else {
-            // Compact o Duo abierto en vertical: A arriba, B abajo.
+            // Compact or Duo open in portrait: A on top, B below.
             XCTAssertGreaterThanOrEqual(
                 teamBRandom.frame.minY + 1,
                 teamARandom.frame.maxY,
@@ -354,7 +354,7 @@ final class SuperHeroBattleUITests: XCTestCase {
         }
     }
 
-    /// Espera a que un elemento existente esté habilitado.
+    /// Waits until an existing element is enabled.
     @MainActor
     private func waitForEnabled(
         _ element: XCUIElement,
@@ -367,7 +367,7 @@ final class SuperHeroBattleUITests: XCTestCase {
         return XCTWaiter.wait(for: [enabled], timeout: timeout) == .completed
     }
 
-    /// Hace scroll ascendente hasta que el elemento es visible y golpeable.
+    /// Scrolls up until the element is visible and hittable.
     @MainActor
     private func scrollToHittable(_ element: XCUIElement, in app: XCUIApplication) {
         for _ in 0..<8 where !element.isHittable {

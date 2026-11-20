@@ -1,9 +1,9 @@
 import Foundation
 
-/// Callback de selección de héroe. Activa el modo picker de la Guía.
+/// Hero selection callback. It enables the Guide's picker mode.
 typealias HeroSelectionHandler = @MainActor (Hero) -> Void
 
-/// Estado de la Guía: catálogo paginado por IDs y búsqueda explícita.
+/// State for the Guide: a paginated, ID-based catalog and explicit search.
 @MainActor
 @Observable
 final class CharacterGuideViewModel {
@@ -12,8 +12,8 @@ final class CharacterGuideViewModel {
 
     let search: HeroSearchViewModel
 
-    /// Handler opcional de selección. Cuando es non-nil la Guía funciona
-    /// como selector: las filas eligen un héroe en lugar de navegar al detalle.
+    /// Optional selection handler. When non-nil the Guide works
+    /// as a picker: rows choose a hero instead of navigating to the detail.
     let onHeroSelected: HeroSelectionHandler?
 
     private(set) var isSearching = false
@@ -88,14 +88,14 @@ final class CharacterGuideViewModel {
         loadNextPage()
     }
 
-    /// Reintenta leer el índice cuando falló el recurso empaquetado.
+    /// Retries reading the index when the bundled resource failed.
     func retryCatalog() {
         catalogFailure = nil
         hasLoadedCatalog = false
         loadIfNeeded()
     }
 
-    /// Carga la siguiente página si no hay otra en curso ni un error pendiente.
+    /// Loads the next page if none is in flight and no error is pending.
     func loadNextPage() {
         guard pageTask == nil,
               pageFailure == nil,
@@ -140,7 +140,7 @@ final class CharacterGuideViewModel {
         loadNextPage()
     }
 
-    /// Precarga la página siguiente cuando el usuario se acerca al final visible.
+    /// Prefetches the next page as the user approaches the visible end.
     func prefetchIfNeeded(currentHero: Hero) {
         guard hasMorePages, pageFailure == nil, !isLoadingPage else { return }
 
@@ -171,7 +171,7 @@ final class CharacterGuideViewModel {
         search.clear()
     }
 
-    /// Cancela trabajo en curso al salir de la pantalla sin borrar lo publicado.
+    /// Cancels in-flight work when leaving the screen without erasing published content.
     func cancelActiveWork() {
         search.cancelActiveSearch()
 

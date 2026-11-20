@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Fila de carga que mantiene la estructura de `HeroResultRow`.
+/// Loading skeleton row that mirrors the layout of `HeroResultRow`.
 struct HeroSkeletonRow: View {
     var body: some View {
         HStack(spacing: 14) {

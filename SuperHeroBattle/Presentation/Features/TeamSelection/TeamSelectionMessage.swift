@@ -1,6 +1,6 @@
 import Foundation
 
-/// Mensajes presentables de la selección de equipos.
+/// Presentable team selection messages.
 nonisolated enum TeamSelectionMessage: Equatable, Sendable {
     case duplicateHero
     case noHeroesAvailable

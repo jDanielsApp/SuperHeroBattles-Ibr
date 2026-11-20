@@ -1,10 +1,10 @@
 import Foundation
 
-/// Fuente de aleatoriedad inyectable para sortear IDs de personajes,
-/// siguiendo el patrón de `RandomHeroPicker`.
+/// Injectable source of randomness for drawing random character IDs,
+/// following the pattern of `RandomHeroPicker`.
 nonisolated protocol RandomIDPicker: Sendable {
-    /// Sortea `count` IDs únicos de `ids`, excluyendo `excludedIDs`.
-    /// Devuelve menos si el índice disponible se agota.
+    /// Draws `count` unique IDs from `ids`, excluding `excludedIDs`.
+    /// Returns fewer if the available pool runs out.
     func pickIDs(from ids: [String], excluding excludedIDs: Set<String>, count: Int) -> [String]
 }
 

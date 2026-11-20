@@ -1,14 +1,14 @@
 import SwiftUI
 
-/// Vista común de estados ilustrativos: grande, centrada y decorativa.
-/// Reutilizada por la columna de detalle vacía del split de la Guía.
+/// Shared view for illustrative states: large, centered, and decorative.
+/// Reused by the empty detail column of the Guide split view.
 struct FeaturePlaceholderView: View {
     let titleKey: LocalizableStringKey
     let headlineKey: LocalizableStringKey
     let messageKey: LocalizableStringKey
     let systemImage: String
     let accent: Color
-    /// Badge "Próximamente": solo para funciones aún no disponibles.
+    /// "Coming soon" badge: only for features not yet available.
     var showsComingSoonBadge = true
 
     var body: some View {

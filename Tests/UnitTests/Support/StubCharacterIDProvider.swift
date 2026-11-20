@@ -1,7 +1,7 @@
 import Foundation
 @testable import SuperHeroBattle
 
-/// Proveedor de IDs controlable para tests.
+/// Controllable ID provider for tests.
 nonisolated struct StubCharacterIDProvider: CharacterIDProviding {
     let ids: [String]
     let error: CharacterIDProviderError?

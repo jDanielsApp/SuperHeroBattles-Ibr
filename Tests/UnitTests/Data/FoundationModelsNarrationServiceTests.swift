@@ -1,8 +1,8 @@
 import XCTest
 @testable import SuperHeroBattle
 
-/// Prueba la estrategia de reintento del servicio con el seam inyectable:
-/// nunca invoca el modelo real.
+/// Tests the service's retry strategy through the injected seam:
+/// the real model is never invoked.
 final class FoundationModelsNarrationServiceTests: XCTestCase {
     func testRetriesWithSafePromptWhenGuardrailTriggers() async throws {
         let recorder = AttemptRecorder()
@@ -160,7 +160,7 @@ final class FoundationModelsNarrationServiceTests: XCTestCase {
     }
 }
 
-/// Registro de intentos con aislamiento por actor.
+/// Records attempts with actor isolation.
 private actor AttemptRecorder {
     private var instructionsHistory: [String] = []
     private var temperatureHistory: [Double] = []

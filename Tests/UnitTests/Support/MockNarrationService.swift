@@ -1,7 +1,7 @@
 import Foundation
 @testable import SuperHeroBattle
 
-/// Servicio de narración controlable para tests: nunca invoca el modelo real.
+/// Controllable narration service for tests: never invokes the real model.
 nonisolated final class MockNarrationService: CombatNarrationService, @unchecked Sendable {
     nonisolated enum Behavior: Sendable {
         case narrative(CombatNarrative)
@@ -10,7 +10,7 @@ nonisolated final class MockNarrationService: CombatNarrationService, @unchecked
         case cancellation
     }
 
-    /// Registro aislado en un actor: seguro ante concurrencia.
+    /// Recording isolated in an actor: safe under concurrency.
     private actor Recorder {
         private var count = 0
         private var lastLanguage: NarrationLanguage?

@@ -1,7 +1,7 @@
 import Foundation
 
-/// Ejecuta el combate mediante el motor y devuelve el resultado trazable.
-/// Síncrono y puro: la resolución no depende de la interfaz.
+/// Runs the combat through the engine and returns the traceable result.
+/// Synchronous and pure: resolution does not depend on the UI.
 nonisolated struct ResolveCombatUseCase: Sendable {
     private let engine: CombatEngine
 

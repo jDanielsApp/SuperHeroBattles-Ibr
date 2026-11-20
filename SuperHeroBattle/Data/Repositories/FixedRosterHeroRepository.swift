@@ -1,13 +1,13 @@
 import Foundation
 
-/// Repositorio con una plantilla fija de héroes sintéticos.
+/// Repository backed by a fixed roster of synthetic heroes.
 ///
-/// Solo se usa cuando la app arranca en modo fakes (`-uitest-fakes`) y en
-/// previews. Sus datos son de prueba y nunca se presentan como si vinieran
-/// de SuperHeroAPI.
+/// Only used when the app launches in fakes mode (`-uitest-fakes`) and in
+/// previews. Its data is for testing and is never presented as if it came
+/// from SuperHeroAPI.
 nonisolated struct FixedRosterHeroRepository: HeroRepository {
-    /// Plantilla sintética con héroes suficientes para llenar un 3 vs 3
-    /// sin repetidos y con variedad de editorial y género.
+    /// Synthetic roster with enough heroes to fill a 3 vs 3 without
+    /// duplicates and with a variety of publishers and genders.
     static let roster: [Hero] = (1...12).map { index in
         Hero(
             id: String(index),

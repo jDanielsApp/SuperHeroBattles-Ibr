@@ -11,7 +11,7 @@ SuperHeroBattle es una app iOS nativa que permite:
 - Generar narrativas de combate con Apple Foundation Models.
 - Guardar el historial local de combates con Realm.
 
-El código, los nombres de tipos, las ramas y los commits se escriben en inglés. La documentación y los comentarios técnicos se escriben en español. Los textos visibles para el usuario se externalizan en inglés y español; los nombres propios de personajes, grupos y editoriales no se traducen.
+El código, los nombres de tipos, las ramas, los commits y los comentarios técnicos (`//`, `///`, `// MARK:`) se escriben en inglés. La documentación del proyecto (`docs/`) se mantiene en español. Los textos visibles para el usuario se externalizan en inglés y español; los nombres propios de personajes, grupos y editoriales no se traducen.
 
 ## 2. Stack y requisitos
 

@@ -1,9 +1,9 @@
 import Foundation
 
-/// Representación persistible y estable de `Hero`.
+/// Persistable, stable representation of `Hero`.
 ///
-/// Se guarda como JSON dentro de Realm para no acoplar el esquema de persistencia
-/// a los cambios internos de las entidades de dominio.
+/// Stored as JSON inside Realm so the persistence schema stays decoupled
+/// from internal changes in the domain entities.
 nonisolated struct HeroRecord: Codable, Sendable {
     let id: String
     let name: String

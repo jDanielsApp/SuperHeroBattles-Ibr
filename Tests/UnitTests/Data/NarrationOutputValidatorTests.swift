@@ -51,7 +51,7 @@ final class NarrationOutputValidatorTests: XCTestCase {
     }
 
     func testWinnerMissingFromVerdictThrowsInvalidResponse() {
-        // El Equipo A solo aparece en la apertura: el veredicto nombra al B.
+        // Team A only appears in the opening: the verdict names Team B.
         let narration = makeNarration(
             opening: "Equipo A contra Equipo B.",
             verdict: "El bando B se impone."
@@ -96,8 +96,8 @@ final class NarrationOutputValidatorTests: XCTestCase {
     }
 
     func testSpanishNarrationPassesWithEnglishLabels() throws {
-        // El modelo puede ecoar las etiquetas del roster aunque se narra en
-        // español: el validador acepta ambos idiomas.
+        // The model may echo the roster labels even when narrating in
+        // Spanish: the validator accepts both languages.
         let narration = makeNarration(
             opening: "Team A y Team B se miden en la arena.",
             verdict: "El veredicto es claro: gana Team A."
@@ -140,8 +140,8 @@ final class NarrationOutputValidatorTests: XCTestCase {
     }
 
     func testHeroNamesSatisfyBothSides() throws {
-        // Reproduce el caso real del dispositivo: el modelo narró solo con
-        // nombres de héroes, sin mencionar a ningún equipo.
+        // Reproduces a real device case: the model narrated using only
+        // hero names, without mentioning any team.
         let narration = makeNarration(
             opening: "El combate comienza con Batman enfrentándose a Joker.",
             exchange: "Joker responde con un giro brillante.",
@@ -163,7 +163,7 @@ final class NarrationOutputValidatorTests: XCTestCase {
             verdict: "Batman domina el desenlace."
         )
 
-        // Batman pertenece al Equipo A, el bando ganador: veredicto válido.
+        // Batman belongs to Team A, the winning side: a valid verdict.
         XCTAssertNoThrow(
             try NarrationOutputValidator.validatedText(
                 from: narration,
@@ -178,7 +178,7 @@ final class NarrationOutputValidatorTests: XCTestCase {
             verdict: "Joker domina el desenlace."
         )
 
-        // Joker pertenece al Equipo B, que pierde: veredicto inválido.
+        // Joker belongs to Team B, which loses: an invalid verdict.
         XCTAssertThrowsError(
             try NarrationOutputValidator.validatedText(
                 from: narration,

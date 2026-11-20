@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// Fondo compartido de la identidad comic book.
+/// Shared background for the comic book identity.
 ///
-/// Degradado base con tramas de imprenta (halftone) y dos manchas de color
-/// difuminadas para dar profundidad sin saturar.
+/// Base gradient with halftone print patterns and two blurred color
+/// splashes to add depth without oversaturating.
 struct ComicBackground: View {
     var body: some View {
         LinearGradient(
@@ -33,7 +33,7 @@ struct ComicBackground: View {
     }
 }
 
-/// Tramas de puntos de baja opacidad, dibujadas en un único `Canvas`.
+/// Low-opacity dot pattern drawn in a single `Canvas`.
 private struct HalftoneOverlay: View {
     private let spacing: CGFloat = 18
     private let dotRadius: CGFloat = 1.5

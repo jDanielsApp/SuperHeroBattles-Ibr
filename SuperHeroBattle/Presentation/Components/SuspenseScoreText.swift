@@ -1,19 +1,19 @@
 import SwiftUI
 
-/// Lógica del marcador en suspense, pura y testeable.
+/// Pure, testable logic for the suspense scoreboard.
 ///
-/// - `revealed`: se muestra la puntuación real.
-/// - `cyclingMystery`: números aleatorios plausibles que rotan (normal).
-/// - `staticMystery`: un único número aleatorio congelado (Reduce Motion).
+/// - `revealed`: the real score is shown.
+/// - `cyclingMystery`: plausible random numbers rotating (default).
+/// - `staticMystery`: a single frozen random number (Reduce Motion).
 nonisolated enum SuspenseScore {
-    /// Rango plausible del total de un combatiente (base + suerte).
+    /// Plausible range for a combatant's total (base + luck).
     static let combatantRange: ClosedRange<Double> = 12...140
 
-    /// Cadencia de rotación del marcador en suspense: legible, sin estrobo.
+    /// Rotation cadence for the suspense scoreboard: readable, no strobing.
     static let cyclingInterval: TimeInterval = 0.12
 
-    /// Rango plausible del total de un equipo, escalado por su tamaño y
-    /// holgado para absorber el feeling.
+    /// Plausible range for a team's total, scaled by its size and
+    /// generous enough to absorb the feeling.
     static func teamRange(forTeamSize size: Int) -> ClosedRange<Double> {
         let count = Double(max(1, size))
         return 12 * count...(140 * count + 99)
@@ -26,7 +26,7 @@ nonisolated enum SuspenseScore {
         return reduceMotion ? .staticMystery : .cyclingMystery
     }
 
-    /// Número aleatorio plausible dentro del rango pedido.
+    /// Plausible random number within the requested range.
     static func randomMystery(in range: ClosedRange<Double>) -> Double {
         .random(in: range)
     }
@@ -38,12 +38,12 @@ nonisolated enum SuspenseScore {
     }
 }
 
-/// Puntuación en suspense: mientras la narración no está publicada muestra
-/// números aleatorios plausibles; al revelarse muestra el valor real.
+/// Suspense score: while the narration is not yet published it shows
+/// plausible random numbers; once revealed it shows the real value.
 ///
-/// Reduce Motion congela un único número aleatorio. VoiceOver nunca
-/// anuncia el número aleatorio: en suspense se lee la etiqueta de
-/// puntuación pendiente y al revelarse la puntuación real.
+/// Reduce Motion freezes a single random number. VoiceOver never
+/// announces the random number: while in suspense the pending score
+/// label is read, and the real score once revealed.
 struct SuspenseScoreText: View {
     let realValue: Double
     let isRevealed: Bool
@@ -86,7 +86,7 @@ struct SuspenseScoreText: View {
                 Text(staticMystery, format: format)
             }
         }
-        // En suspense VoiceOver anuncia el estado, nunca el número aleatorio.
+        // While in suspense, VoiceOver announces the state, never the random number.
         .accessibilityLabel(accessibilityDescription)
     }
 

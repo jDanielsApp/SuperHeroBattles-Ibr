@@ -1,6 +1,6 @@
 import Foundation
 
-/// Registro inmutable del historial. No conserva suerte, feeling ni cálculos intermedios.
+/// Immutable history record. It does not keep luck, affinity, or intermediate calculations.
 nonisolated struct CombatRecord: Identifiable, Equatable, Hashable, Sendable {
     let id: UUID
     let date: Date

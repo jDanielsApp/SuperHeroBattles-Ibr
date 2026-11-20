@@ -5,14 +5,14 @@ struct RootView: View {
 
     @AppStorage("app.language") private var languageRawValue = AppLanguage.system.rawValue
 
-    /// Ruta de la pila: permite volver a la raíz tras guardar un combate.
+    /// Navigation path: allows returning to the root after saving a combat.
     @State private var path = NavigationPath()
 
     private var language: AppLanguage {
         AppLanguage(rawValue: languageRawValue) ?? .system
     }
 
-    /// Idioma de la narración derivado de la preferencia del usuario.
+    /// Narration language derived from the user's preference.
     private var narrationLanguage: NarrationLanguage {
         NarrationLanguage(rawValue: language.narrationCode) ?? .english
     }

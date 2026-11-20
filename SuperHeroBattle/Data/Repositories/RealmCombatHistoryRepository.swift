@@ -1,11 +1,11 @@
 import Foundation
 import RealmSwift
 
-/// Historial de combates persistido en Realm.
+/// Combat history persisted in Realm.
 ///
-/// Mismo patrón que `RealmHeroCatalogRepository`: Realm confinado al actor
-/// principal, métodos del protocolo `nonisolated` que delegan en helpers
-/// aislados y solo entidades de dominio en la interfaz.
+/// Same pattern as `RealmHeroCatalogRepository`: Realm confined to the main
+/// actor, `nonisolated` protocol methods delegating to isolated helpers,
+/// and only domain entities in the interface.
 @MainActor
 final class RealmCombatHistoryRepository: CombatHistoryRepository {
     private let realm: Realm
@@ -14,7 +14,7 @@ final class RealmCombatHistoryRepository: CombatHistoryRepository {
         realm = try Realm(configuration: configuration)
     }
 
-    /// Configuración de producción con el esquema y las migraciones centralizados.
+    /// Production configuration with centralized schema and migrations.
     static func live() throws -> RealmCombatHistoryRepository {
         try RealmCombatHistoryRepository(configuration: RealmStore.configuration())
     }

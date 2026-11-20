@@ -1,6 +1,6 @@
 import Foundation
 
-/// Errores presentables del catálogo local. La vista solo muestra claves localizadas.
+/// Presentable errors for the local catalog. The view only shows localized keys.
 nonisolated enum HeroCatalogFailure: Equatable, Sendable {
     case unavailable
     case empty

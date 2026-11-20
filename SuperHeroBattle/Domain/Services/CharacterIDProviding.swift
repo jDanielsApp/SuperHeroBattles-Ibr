@@ -1,12 +1,12 @@
 import Foundation
 
-/// Fuente del índice de IDs de personajes empaquetado con la app.
+/// Source of the character ID index bundled with the app.
 nonisolated protocol CharacterIDProviding: Sendable {
-    /// Devuelve los IDs en orden ascendente, sin duplicados.
+    /// Returns the IDs in ascending order, without duplicates.
     func characterIDs() throws -> [String]
 }
 
-/// Errores al leer el índice local de IDs.
+/// Errors thrown while reading the local ID index.
 nonisolated enum CharacterIDProviderError: Error, Equatable, Sendable {
     case resourceMissing
     case unreadable

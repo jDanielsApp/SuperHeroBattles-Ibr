@@ -69,7 +69,7 @@ final class CombatRecordDetailViewModelTests: XCTestCase {
     }
 }
 
-/// Repositorio que cuenta los borrados para verificar el guarda de doble intento.
+/// Repository that counts deletions to verify the double-delete guard.
 private actor CountingDeleteHistoryRepository: CombatHistoryRepository {
     private var deletions = 0
 
@@ -90,7 +90,7 @@ private actor CountingDeleteHistoryRepository: CombatHistoryRepository {
     }
 }
 
-/// Repositorio cuyo `delete` siempre falla: cubre el reintento silencioso.
+/// Repository whose `delete` always fails: covers the silent retry.
 private struct FailingDeleteHistoryRepository: CombatHistoryRepository {
     func save(_ record: CombatRecord) async throws {}
 

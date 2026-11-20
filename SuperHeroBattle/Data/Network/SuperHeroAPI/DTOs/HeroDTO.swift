@@ -1,7 +1,7 @@
 import Foundation
 
-/// Elemento de un resultado de búsqueda o de una consulta de detalle.
-/// Todos los campos son opcionales para tolerar respuestas parciales.
+/// Element of a search result or a detail lookup.
+/// All fields are optional to tolerate partial responses.
 nonisolated struct HeroDTO: Decodable, Sendable {
     let response: String?
     let error: String?

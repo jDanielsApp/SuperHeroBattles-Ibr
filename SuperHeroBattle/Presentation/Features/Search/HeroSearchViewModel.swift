@@ -69,14 +69,14 @@ final class HeroSearchViewModel {
         submit()
     }
 
-    /// Limpia el campo, cancela la búsqueda activa y vuelve al estado inicial.
+    /// Clears the field, cancels the active search, and returns to the idle state.
     func clear() {
         query = ""
         cancelActiveSearch()
         state = .idle
     }
 
-    /// Cancela sin borrar resultados ya publicados. Se usa al salir de la vista.
+    /// Cancels without discarding already-published results. Used when leaving the view.
     func cancelActiveSearch() {
         activeTask?.cancel()
         activeTask = nil

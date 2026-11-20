@@ -1,7 +1,7 @@
 import Foundation
 
-/// Errores de dominio del acceso remoto a SuperHeroAPI.
-/// No incluyen la URL ni el token: el token viaja en la ruta de la petición.
+/// Domain errors for remote SuperHeroAPI access.
+/// They never include the URL or the token: the token travels in the request path.
 nonisolated enum HeroRepositoryError: Error, Equatable, Sendable {
     case notConfigured
     case notFound

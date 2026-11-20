@@ -171,8 +171,8 @@ final class CombatEngineTests: XCTestCase {
     }
 
     func testResultIsFullyTraceable() {
-        // Réplica del ejemplo conceptual de la especificación con las reglas
-        // reales: tres parejas a 33 puntos suman 99, no 66.
+        // Replicates the conceptual example from the combat rules:
+        // three pairs at 33 points add up to 99, not 66.
         let engine = CombatEngine(
             luckProvider: SequenceLuckProvider([40, 25, 50, 7, 7, 7])
         )

@@ -10,7 +10,7 @@ nonisolated enum NarrationLanguage: String, Equatable, Sendable {
     case spanish = "es"
 }
 
-/// Contrato de generación narrativa. La implementación real y el fallback son intercambiables.
+/// Narrative generation contract. The real implementation and the fallback are interchangeable.
 nonisolated protocol CombatNarrationService: Sendable {
     var availability: NarrationAvailability { get async }
     func narrate(

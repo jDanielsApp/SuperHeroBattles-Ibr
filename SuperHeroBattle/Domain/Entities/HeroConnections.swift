@@ -1,7 +1,7 @@
 import Foundation
 
-/// Conexiones del personaje. La API entrega texto libre y la documentación
-/// recomienda no interpretarlo automáticamente, así que se conserva tal cual.
+/// The character's connections. The API delivers free-form text and its
+/// documentation recommends not interpreting it automatically, so it is kept as-is.
 nonisolated struct HeroConnections: Hashable, Sendable {
     let groupAffiliation: String?
     let relatives: String?

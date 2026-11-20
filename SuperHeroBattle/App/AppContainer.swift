@@ -1,11 +1,11 @@
 import Foundation
 import Observation
 
-/// Composición de dependencias de la app. Se irá completando por fases.
+/// Composition of the app's dependencies.
 @MainActor
 @Observable
 final class AppContainer {
-    /// Argumento de lanzamiento que activa los fakes de UI tests.
+    /// Launch argument that enables the UI test fakes.
     static let uiTestFakesArgument = "-uitest-fakes"
 
     let searchHeroes: SearchHeroesUseCase
@@ -29,7 +29,7 @@ final class AppContainer {
         let remote: any HeroRepository
 
         if usesUITestFakes {
-            // Modo fakes para UI tests: plantilla sintética, sin red ni token.
+            // UI test fake mode: synthetic roster, no network and no token.
             remote = FixedRosterHeroRepository()
         } else if let configuration = SuperHeroAPIConfiguration.live() {
             let client = SuperHeroAPIClient(
@@ -58,8 +58,8 @@ final class AppContainer {
             engine: CombatEngine(luckProvider: SystemLuckProvider())
         )
 
-        // El servicio de IA solo se instancia fuera del modo fakes; la
-        // plantilla siempre queda como fallback honesto y determinista.
+        // The AI service is only instantiated outside fake mode; the template
+        // always remains an honest, deterministic fallback.
         let templateNarration = TemplateNarrationService()
         let narrationService: any CombatNarrationService = usesUITestFakes
             ? templateNarration
@@ -138,8 +138,8 @@ final class AppContainer {
         )
     }
 
-    /// Realm es la caché principal. Si no se puede abrir, la app sigue
-    /// funcionando con un catálogo en memoria durante esa sesión.
+    /// Realm is the primary store. If it cannot be opened, the app keeps
+    /// running with an in-memory catalog for that session.
     private static func makeCatalogRepository() -> any HeroCatalogRepository {
         do {
             return try RealmHeroCatalogRepository.live()
@@ -148,8 +148,8 @@ final class AppContainer {
         }
     }
 
-    /// Mismo criterio para el historial: Realm como almacenamiento principal
-    /// y memoria como respaldo de sesión si no se puede abrir.
+    /// Same approach for combat history: Realm as the primary store and
+    /// memory as the session fallback when it cannot be opened.
     private static func makeHistoryRepository() -> any CombatHistoryRepository {
         do {
             return try RealmCombatHistoryRepository.live()

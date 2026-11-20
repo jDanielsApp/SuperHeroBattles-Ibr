@@ -1,7 +1,7 @@
 import Foundation
 @testable import SuperHeroBattle
 
-/// Catálogo observable desde los tests: guarda los upserts recibidos.
+/// Catalog observable from tests: stores the upserts it receives.
 actor SpyCatalogRepository: HeroCatalogRepository {
     private var storage: [String: Hero]
     private var upsertedBatches: [[Hero]] = []
@@ -41,7 +41,7 @@ actor SpyCatalogRepository: HeroCatalogRepository {
     }
 }
 
-/// Repositorio remoto con un resultado intercambiable entre llamadas.
+/// Remote repository with an outcome that can be swapped between calls.
 actor SwitchableHeroRepository: HeroRepository {
     private var outcome: StubHeroOutcome
 
@@ -83,7 +83,7 @@ actor SwitchableHeroRepository: HeroRepository {
     }
 }
 
-/// Repositorio remoto con éxitos y fallos por ID.
+/// Remote repository with per-ID successes and failures.
 nonisolated struct PerIDHeroRepository: HeroRepository {
     let heroes: [String: Hero]
     let failures: [String: HeroRepositoryError]
@@ -111,8 +111,8 @@ nonisolated struct PerIDHeroRepository: HeroRepository {
     }
 }
 
-/// Repositorio remoto que suspende cada petición hasta que el test la libera.
-/// Permite medir la concurrencia real del caso de uso.
+/// Remote repository that suspends each request until the test releases it.
+/// Allows measuring the use case's real concurrency.
 actor GatedHeroRepository: HeroRepository {
     private let heroes: [String: Hero]
     private var failures: [String: HeroRepositoryError]

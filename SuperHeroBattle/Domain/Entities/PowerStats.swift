@@ -1,6 +1,6 @@
 import Foundation
 
-/// PowerStats de un personaje. Un valor `nil` significa desconocido, nunca cero.
+/// A character's PowerStats. A `nil` value means unknown, never zero.
 nonisolated struct PowerStats: Hashable, Sendable {
     private let values: [PowerStatKind: Int]
 
@@ -41,7 +41,7 @@ nonisolated struct PowerStats: Hashable, Sendable {
         values.count
     }
 
-    /// Media aritmética de los valores conocidos. Sin valores conocidos devuelve cero.
+    /// Arithmetic mean of the known values. Returns zero when there are no known values.
     var baseScore: Double {
         guard !values.isEmpty else { return 0 }
         return Double(knownValues.reduce(0, +)) / Double(values.count)

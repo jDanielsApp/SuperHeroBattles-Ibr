@@ -1,13 +1,13 @@
 import SwiftUI
 
-/// Pantalla de resultado del combate: puntuaciones trazables, feeling y ganador.
+/// Combat result screen: traceable scores, affinity and winner.
 ///
-/// El veredicto y las puntuaciones reales permanecen en suspense hasta que
-/// la narración está publicada: hasta entonces el banner muestra la
-/// incógnita, los totales rotan números aleatorios y VoiceOver anuncia la
-/// puntuación como pendiente. Al publicarse la narración se retira la
-/// cabecera de choque, se revela el ganador y los marcadores muestran los
-/// valores reales. El resultado matemático es inmutable en todo momento.
+/// The verdict and the real scores stay in suspense until the narration is
+/// published: until then the banner keeps the outcome unknown, the totals
+/// rotate random numbers and VoiceOver announces the score as pending. When
+/// the narration is published the clash banner is removed, the winner is
+/// revealed and the scoreboards show the real values. The mathematical
+/// result is immutable at all times.
 struct CombatView: View {
     @State private var viewModel: CombatViewModel
     @State private var isPresentingSaveConfirmation = false
@@ -20,7 +20,7 @@ struct CombatView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
-    /// iPhone Duo abierto (o iPad): la narración va a la derecha del resto.
+    /// iPhone Duo open (or iPad): the narration sits to the right of the rest.
     private var isWideLayout: Bool {
         horizontalSizeClass == .regular
     }
@@ -52,13 +52,13 @@ struct CombatView: View {
         }
     }
 
-    // MARK: - Reparto de pantalla
+    // MARK: - Layout
 
-    /// Pantalla interior del Duo: `ArrangementView` decide el eje con la
-    /// geometría real —resto y narración lado a lado en horizontal, apilados
-    /// en vertical— y cada panel scrollea por su cuenta. Nunca dentro de un
-    /// ScrollView común: la altura infinita del scroll rompe su decisión
-    /// de eje.
+    /// Duo inner screen: `ArrangementView` decides the axis from the
+    /// real geometry —rest and narration side by side in horizontal, stacked
+    /// in vertical— and each panel scrolls on its own. Never inside a
+    /// common ScrollView: the scroll's infinite height breaks its
+    /// axis decision.
     @available(iOS 27.1, *)
     private var wideLayout: some View {
         ArrangementView {
@@ -81,10 +81,9 @@ struct CombatView: View {
         .arrangementViewStyle(.split)
     }
 
-    /// Bloques de resultado: cabecera en suspense, veredicto y equipos.
+    /// Result blocks: suspense header, verdict and teams.
     private var restBlocks: some View {
         VStack(spacing: 18) {
-            // La cabecera de choque se retira cuando hay narración.
             if !viewModel.isNarrationPublished {
                 introBanner
                     .transition(introTransition)
@@ -112,7 +111,7 @@ struct CombatView: View {
 
     // MARK: - Suspense
 
-    /// Transición de salida de la cabecera de choque; sin movimiento con
+    /// Exit transition for the clash banner; no motion under
     /// Reduce Motion.
     private var introTransition: AnyTransition {
         reduceMotion ? .opacity : .opacity.combined(with: .scale)
@@ -122,10 +121,10 @@ struct CombatView: View {
         reduceMotion ? nil : .easeOut(duration: 0.4)
     }
 
-    // MARK: - Inicio del combate
+    // MARK: - Combat intro
 
-    /// Cabecera decorativa del choque: slot de Lottie con ráfaga comic de
-    /// respaldo. Reduce Motion y ausencia de asset muestran el respaldo.
+    /// Decorative clash header: a Lottie slot with a comic burst
+    /// fallback. Reduce Motion and a missing asset show the fallback.
     private var introBanner: some View {
         HStack(spacing: 18) {
             teamEmblem("A", color: TeamPalette.teamA)
@@ -141,7 +140,7 @@ struct CombatView: View {
         .accessibilityHidden(true)
     }
 
-    /// Ráfaga comic de respaldo con el "VS" central.
+    /// Fallback comic burst with the central "VS".
     private var comicBurst: some View {
         ZStack {
             ForEach(0..<8, id: \.self) { index in
@@ -178,10 +177,10 @@ struct CombatView: View {
         }
     }
 
-    // MARK: - Guardado en el historial
+    // MARK: - History saving
 
-    /// Guardado explícito: el botón se habilita con la narración publicada
-    /// y pide confirmación antes de registrar el combate y volver a Home.
+    /// Explicit saving: the button enables once the narration is published
+    /// and asks for confirmation before recording the combat and returning Home.
     private var saveSection: some View {
         Button {
             isPresentingSaveConfirmation = true
@@ -215,7 +214,7 @@ struct CombatView: View {
         }
     }
 
-    // MARK: - Panel de equipo
+    // MARK: - Team panel
 
     private func teamSection(_ summary: TeamCombatSummary) -> some View {
         let accent = summary.side == .teamA ? TeamPalette.teamA : TeamPalette.teamB
@@ -300,10 +299,10 @@ struct CombatView: View {
         .accessibilityIdentifier("combat.combatant.\(side.rawValue)-\(score.hero.id)")
     }
 
-    // MARK: - Feeling
+    // MARK: - Affinity
 
-    /// La sección de feeling solo aparece si el equipo tiene bonus; un
-    /// equipo sin coincidencias (y el 1v1, sin parejas) no la muestra.
+    /// The affinity section only appears when the team has bonuses; a team
+    /// without matches (and 1v1, with no pairs) doesn't show it.
     @ViewBuilder
     private func affinitySection(_ summary: TeamCombatSummary) -> some View {
         if !summary.affinityBonuses.isEmpty {
@@ -360,7 +359,7 @@ struct CombatView: View {
         .accessibilityElement(children: .combine)
     }
 
-    // MARK: - Detalles de estilo
+    // MARK: - Style details
 
     private var statDivider: some View {
         Text("·")
@@ -380,7 +379,7 @@ struct CombatView: View {
         }
     }
 
-    /// Total del combatiente: en suspense hasta que la narración se publica.
+    /// Combatant total: kept in suspense until the narration is published.
     private func statTotalCaption(_ score: CombatantScore) -> some View {
         HStack(spacing: 3) {
             L10n.text(.combatResultTotal)
@@ -406,8 +405,8 @@ struct CombatView: View {
         let luck = L10n.string(.combatResultLuck, locale: locale)
         let total = L10n.string(.combatResultTotal, locale: locale)
 
-        // En suspense el total real no se anuncia: el marcador está pendiente
-        // de narración y el número visible es aleatorio.
+        // While in suspense the real total is not announced: the scoreboard is
+        // pending narration and the visible number is random.
         let totalDescription = viewModel.isNarrationPublished
             ? score.totalScore.formatted(scoreFormat)
             : L10n.string(.combatScorePending, locale: locale)

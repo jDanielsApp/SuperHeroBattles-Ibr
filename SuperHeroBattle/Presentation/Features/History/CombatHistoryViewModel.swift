@@ -1,6 +1,6 @@
 import Foundation
 
-/// Estado de la pantalla de historial de combates.
+/// State for the combat history screen.
 @MainActor
 @Observable
 final class CombatHistoryViewModel {
@@ -32,7 +32,7 @@ final class CombatHistoryViewModel {
             records = try await getHistory.execute()
             loadFailed = false
         } catch is CancellationError {
-            // Sin cambios: la vista desapareció o se recargó.
+            // No state change: the view disappeared or the load restarted.
         } catch {
             loadFailed = true
         }
@@ -48,7 +48,7 @@ final class CombatHistoryViewModel {
             try await deleteHistory.executeAll()
             records.removeAll()
         } catch {
-            // Sin cambios: el listado conserva los registros.
+            // No state change: the list keeps its records.
         }
     }
 }

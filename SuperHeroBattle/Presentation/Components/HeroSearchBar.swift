@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Barra de búsqueda explícita: botón y tecla Return. No lanza peticiones por tecla.
+/// Explicit search bar: button and Return key. It does not fire a request per keystroke.
 struct HeroSearchBar: View {
     @Binding var query: String
     let canSubmit: Bool

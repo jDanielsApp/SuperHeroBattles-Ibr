@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Tipografía relativa para respetar Dynamic Type.
+/// Relative typography that respects Dynamic Type.
 nonisolated enum ComicTypography {
     static let display = Font.system(.largeTitle, design: .rounded).weight(.black)
     static let title = Font.system(.title, design: .rounded).weight(.heavy)

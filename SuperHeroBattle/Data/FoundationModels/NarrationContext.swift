@@ -1,16 +1,17 @@
 import Foundation
 
-/// Contexto determinista para la narración de un combate.
+/// Deterministic context for a combat narration.
 ///
-/// Se construye exclusivamente desde el dominio y **etiqueta cada combatiente
-/// con su bando**: en 2v2 y 3v3, o cuando el mismo personaje aparece en ambos
-/// equipos, el modelo necesita distinguir sin ambigüedad quién pega en qué
-/// lado. El umbral `clearWinGap` decide si la victoria se narra como clara.
+/// Built exclusively from the domain and **labels each combatant with
+/// their side**: in 2v2 and 3v3, or when the same character appears on both
+/// teams, the model needs to tell unambiguously who fights on which side.
+/// The `clearWinGap` threshold decides whether the victory is narrated as
+/// clear.
 nonisolated struct NarrationContext: Equatable, Sendable {
-    /// Diferencia de puntos a partir de la cual la victoria es clara.
+    /// Point gap from which a victory counts as clear.
     static let clearWinGap: Double = 30
 
-    /// Combatiente etiquetado con su bando y sus puntuaciones.
+    /// A combatant labeled with their side and scores.
     struct HeroContext: Equatable, Sendable {
         let side: TeamSide
         let hero: Hero

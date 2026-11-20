@@ -1,6 +1,6 @@
 import Foundation
 
-/// Decorador que añade caché TTL a las búsquedas y deja el detalle sin cachear.
+/// Decorator that adds TTL caching to searches and leaves detail lookups uncached.
 nonisolated struct CachedHeroRepository: HeroRepository {
     private let remote: any HeroRepository
     private let cache: HeroSearchCache

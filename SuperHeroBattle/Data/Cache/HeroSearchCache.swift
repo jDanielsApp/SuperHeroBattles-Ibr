@@ -1,7 +1,7 @@
 import Foundation
 
-/// Caché en memoria con TTL para búsquedas de héroes.
-/// La clave es la query normalizada y no se cachean errores.
+/// In-memory TTL cache for hero searches.
+/// Keyed by the normalized query; errors are never cached.
 actor HeroSearchCache {
     private struct Entry {
         let heroes: [Hero]

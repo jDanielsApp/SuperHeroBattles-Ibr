@@ -1,6 +1,6 @@
 import Foundation
 
-/// Errores presentables de la búsqueda. La vista solo muestra claves localizadas.
+/// Presentable search failures. The view only shows localized keys.
 nonisolated enum HeroSearchFailure: Equatable, Sendable {
     case notConfigured
     case offline

@@ -1,6 +1,6 @@
 import Foundation
 
-/// Idioma seleccionado por el usuario para la interfaz y las narraciones.
+/// Language selected by the user for the interface and narrations.
 nonisolated enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
     case system
     case english = "en"
@@ -19,7 +19,7 @@ nonisolated enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// Código que se envía a Foundation Models. `system` se resuelve con el locale actual.
+    /// Code sent to Foundation Models. `system` resolves to the current locale.
     var narrationCode: String {
         switch self {
         case .system:

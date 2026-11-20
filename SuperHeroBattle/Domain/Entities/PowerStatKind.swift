@@ -1,6 +1,6 @@
 import Foundation
 
-/// Identifica cada uno de los seis PowerStats de SuperHeroAPI.
+/// Identifies each of the six PowerStats from SuperHeroAPI.
 nonisolated enum PowerStatKind: String, CaseIterable, Identifiable, Hashable, Sendable {
     case intelligence
     case strength

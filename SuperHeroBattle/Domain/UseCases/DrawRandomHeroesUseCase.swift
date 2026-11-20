@@ -1,13 +1,13 @@
 import Foundation
 
-/// Sortea IDs aleatorios del índice completo de personajes y obtiene sus
-/// fichas con la caché local delante.
+/// Draws random IDs from the full character index and fetches their
+/// profiles with the local cache in front.
 ///
-/// - Los IDs ya sorteados o excluidos no se repiten.
-/// - Un `notFound` se omite sin romper el sorteo.
-/// - Índice vacío o agotado devuelve un resultado vacío, no un error.
-/// - Los errores del índice o de la carga se propagan para que quien
-///   llame decida su respaldo.
+/// - Already drawn or excluded IDs are never repeated.
+/// - A `notFound` is skipped without breaking the draw.
+/// - An empty or exhausted index returns an empty outcome, not an error.
+/// - Index or loading errors are propagated so the caller decides
+///   how to recover.
 nonisolated struct DrawRandomHeroesUseCase: Sendable {
     private let characterIDs: any CharacterIDProviding
     private let loadHeroes: LoadHeroesByIDsUseCase
@@ -41,12 +41,12 @@ nonisolated struct DrawRandomHeroesUseCase: Sendable {
         let heroes = try await loadHeroes.execute(ids: drawn)
         try Task.checkCancellation()
 
-        // Los IDs sorteados se devuelven siempre, resuelvan o no, para que
-        // el llamador no vuelva a sortear los mismos.
+        // Drawn IDs are always returned, whether or not they resolve, so
+        // the caller never draws the same ones again.
         return Outcome(heroes: heroes, drawnIDs: drawn)
     }
 
-    /// Héroes resueltos e IDs sorteados en la tirada.
+    /// Heroes resolved and IDs drawn in the pick.
     struct Outcome: Sendable {
         let heroes: [Hero]
         let drawnIDs: [String]

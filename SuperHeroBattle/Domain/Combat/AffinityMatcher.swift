@@ -1,28 +1,28 @@
 import Foundation
 
-/// Cálculo del feeling entre dos compañeros de equipo.
+/// Calculates the affinity bonus between two teammates.
 ///
-/// Reglas de la especificación:
-/// - Se comparan `group-affiliation` y `relatives` como listas de elementos
-///   individuales separados por comas o puntos y coma.
-/// - El contenido entre paréntesis o corchetes se descarta antes de comparar
-///   (la API lo usa para roles y notas: "Avengers (honorary member)").
-/// - Afiliaciones: coincidencia exacta entre las dos listas normalizadas.
-/// - Familiares: el nombre de un familiar debe coincidir con el nombre o un
-///   alias de su compañero, en cualquiera de las dos direcciones. Compartir
-///   el mismo familiar entre los dos héroes ya no otorga bonus.
-/// - La comparación es exacta, sin distinguir mayúsculas y sin espacios sobrantes.
-/// - Una coincidencia en cualquiera de los dos campos (OR) aporta +33.
-/// - Coincidir en ambos campos sigue aportando +33, nunca 66.
+/// Rules:
+/// - `group-affiliation` and `relatives` are compared as lists of individual
+///   items separated by commas or semicolons.
+/// - Content in parentheses or brackets is discarded before comparing
+///   (the API uses it for roles and notes: "Avengers (honorary member)").
+/// - Affiliations: exact match between the two normalized lists.
+/// - Relatives: a relative's name must match the teammate's name or one of
+///   their aliases, in either direction. Sharing the same relative between
+///   the two heroes no longer grants a bonus.
+/// - Comparison is exact, case-insensitive, and ignores stray whitespace.
+/// - A match in either field (OR) contributes +33.
+/// - Matching both fields still contributes +33, never 66.
 nonisolated enum AffinityMatcher {
     static let bonusPerPair = 33
 
     private static let unknownMarkers: Set<String> = ["-", "unknown", "none", "n/a"]
     private static let itemSeparators: Set<Character> = [",", ";"]
 
-    /// Normaliza texto libre de la API: separa por comas y puntos y coma,
-    /// elimina el contenido entre paréntesis y corchetes, recorta espacios,
-    /// compara en minúsculas y descarta vacíos y marcadores de desconocido.
+    /// Normalizes free-form API text: splits on commas and semicolons,
+    /// removes content in parentheses and brackets, trims whitespace,
+    /// lowercases, and discards empty items and unknown markers.
     static func normalizedItems(from text: String?) -> Set<String> {
         guard let text, !text.isEmpty else { return [] }
 
@@ -35,7 +35,7 @@ nonisolated enum AffinityMatcher {
         )
     }
 
-    /// Bonus de una pareja del mismo equipo. `nil` cuando no hay coincidencias.
+    /// Bonus for a pair of teammates. `nil` when there are no matches.
     static func bonus(between heroA: Hero, and heroB: Hero) -> AffinityBonus? {
         let matchedAffiliations = normalizedItems(from: heroA.connections.groupAffiliation)
             .intersection(normalizedItems(from: heroB.connections.groupAffiliation))
@@ -56,9 +56,9 @@ nonisolated enum AffinityMatcher {
         )
     }
 
-    /// Familiares que coinciden con la identidad del compañero: los
-    /// familiares de A contra el nombre o alias de B, y los de B contra los
-    /// de A. El resultado se publica normalizado, sin paréntesis.
+    /// Relatives that match the teammate's identity: A's relatives against
+    /// B's name or aliases, and B's relatives against A's. The result is
+    /// published normalized, without parentheses.
     private static func matchedRelatives(between heroA: Hero, and heroB: Hero) -> [String] {
         let relativesA = normalizedItems(from: heroA.connections.relatives)
         let relativesB = normalizedItems(from: heroB.connections.relatives)
@@ -69,8 +69,8 @@ nonisolated enum AffinityMatcher {
         return matches.sorted()
     }
 
-    /// Identidad de un héroe para el emparejado de familiares: su nombre y
-    /// los alias biográficos, con la misma normalización.
+    /// A hero's identity for relative matching: their name and
+    /// biographical aliases, with the same normalization.
     private static func identityNames(of hero: Hero) -> Set<String> {
         var names = normalizedItems(from: hero.name)
 
@@ -81,10 +81,10 @@ nonisolated enum AffinityMatcher {
         return names
     }
 
-    /// Elimina los segmentos entre paréntesis y corchetes, tolerando
-    /// desequilibrios: "Loki (adoptive brother)[note 1]" queda en "Loki".
-    /// Un ítem que solo aporta paréntesis ("(wife)") queda vacío y se
-    /// descarta en la normalización.
+    /// Removes segments in parentheses and brackets, tolerating
+    /// unbalanced delimiters: "Loki (adoptive brother)[note 1]" becomes "Loki".
+    /// An item consisting only of parentheses ("(wife)") becomes empty
+    /// and is discarded during normalization.
     private static func withoutParentheses(_ item: String) -> String {
         var result = ""
         var depth = 0

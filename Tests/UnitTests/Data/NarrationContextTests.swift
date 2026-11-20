@@ -28,12 +28,12 @@ final class NarrationContextTests: XCTestCase {
     }
 
     func testClearWinBoundaryIsExactlyThirty() {
-        // 100 + 7 = 107 frente a 70 + 7 = 77: diferencia exacta de 30.
+        // 100 + 7 = 107 vs 70 + 7 = 77: an exact gap of 30.
         let boundary = makeContext(
             teamAStats: PowerStats(intelligence: 100),
             teamBStats: PowerStats(intelligence: 70)
         )
-        // 99 + 7 = 106 frente a 77: diferencia 29.
+        // 99 + 7 = 106 vs 77: a gap of 29.
         let close = makeContext(
             teamAStats: PowerStats(intelligence: 99),
             teamBStats: PowerStats(intelligence: 70)

@@ -1,12 +1,11 @@
 import SwiftUI
 
-/// Banner de resultado compartido por el combate en vivo y el detalle de
-/// combates guardados: ganador con slot de Lottie o empate.
+/// Outcome banner shared by the live combat and saved battle detail
+/// screens: winner with a Lottie slot, or a draw.
 ///
-/// Con `isRevealed == false` muestra la variante de suspense en lugar del
-/// veredicto, de modo que el ganador no se desvela hasta que la narración
-/// está publicada. La entrada spring de la revelación se desactiva con
-/// Reduce Motion.
+/// With `isRevealed == false` it shows the suspense variant instead of the
+/// verdict, so the winner stays hidden until the narration is published.
+/// The spring entrance of the reveal is disabled under Reduce Motion.
 struct CombatOutcomeBanner: View {
     let outcome: CombatOutcome
     var isRevealed = true
@@ -21,7 +20,7 @@ struct CombatOutcomeBanner: View {
         Group {
             if isRevealed {
                 revealedContent
-                    // Entrada sutil del veredicto; sin movimiento con Reduce Motion.
+                    // Subtle verdict entrance; no motion under Reduce Motion.
                     .scaleEffect(isWinnerAppeared ? 1 : 0.85)
                     .opacity(isWinnerAppeared ? 1 : 0)
             } else {
@@ -50,14 +49,14 @@ struct CombatOutcomeBanner: View {
         }
     }
 
-    // MARK: - Veredicto
+    // MARK: - Verdict
 
     @ViewBuilder
     private var revealedContent: some View {
         switch outcome {
         case .winner(let side):
             VStack(spacing: 10) {
-                // Slot de Lottie para la presentación del ganador.
+                // Lottie slot presenting the winner.
                 ComicLottieView(
                     animationName: "combat_winner",
                     fallbackIcon: "trophy.fill",
@@ -99,7 +98,7 @@ struct CombatOutcomeBanner: View {
 
     // MARK: - Suspense
 
-    /// Incógnita decorativa mientras la narración escribe el desenlace.
+    /// Decorative mystery while the narration writes the outcome.
     private var suspenseContent: some View {
         VStack(spacing: 10) {
             ZStack {

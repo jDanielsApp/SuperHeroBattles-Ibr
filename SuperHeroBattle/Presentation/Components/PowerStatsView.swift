@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Barras de PowerStats con valor numérico accesible.
+/// PowerStats bars with an accessible numeric value.
 struct PowerStatsView: View {
     let stats: PowerStats
 

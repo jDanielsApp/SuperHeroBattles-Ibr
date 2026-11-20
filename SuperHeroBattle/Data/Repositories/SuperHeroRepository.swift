@@ -1,6 +1,6 @@
 import Foundation
 
-/// Implementación remota de `HeroRepository`.
+/// Remote implementation of `HeroRepository`.
 nonisolated struct SuperHeroRepository: HeroRepository {
     private let client: SuperHeroAPIClient
     private let mapper: HeroMapper

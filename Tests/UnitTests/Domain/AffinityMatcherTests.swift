@@ -63,8 +63,8 @@ final class AffinityMatcherTests: XCTestCase {
     }
 
     func testSharedRelativeNoLongerYieldsBonus() {
-        // La regla antigua de intersección de familiares queda sustituida:
-        // compartir familiar entre los dos héroes no otorga feeling.
+        // The old rule of intersecting relatives has been replaced: sharing
+        // a relative between the two heroes no longer grants an affinity bonus.
         let heroA = makeHero(id: "1", relatives: "Alfred Pennyworth (butler)")
         let heroB = makeHero(id: "2", relatives: "Alfred Pennyworth (butler)")
 
@@ -155,8 +155,8 @@ final class AffinityMatcherTests: XCTestCase {
     }
 
     func testUnknownRelativeNeverMatches() {
-        // Los marcadores de desconocido se descartan de la lista de
-        // familiares antes de comparar con la identidad del compañero.
+        // Unknown markers are discarded from the relatives list before
+        // comparing against the teammate's identity.
         let heroA = makeHero(id: "3", relatives: "Unknown")
         let heroB = makeHero(id: "4", name: "unknown", relatives: "unknown")
 

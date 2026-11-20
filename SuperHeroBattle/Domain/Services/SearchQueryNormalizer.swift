@@ -1,17 +1,17 @@
 import Foundation
 
-/// Normaliza las búsquedas para que la API y la caché compartan criterios.
+/// Normalizes search queries so the API and the cache share the same criteria.
 nonisolated enum SearchQueryNormalizer {
-    /// Recorta y colapsa espacios sin alterar mayúsculas ni acentos.
-    /// Es el texto que se envía a la API.
+    /// Trims and collapses whitespace without changing case or accents.
+    /// This is the text sent to the API.
     static func normalizedQuery(_ raw: String) -> String {
         raw
             .split(whereSeparator: { $0.isWhitespace })
             .joined(separator: " ")
     }
 
-    /// Clave de caché estable: sin mayúsculas ni diacríticos.
-    /// Así "Bátman", "batman" y "  BATMÁN  " comparten entrada.
+    /// Stable cache key: no case and no diacritics.
+    /// This way "Bátman", "batman", and "  BATMÁN  " share one entry.
     static func cacheKey(_ raw: String) -> String {
         normalizedQuery(raw)
             .folding(
