@@ -47,9 +47,9 @@ aquí, aplica "columna única con ancho legible acotado" en regular.
 
 | Pantalla | Compact (cerrado) | Regular (Duo abierto) |
 |---|---|---|
-| TeamSelectionView | Columna actual con divisor "VS". | Equipo A y Equipo B lado a lado (split); CTA de inicio debajo a todo el ancho. |
-| CombatView y CombatRecordDetailView | Columna actual (banners, equipo A, divisor, equipo B, narración, guardado). | Resto a la izquierda (banners, equipos, guardado) y narración a la derecha. |
-| CharacterGuideView (ruta standalone desde Home) | Push actual de `HeroDetailView`. | `NavigationSplitView`: lista + ficha lado a lado (patrón Mail). |
+| TeamSelectionView | Columna actual con divisor "VS". | Equipo A y Equipo B lado a lado con `ArrangementView(.split)`; el pliegue hace de separador. CTA de inicio debajo a todo el ancho. |
+| CombatView y CombatRecordDetailView | Columna actual (banners, equipos, narración, guardado). | Resto a la izquierda (banners, equipos, guardado al final de la columna) y narración a la derecha con `ArrangementView(.split)`. |
+| CharacterGuideView (ruta standalone desde Home) | Push actual de `HeroDetailView`. | Lista + ficha lado a lado con `ArrangementView(.split)` (patrón Mail); la ficha se muestra por selección de fila. |
 | Hoja selectora de equipos (CharacterGuideView embebida) | Sin cambios: las filas eligen héroe, no navegan a detalle. | Igual, sin split. |
 | HomeView, DuelModeView, HistoryView, SettingsView | Columna actual. | Columna única con ancho legible acotado (helper compartido). |
 
@@ -59,9 +59,18 @@ Helper compartido para el ancho legible: componente/módifier reutilizable
 ## APIs recomendadas
 
 - `@Environment(\.horizontalSizeClass)` para elegir layout.
-- `NavigationSplitView` para lista + detalle (colapsa sola a push en compact).
-- `HStack`/`ZStack` adaptativos: la HIG los mapea a *arrangement views*
-  (split/overlay) sin que escribamos contenedores custom.
+- `ArrangementView { } secondary: { }` con `.arrangementViewStyle(.split)`
+  para paneles lado a lado: gestiona la región de pliegue en las poses
+  del Duo. Disponible en **iOS 27.1+**: el target del proyecto es iOS 26,
+  así que se usa con `if #available(iOS 27.1, *)` y size class regular;
+  el respaldo manual (`CombatArrangementLayout` y equivalentes) cubre
+  compact e iOS 26.
+- `HStack`/`ZStack` adaptativos como respaldo pre-27.1 o cuando el orden
+  del contenido exige control fino (la HIG los mapea a *arrangement
+  views*).
+- `NavigationSplitView` para lista + detalle raíz; empujado dentro de un
+  `NavigationStack` no renderiza su sidebar en compact — evítalo ahí y
+  usa `ArrangementView` + selección.
 - `ReservedRegion` (SwiftUI) solo si el sistema no aparta algo por sí solo.
 - `ToolbarItemVisibilityPriority` para conservar acciones frecuentes cuando
   la barra comprime.
