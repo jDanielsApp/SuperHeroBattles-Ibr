@@ -6,10 +6,10 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 
 ## Resumen
 
-- **Fase actual:** Fase 10 cerrada (mejoras de combate) sobre el proyecto completado.
-- **Última fase cerrada:** Fase 10 — afinidad sin paréntesis y familiares por identidad del compañero; suspense del veredicto y los marcadores hasta que la narración se publica; feeling solo con bonus; skill `iphone-duo` para las adaptaciones a iPhone Duo.
+- **Fase actual:** Fases 11 y 12 cerradas (aleatorio con índice completo y selector de duelos) sobre el proyecto completado.
+- **Última fase cerrada:** Fase 12 — sin badge "VS" en las tarjetas de modo de duelo; Fase 11 — aleatorio precargado desde el índice completo (pool 2/4/6 + sorteo bajo demanda + catálogo local de respaldo).
 - **Herramienta nueva:** skill de proyecto `.opencode/skills/iphone-duo` (HIG destilada + mapa de decisiones por pantalla) para las fases siguientes sin releer la documentación.
-- **Estado del build:** compila en Debug sin warnings de código; **250 unit tests + 5 UI tests** en verde en iPhone 17 (iOS 27.2).
+- **Estado del build:** compila en Debug sin warnings de código propio; **264 unit tests + 5 UI tests** en verde en iPhone 17 (iOS 27.2).
 - **Dependencias:** RealmSwift 20.0.6 y Lottie 4.6.1 resueltas con SwiftPM.
 
 ## Decisiones confirmadas
@@ -37,6 +37,8 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 | 8. Diseño comic, Lottie, idiomas y accesibilidad | Completada | Wrapper con fallbacks y Reduce Motion, halftone, ComicCTALabel, cabecera de choque y assets `combat_intro`/`combat_winner` activos |
 | 9. Calidad final | Completada | Limpieza de código muerto, cobertura 84,9 %, smoke tests de pantallas, build Release y docs de entrega |
 | 10. Mejoras de combate | Completada | Afinidad sin paréntesis, familiares por identidad del compañero, suspense hasta la narración, feeling condicional y skill `iphone-duo` |
+| 11. Aleatorio con índice completo | Completada | Pool precargado de 2/4/6 IDs sorteados, sorteo bajo demanda y catálogo local de respaldo |
+| 12. Selector de duelos | Completada | Tarjetas de modo sin badge "VS"; el badge queda solo en la tarjeta "Duelos" de Home |
 
 ## Fase 0 — completada
 
@@ -291,6 +293,30 @@ Decisiones de la fase:
 - La regla de familiares se sustituye en lugar de acumularse: compartir el mismo familiar entre dos héroes ya no otorga feeling (decisión del usuario).
 
 Verificación Fase 10: build Debug correcto sin warnings de código, **250 unit tests + 5 UI tests en verde** en iPhone 17 (iOS 27.2), `xcodebuild -list` correcto. Suites nuevas: AffinityMatcherTests (19), SuspenseScoreTests (6) y cobertura de `isNarrationPublished` en CombatViewModelTests (11).
+
+## Fase 11 — completada
+
+- [x] **`RandomIDPicker`** en `Domain/Services` junto a `RandomHeroPicker`: protocolo inyectable con `SystemRandomIDPicker` (barajado, sin repeticiones, tolerante a índices pequeños).
+- [x] **`DrawRandomHeroesUseCase`**: sortea IDs del índice completo (`CharacterIDProviding`) y carga las fichas con `LoadHeroesByIDsUseCase` (caché local primero, red para los ausentes, `notFound` omitidos). Devuelve héroes e IDs sorteados para que el llamador no repita tiradas; índice vacío o agotado devuelve vacío sin error.
+- [x] **`TeamSelectionViewModel.prepareRandomPool()`** sustituye a la precarga de los 30 primeros IDs: al mostrar la pantalla se sortean `teamSize × 2` IDs (**2 en 1v1, 4 en 2v2, 6 en 3v3**) y su carga se lanza en segundo plano, una sola vez por pantalla y cancelable al salir.
+- [x] **Cadena del botón aleatorio**: pool precargado (instantáneo, saltando los héroes ya presentes en el equipo que se rellena) → sorteo bajo demanda de un ID nuevo excluyendo lo ya sorteado → catálogo local como respaldo si no hay red ni índice → mensaje `noHeroesAvailable` como último eslabón. El aleatorio ya no sale solo de la base de datos local.
+- [x] `AppContainer` compone el caso de uso una vez y lo inyecta en el view model; los UI tests con fakes (`FixedCharacterIDProvider` + roster de 12) cubren el pool de 6 del 3v3 sin cambios.
+- [x] Copy de `team.selection.error.noHeroes` actualizado en `en`/`es` (hablaba de héroes descargados; ahora menciona conexión y guía).
+- [x] Tests: `DrawRandomHeroesUseCaseTests` (9: conteo, exclusiones, agotamiento, notFound, errores de índice/carga, cancelación) y `TeamSelectionViewModelTests` reescrito con pool (17: tamaño por modalidad, una sola preparación, consumo en orden, salto de repetidos del equipo, sorteo bajo demanda sin repetir IDs, respaldo de catálogo, noHeroes, cancelaciones de botón y de preload).
+
+Decisiones de la fase:
+
+- La precarga de la primera página del catálogo (30 IDs) desaparece: el pool es la nueva preparación del botón aleatorio y las fichas que resuelve se guardan igualmente en Realm.
+- Los IDs sorteados se contabilizan aunque su ficha no resuelva (`notFound`), para no volver a sortearlos.
+- Un tap con el pool listo es instantáneo (sin `busySlot`); la espera solo existe en el sorteo bajo demanda o los respaldos.
+
+Verificación Fase 11: build Debug correcto sin warnings de código propio (el linker reporta un aviso conocido del binario de RealmSwift), **264 unit tests + 5 UI tests en verde** en iPhone 17 (iOS 27.2).
+
+## Fase 12 — completada
+
+- [x] `ComicCard` desacopla el badge "VS" del énfasis: nuevo parámetro `showsVersusBadge` (por defecto `true`).
+- [x] `DuelModeView` pasa `showsVersusBadge: false` en las tres tarjetas de modo; el 3v3 conserva su énfasis (`isPrimary`) pero ninguna tarjeta de modo muestra la etiqueta. La tarjeta "Duelos" de Home conserva su badge, según lo acordado con el usuario.
+- [x] Sin cambios de tests: el badge es decorativo y ningún UI test lo cubre.
 
 ## Pendientes y riesgos
 

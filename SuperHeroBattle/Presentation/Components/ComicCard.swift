@@ -8,6 +8,8 @@ struct ComicCard: View {
     let accent: Color
     let isPrimary: Bool
     let accessibilityKey: LocalizableStringKey
+    /// Etiqueta "VS" de la esquina; independiente del énfasis de `isPrimary`.
+    var showsVersusBadge = true
 
     var body: some View {
         HStack(spacing: 16) {
@@ -60,7 +62,7 @@ struct ComicCard: View {
                 .stroke(ComicPalette.panelBorder, lineWidth: 3)
         }
         .overlay(alignment: .topTrailing) {
-            if isPrimary {
+            if isPrimary, showsVersusBadge {
                 L10n.text(.homeVersus)
                     .font(.caption.weight(.black))
                     .foregroundStyle(ComicPalette.ink)

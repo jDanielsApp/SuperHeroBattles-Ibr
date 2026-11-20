@@ -16,7 +16,8 @@ struct DuelModeView: View {
                                 systemImage: mode.systemImage,
                                 accent: ComicPalette.red,
                                 isPrimary: mode == .threeVsThree,
-                                accessibilityKey: mode.accessibilityKey
+                                accessibilityKey: mode.accessibilityKey,
+                                showsVersusBadge: false
                             )
                         }
                         .buttonStyle(.plain)
