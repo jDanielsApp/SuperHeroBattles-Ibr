@@ -226,12 +226,11 @@ final class SuperHeroBattleUITests: XCTestCase {
             "No se abrió el detalle del héroe"
         )
 
-        // Volver a Home: dos niveles atrás (detalle → Guía → Home).
-        for _ in 0..<2 {
-            let back = app.navigationBars.buttons.element(boundBy: 0)
-            XCTAssertTrue(back.waitForExistence(timeout: 5))
-            back.tap()
-        }
+        // Volver a Home relanzando la app: determinista en cualquier pose
+        // del iPhone Duo, donde los controles de navegación se montan en el
+        // lateral y el botón atrás no siempre es localizable.
+        app.terminate()
+        app.launch()
 
         // Ajustes desde la barra de Home.
         let settings = app.buttons["home.settings"]

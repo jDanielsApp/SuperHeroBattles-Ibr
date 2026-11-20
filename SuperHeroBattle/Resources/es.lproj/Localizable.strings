@@ -26,6 +26,8 @@
 "guide.detail.biography" = "Biografía";
 "guide.detail.alterEgos" = "Alter egos";
 "guide.detail.aliases" = "Alias";
+"guide.split.placeholder.headline" = "Elige a tu héroe";
+"guide.split.placeholder.message" = "Selecciona un personaje de la lista para ver su ficha.";
 "guide.detail.placeOfBirth" = "Lugar de nacimiento";
 "guide.detail.firstAppearance" = "Primera aparición";
 "guide.detail.alignment" = "Alineación";
