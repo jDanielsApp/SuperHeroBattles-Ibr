@@ -7,6 +7,13 @@ struct TeamSelectionView: View {
 
     @State private var pickerTarget: PickerTarget?
 
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    /// iPhone Duo abierto (o iPad): los equipos van lado a lado.
+    private var isWideLayout: Bool {
+        horizontalSizeClass == .regular
+    }
+
     init(viewModel: TeamSelectionViewModel, container: AppContainer) {
         _viewModel = State(initialValue: viewModel)
         self.container = container
@@ -28,11 +35,7 @@ struct TeamSelectionView: View {
                 VStack(spacing: 18) {
                     modeHeader
 
-                    teamPanel(.teamA)
-
-                    ComicVersusDivider()
-
-                    teamPanel(.teamB)
+                    teamsSection
 
                     startSection
                 }
@@ -67,6 +70,31 @@ struct TeamSelectionView: View {
                 .foregroundStyle(ComicPalette.paper)
 
             Spacer(minLength: 0)
+        }
+    }
+
+    // MARK: - Equipos
+
+    /// Pantalla interior del Duo: `ArrangementView` reparte los paneles
+    /// respetando la bisagra (el pliegue hace de separador visual). En
+    /// compact se mantiene la columna actual con el divisor "VS".
+    @ViewBuilder
+    private var teamsSection: some View {
+        if #available(iOS 27.1, *), isWideLayout {
+            ArrangementView {
+                teamPanel(.teamA)
+            } secondary: {
+                teamPanel(.teamB)
+            }
+            .arrangementViewStyle(.split)
+        } else {
+            VStack(spacing: 18) {
+                teamPanel(.teamA)
+
+                ComicVersusDivider()
+
+                teamPanel(.teamB)
+            }
         }
     }
 
