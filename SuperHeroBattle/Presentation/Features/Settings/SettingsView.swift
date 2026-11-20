@@ -32,6 +32,7 @@ struct SettingsView: View {
         }
         .navigationTitle(LocalizedStringKey(LocalizableStringKey.settingsTitle.rawValue))
         .navigationBarTitleDisplayMode(.inline)
+        .accessibilityIdentifier("settings.root")
     }
 }
 

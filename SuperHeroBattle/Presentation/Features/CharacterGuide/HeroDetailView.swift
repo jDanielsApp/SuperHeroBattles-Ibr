@@ -60,6 +60,7 @@ struct HeroDetailView: View {
         section(title: .guideDetailPowerStats) {
             PowerStatsView(stats: hero.powerStats)
         }
+        .accessibilityIdentifier("hero.detail.powerstats")
     }
 
     private var biographySection: some View {

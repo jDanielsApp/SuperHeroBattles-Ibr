@@ -29,18 +29,19 @@ Proyecto construido con SwiftUI, Clean Architecture + MVVM, Swift Concurrency es
 
 ## Estado actual
 
-| Funcionalidad | Estado |
-|---|---|
-| Navegación Home → Guía → Detalle, Ajustes | ✅ Operativa |
-| Catálogo paginado por IDs con caché Realm | ✅ Operativa |
-| Búsqueda por nombre con caché TTL y cancelación | ✅ Operativa |
-| Filtros locales (editorial, género) sobre los héroes cargados | ✅ Operativa |
-| Detalle de personaje con PowerStats accesibles | ✅ Operativa |
-| Selección de equipos y motor de combate | ✅ Operativa | Motor determinista con resultado trazable; narrativa e historial en Fases 6-7 |
-| Narración con Apple Foundation Models | ✅ Operativa (fallback activo en simulador) | En dispositivo con Apple Intelligence genera con IA; sin modelo cae a plantilla honesta con badge de origen |
+| Funcionalidad | Estado | Notas |
+|---|---|---|
+| Navegación Home → Guía → Detalle, Ajustes | ✅ Operativa | |
+| Catálogo paginado por IDs con caché Realm | ✅ Operativa | |
+| Búsqueda por nombre con caché TTL y cancelación | ✅ Operativa | |
+| Filtros locales (editorial, género) sobre los héroes cargados | ✅ Operativa | |
+| Detalle de personaje con PowerStats accesibles | ✅ Operativa | |
+| Selección de equipos y motor de combate | ✅ Operativa | Motor determinista con resultado trazable |
+| Narración con Apple Foundation Models | ✅ Operativa | En dispositivo con Apple Intelligence genera con IA; sin modelo cae a plantilla honesta con badge de origen |
 | Animaciones Lottie | ✅ Operativas | `combat_intro` (bucle) y `combat_winner` (una vez) activas; Reduce Motion y ausencia de asset caen a fallback comic |
 | Historial de combates con Realm | ✅ Operativa | Guardado explícito con confirmación y vuelta a Home; listado con borrado/vaciado y detalle |
-| Caché de imágenes remotas | ⚠️ Bloqueada por el host externo (HTTP 403) |
+| Calidad final | ✅ Cerrada | 233 tests unitarios + 5 UI en verde; cobertura 84,9 %; build Release verificado sin secretos |
+| Caché de imágenes remotas | ⚠️ Bloqueada por el host externo (HTTP 403) | Único pendiente externo documentado |
 
 `docs/IMPLEMENTATION_STATUS.md` es el registro vivo de fases y decisiones; este cuadro es solo un resumen.
 
@@ -235,7 +236,7 @@ Comportamiento esperado: con el índice sin cambios verás `Sin cambios: 731 IDs
 
 ## Tests
 
-Estado actual: **111 tests unitarios + 1 UI test** en verde sobre iPhone 17 (iOS 27.0).
+Estado actual: **233 tests unitarios + 5 UI tests** en verde sobre iPhone 17 (iOS 27.0), con una cobertura del **84,9 %** en la app y build Release verificado.
 
 Convenciones del proyecto:
 
@@ -281,8 +282,11 @@ git checkout -- SuperHeroBattle.xcodeproj/project.xcworkspace/xcshareddata/swift
 - [x] Fase 6: narración con Apple Foundation Models y fallback local
 - [x] Fase 7: historial de combates en Realm
 - [x] Fase 8: diseño comic completo, Lottie y accesibilidad final
-- [ ] Fase 9: calidad final
-- [ ] Caché de imágenes remotas (bloqueada por HTTP 403 del host)
+- [x] Fase 9: calidad final
+
+**Proyecto completado.** El único pendiente externo:
+
+- [ ] Caché de imágenes remotas (bloqueada por HTTP 403 del host de SuperHeroAPI)
 
 ## Documentación adicional
 

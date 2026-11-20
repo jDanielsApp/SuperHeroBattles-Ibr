@@ -27,6 +27,7 @@ struct HomeView: View {
                         .frame(width: 44, height: 44)
                 }
                 .accessibilityLabel(L10n.text(.accessibilityHomeSettings))
+                .accessibilityIdentifier("home.settings")
             }
         }
     }
