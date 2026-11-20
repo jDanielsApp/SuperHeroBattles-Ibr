@@ -91,7 +91,7 @@
 "team.selection.slot.replace" = "Sustituir";
 "team.selection.slot.remove" = "Quitar";
 "team.selection.error.duplicate" = "Ese héroe ya está en este equipo.";
-"team.selection.error.noHeroes" = "Aún no hay héroes descargados. Abre un hueco, carga la guía e inténtalo de nuevo.";
+"team.selection.error.noHeroes" = "No se ha podido conseguir un héroe aleatorio. Comprueba tu conexión o elige uno de la guía.";
 "team.selection.error.invalidSlot" = "Ese hueco no es válido.";
 "team.selection.start" = "Iniciar combate";
 "team.selection.start.hint" = "Disponible cuando ambos equipos estén completos.";

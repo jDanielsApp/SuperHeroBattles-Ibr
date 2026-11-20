@@ -83,6 +83,149 @@ final class TeamSelectionViewModelTests: XCTestCase {
         XCTAssertEqual(participants?.teamB.map(\.id), ["3", "4"])
     }
 
+    func testPrepareRandomPoolDrawsTwoIDsPerSlotAndOnlyOnce() async {
+        let ids = (1...65).map(String.init)
+        let roster = ids.map { makeHero(id: $0) }
+        let catalog = SpyCatalogRepository()
+        let remote = StubHeroRepository(outcome: .success(roster))
+        let viewModel = makeViewModel(
+            mode: .threeVsThree,
+            catalog: catalog,
+            preload: LoadHeroesByIDsUseCase(catalog: catalog, remote: remote),
+            characterIDs: StubCharacterIDProvider(ids: ids)
+        )
+
+        viewModel.prepareRandomPool()
+        await waitFor { await catalog.storedIDs().count == 6 }
+
+        let stored = await catalog.storedIDs()
+        XCTAssertEqual(stored.count, 6, "3v3 precarga exactamente 6 IDs sorteados")
+        XCTAssertEqual(
+            stored.sorted(),
+            Set((1...6).map(String.init)).sorted(),
+            "El picker secuencial toma los primeros IDs del índice"
+        )
+
+        viewModel.prepareRandomPool()
+        await settle()
+
+        let upserted = await catalog.upsertedIDs()
+        XCTAssertEqual(upserted.count, 6, "La precarga no debe ejecutarse dos veces")
+    }
+
+    func testPrepareRandomPoolSizeFollowsMode() async {
+        let cases: [(CombatMode, Int)] = [(.oneVsOne, 2), (.twoVsTwo, 4), (.threeVsThree, 6)]
+
+        for (mode, expectedCount) in cases {
+            let ids = (1...65).map(String.init)
+            let roster = ids.map { makeHero(id: $0) }
+            let catalog = SpyCatalogRepository()
+            let viewModel = makeViewModel(
+                mode: mode,
+                catalog: catalog,
+                preload: LoadHeroesByIDsUseCase(
+                    catalog: catalog,
+                    remote: StubHeroRepository(outcome: .success(roster))
+                ),
+                characterIDs: StubCharacterIDProvider(ids: ids)
+            )
+
+            viewModel.prepareRandomPool()
+            await waitFor { await catalog.storedIDs().count == expectedCount }
+
+            let stored = await catalog.storedIDs()
+            XCTAssertEqual(stored.count, expectedCount, "El pool de \(mode.rawValue) debe tener \(expectedCount) héroes")
+        }
+    }
+
+    func testFillRandomConsumesPreloadedPoolBeforeCatalog() async {
+        let roster = (1...10).map { makeHero(id: String($0)) }
+        let loadCatalog = SpyCatalogRepository()
+        let viewModel = makeViewModel(
+            mode: .oneVsOne,
+            catalog: FailingCatalog(),
+            preload: LoadHeroesByIDsUseCase(
+                catalog: loadCatalog,
+                remote: StubHeroRepository(outcome: .success(roster))
+            ),
+            characterIDs: StubCharacterIDProvider(ids: roster.map(\.id))
+        )
+
+        viewModel.prepareRandomPool()
+        await waitFor { await loadCatalog.storedIDs().count == 2 }
+
+        viewModel.fillRandom(side: .teamA, slot: 0)
+
+        XCTAssertEqual(viewModel.hero(in: 0, side: .teamA)?.id, "1", "El pool se consume en orden de sorteo")
+        XCTAssertNil(viewModel.busySlot, "El pool resuelve el hueco al instante, sin catálogo")
+        XCTAssertNil(viewModel.message)
+    }
+
+    func testFillRandomSkipsPoolHeroAlreadyInTeam() async {
+        let roster = (1...10).map { makeHero(id: String($0)) }
+        let loadCatalog = SpyCatalogRepository()
+        let viewModel = makeViewModel(
+            mode: .twoVsTwo,
+            catalog: FailingCatalog(),
+            preload: LoadHeroesByIDsUseCase(
+                catalog: loadCatalog,
+                remote: StubHeroRepository(outcome: .success(roster))
+            ),
+            characterIDs: StubCharacterIDProvider(ids: roster.map(\.id))
+        )
+
+        viewModel.prepareRandomPool()
+        await waitFor { await loadCatalog.storedIDs().count == 4 }
+
+        // El héroe 1 fue elegido a mano para el Equipo A: el pool lo salta.
+        viewModel.assign(makeHero(id: "1"), to: .teamA, slot: 0)
+
+        viewModel.fillRandom(side: .teamA, slot: 1)
+
+        XCTAssertEqual(viewModel.hero(in: 1, side: .teamA)?.id, "2")
+        XCTAssertNil(viewModel.message)
+    }
+
+    func testFillRandomDrawsFreshIDWhenPoolIsExhausted() async {
+        let ids = (1...10).map(String.init)
+        let roster = ids.map { makeHero(id: $0) }
+        let catalog = SpyCatalogRepository()
+        let viewModel = makeViewModel(
+            mode: .oneVsOne,
+            catalog: catalog,
+            preload: LoadHeroesByIDsUseCase(
+                catalog: catalog,
+                remote: StubHeroRepository(outcome: .success(roster))
+            ),
+            characterIDs: StubCharacterIDProvider(ids: ids)
+        )
+
+        viewModel.prepareRandomPool()
+        await waitFor { await catalog.storedIDs().count == 2 }
+
+        // Se agota el pool consumiendo y liberando el hueco.
+        for expectedID in ["1", "2"] {
+            viewModel.fillRandom(side: .teamA, slot: 0)
+            XCTAssertEqual(viewModel.hero(in: 0, side: .teamA)?.id, expectedID)
+            viewModel.clear(side: .teamA, slot: 0)
+        }
+
+        // Pool agotado: sorteo bajo demanda que excluye lo ya sorteado.
+        viewModel.fillRandom(side: .teamA, slot: 0)
+        await waitFor { viewModel.hero(in: 0, side: .teamA)?.id == "3" }
+
+        XCTAssertEqual(viewModel.hero(in: 0, side: .teamA)?.id, "3")
+        XCTAssertNil(viewModel.message)
+        XCTAssertNil(viewModel.busySlot)
+
+        // Y tampoco repite el ID recién sorteado bajo demanda.
+        viewModel.clear(side: .teamA, slot: 0)
+        viewModel.fillRandom(side: .teamA, slot: 0)
+        await waitFor { viewModel.hero(in: 0, side: .teamA)?.id == "4" }
+
+        XCTAssertEqual(viewModel.hero(in: 0, side: .teamA)?.id, "4", "Los IDs ya sorteados nunca se repiten")
+    }
+
     func testFillRandomFillsOnlyRequestedSlotExcludingOwnTeam() async {
         let roster = makeRoster(count: 6)
         let viewModel = makeViewModel(
@@ -136,11 +279,11 @@ final class TeamSelectionViewModelTests: XCTestCase {
         XCTAssertNil(viewModel.busySlot)
     }
 
-    func testPreloadFetchesOnlyTheFirstPageOnce() async {
-        let ids = (1...65).map(String.init)
+    func testCancelDuringPoolPreloadDiscardsWork() async {
+        let ids = (1...10).map(String.init)
         let roster = ids.map { makeHero(id: $0) }
         let catalog = SpyCatalogRepository()
-        let remote = StubHeroRepository(outcome: .success(roster))
+        let remote = GatedHeroRepository(heroes: roster)
         let viewModel = makeViewModel(
             mode: .oneVsOne,
             catalog: catalog,
@@ -148,18 +291,21 @@ final class TeamSelectionViewModelTests: XCTestCase {
             characterIDs: StubCharacterIDProvider(ids: ids)
         )
 
-        viewModel.loadCatalogIfNeeded()
-        await waitFor { await catalog.storedIDs().count == 30 }
+        viewModel.prepareRandomPool()
+        await waitFor { await remote.pendingCount() == 2 }
 
-        let stored = await catalog.storedIDs()
-        XCTAssertEqual(stored.count, 30)
-        XCTAssertEqual(stored.sorted(), Set(ids.prefix(30)).sorted())
+        viewModel.cancelActiveWork()
 
-        viewModel.loadCatalogIfNeeded()
+        await remote.completeAllPending()
         await settle()
 
-        let upserted = await catalog.upsertedIDs()
-        XCTAssertEqual(upserted.count, 30, "La precarga no debe ejecutarse dos veces")
+        XCTAssertNil(viewModel.hero(in: 0, side: .teamA))
+        XCTAssertNil(viewModel.hero(in: 0, side: .teamB))
+        XCTAssertNil(viewModel.message)
+        XCTAssertNil(viewModel.busySlot)
+
+        let stored = await catalog.storedIDs()
+        XCTAssertTrue(stored.isEmpty, "Una precarga cancelada no debe persistir la tirada")
     }
 
     // MARK: - Helpers
@@ -169,7 +315,8 @@ final class TeamSelectionViewModelTests: XCTestCase {
         mode: CombatMode,
         catalog: (any HeroCatalogRepository)? = nil,
         preload: LoadHeroesByIDsUseCase? = nil,
-        characterIDs: (any CharacterIDProviding)? = nil
+        characterIDs: (any CharacterIDProviding)? = nil,
+        idPicker: (any RandomIDPicker)? = nil
     ) -> TeamSelectionViewModel {
         // Las construcciones por defecto se hacen en el cuerpo: los actores
         // no pueden aparecer como argumentos por defecto.
@@ -179,6 +326,7 @@ final class TeamSelectionViewModelTests: XCTestCase {
             remote: StubHeroRepository(outcome: .success([]))
         )
         let resolvedIDs = characterIDs ?? StubCharacterIDProvider(ids: [])
+        let resolvedPicker = idPicker ?? SequentialIDPicker()
 
         return TeamSelectionViewModel(
             mode: mode,
@@ -187,9 +335,12 @@ final class TeamSelectionViewModelTests: XCTestCase {
                 catalog: resolvedCatalog,
                 picker: FirstAvailablePicker()
             ),
-            buildBattleParticipants: BuildBattleParticipantsUseCase(),
-            preloadHeroes: resolvedPreload,
-            characterIDs: resolvedIDs
+            drawRandomHeroes: DrawRandomHeroesUseCase(
+                characterIDs: resolvedIDs,
+                loadHeroes: resolvedPreload,
+                picker: resolvedPicker
+            ),
+            buildBattleParticipants: BuildBattleParticipantsUseCase()
         )
     }
 
@@ -229,6 +380,13 @@ final class TeamSelectionViewModelTests: XCTestCase {
 private struct FirstAvailablePicker: RandomHeroPicker {
     func pick(from heroes: [Hero], excluding heroIDs: Set<String>) -> Hero? {
         heroes.first { !heroIDs.contains($0.id) }
+    }
+}
+
+/// Picker determinista de IDs: devuelve los primeros disponibles en orden.
+private struct SequentialIDPicker: RandomIDPicker {
+    func pickIDs(from ids: [String], excluding excludedIDs: Set<String>, count: Int) -> [String] {
+        Array(ids.filter { !excludedIDs.contains($0) }.prefix(count))
     }
 }
 

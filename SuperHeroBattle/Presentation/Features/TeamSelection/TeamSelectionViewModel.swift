@@ -12,6 +12,12 @@ nonisolated struct TeamSlotLocation: Hashable, Sendable {
 /// - No se repiten héroes dentro de un mismo equipo.
 /// - Sí puede aparecer el mismo héroe en ambos equipos.
 /// - La selección aleatoria rellena únicamente el hueco solicitado.
+///
+/// Aleatoriedad: al entrar en la pantalla se sortean `teamSize × 2` IDs
+/// del índice completo de personajes y se cargan en segundo plano (caché
+/// local primero, red para los ausentes). El botón aleatorio consume ese
+/// pool precargado; agotado, sortea un ID nuevo bajo demanda y, si la red
+/// o el índice fallan, cae al catálogo local.
 @MainActor
 @Observable
 final class TeamSelectionViewModel {
@@ -24,11 +30,17 @@ final class TeamSelectionViewModel {
 
     private let selectHero: SelectHeroUseCase
     private let generateRandomHero: GenerateRandomHeroUseCase
+    private let drawRandomHeroes: DrawRandomHeroesUseCase
     private let buildBattleParticipants: BuildBattleParticipantsUseCase
-    private let preloadHeroes: LoadHeroesByIDsUseCase
-    private let characterIDs: any CharacterIDProviding
 
-    private var hasPreloadedCatalog = false
+    private var hasPreparedRandomPool = false
+
+    /// Héroes sorteados del índice completo, pendientes de consumir por el
+    /// botón aleatorio. No alimenta la UI directamente.
+    @ObservationIgnored private var randomPool: [Hero] = []
+
+    /// IDs ya sorteados: nunca se repiten entre tiradas.
+    @ObservationIgnored private var drawnIDs: Set<String> = []
 
     @ObservationIgnored private var randomTask: Task<Void, Never>?
     @ObservationIgnored private var preloadTask: Task<Void, Never>?
@@ -38,16 +50,14 @@ final class TeamSelectionViewModel {
         mode: CombatMode,
         selectHero: SelectHeroUseCase,
         generateRandomHero: GenerateRandomHeroUseCase,
-        buildBattleParticipants: BuildBattleParticipantsUseCase,
-        preloadHeroes: LoadHeroesByIDsUseCase,
-        characterIDs: any CharacterIDProviding
+        drawRandomHeroes: DrawRandomHeroesUseCase,
+        buildBattleParticipants: BuildBattleParticipantsUseCase
     ) {
         self.mode = mode
         self.selectHero = selectHero
         self.generateRandomHero = generateRandomHero
+        self.drawRandomHeroes = drawRandomHeroes
         self.buildBattleParticipants = buildBattleParticipants
-        self.preloadHeroes = preloadHeroes
-        self.characterIDs = characterIDs
         teamA = TeamDraft(side: .teamA, mode: mode)
         teamB = TeamDraft(side: .teamB, mode: mode)
     }
@@ -66,22 +76,26 @@ final class TeamSelectionViewModel {
         draft(for: side).hero(in: slot)
     }
 
-    /// Precarga la primera página del catálogo para que el botón aleatorio
-    /// tenga héroes disponibles sin haber pasado por la Guía. Es un intento
-    /// silencioso: si falla, el propio selector o la Guía mostrarán el error.
-    func loadCatalogIfNeeded() {
-        guard !hasPreloadedCatalog else { return }
-        hasPreloadedCatalog = true
+    /// Precarga el trabajo de aleatoriedad: sortea `teamSize × 2` IDs del
+    /// índice completo (2 en 1v1, 4 en 2v2, 6 en 3v3) y lanza su
+    /// obtención en segundo plano. Así el botón aleatorio resuelve al
+    /// instante y no depende solo de la base de datos local. Silencioso:
+    /// si falla, el propio botón caerá al sorteo bajo demanda o al
+    /// catálogo local. Solo se ejecuta una vez por pantalla.
+    func prepareRandomPool() {
+        guard !hasPreparedRandomPool else { return }
+        hasPreparedRandomPool = true
 
-        guard let ids = try? characterIDs.characterIDs(), !ids.isEmpty else { return }
-        let pageIDs = Array(ids.prefix(CharacterGuideViewModel.pageSize))
+        let count = mode.teamSize * 2
 
         preloadTask = Task { [weak self] in
             guard let self else { return }
             do {
-                _ = try await self.preloadHeroes.execute(ids: pageIDs)
+                let outcome = try await self.drawRandomHeroes.execute(count: count)
+                self.randomPool.append(contentsOf: outcome.heroes)
+                self.drawnIDs.formUnion(outcome.drawnIDs)
             } catch {
-                // Precarga silenciosa: el selector o la Guía presentan el error.
+                // Precarga silenciosa: el botón aleatorio tiene respaldos.
             }
             self.preloadTask = nil
         }
@@ -110,41 +124,34 @@ final class TeamSelectionViewModel {
         }
     }
 
-    /// Rellena únicamente el hueco solicitado con un héroe aleatorio del
-    /// catálogo local, excluyendo solo los integrantes de su propio equipo.
+    /// Rellena únicamente el hueco solicitado con un héroe aleatorio:
+    /// consume el pool precargado desde el índice completo; agotado, sortea
+    /// un ID nuevo bajo demanda; sin red ni índice, cae al catálogo local.
+    /// El sorteo excluye solo los integrantes del equipo que se rellena.
     func fillRandom(side: TeamSide, slot: Int) {
         guard busySlot == nil else { return }
 
+        let excludedIDs = Set(draft(for: side).heroIDs)
+
+        // El pool precargado resuelve el hueco al instante.
+        if let hero = pooledHero(excluding: excludedIDs) {
+            assign(hero, to: side, slot: slot)
+            return
+        }
+
         randomGeneration &+= 1
         let generation = randomGeneration
-        let excludedIDs = Set(draft(for: side).heroIDs)
 
         busySlot = TeamSlotLocation(side: side, slot: slot)
         message = nil
 
         randomTask = Task { [weak self] in
-            guard let self else { return }
-
-            do {
-                let hero = try await self.generateRandomHero.execute(excluding: excludedIDs)
-                try Task.checkCancellation()
-                guard self.randomGeneration == generation else { return }
-
-                if let hero {
-                    self.assign(hero, to: side, slot: slot)
-                } else {
-                    self.message = .noHeroesAvailable
-                }
-            } catch is CancellationError {
-                guard self.randomGeneration == generation else { return }
-            } catch {
-                guard self.randomGeneration == generation else { return }
-                self.message = .noHeroesAvailable
-            }
-
-            guard self.randomGeneration == generation else { return }
-            self.busySlot = nil
-            self.randomTask = nil
+            await self?.resolveRandomSlot(
+                side: side,
+                slot: slot,
+                excludedIDs: excludedIDs,
+                generation: generation
+            )
         }
     }
 
@@ -159,6 +166,72 @@ final class TeamSelectionViewModel {
 
         busySlot = nil
     }
+
+    // MARK: - Resolución del aleatorio
+
+    /// Cadena de resolución bajo demanda: sorteo de un ID nuevo desde el
+    /// índice completo y, si no hay red ni índice, catálogo local. La
+    /// cancelación nunca publica; una generación antigua tampoco.
+    private func resolveRandomSlot(
+        side: TeamSide,
+        slot: Int,
+        excludedIDs: Set<String>,
+        generation: Int
+    ) async {
+        var candidate: Hero?
+
+        do {
+            let outcome = try await drawRandomHeroes.execute(
+                count: 1,
+                excluding: drawnIDs.union(excludedIDs)
+            )
+            drawnIDs.formUnion(outcome.drawnIDs)
+            randomPool.append(contentsOf: outcome.heroes)
+            try Task.checkCancellation()
+
+            // El sorteo ya excluye el equipo actual; el filtro es defensivo.
+            candidate = outcome.heroes.first { !excludedIDs.contains($0.id) }
+        } catch is CancellationError {
+            return
+        } catch {
+            // Red o índice caídos: se prueba el catálogo local.
+        }
+
+        if candidate == nil {
+            do {
+                candidate = try await generateRandomHero.execute(excluding: excludedIDs)
+            } catch is CancellationError {
+                return
+            } catch {
+                candidate = nil
+            }
+        }
+
+        guard randomGeneration == generation else { return }
+
+        if let candidate {
+            // El héroe del sorteo sale del pool para no repetirlo.
+            if let index = randomPool.firstIndex(where: { $0.id == candidate.id }) {
+                randomPool.remove(at: index)
+            }
+            assign(candidate, to: side, slot: slot)
+        } else {
+            message = .noHeroesAvailable
+        }
+
+        busySlot = nil
+        randomTask = nil
+    }
+
+    /// Saca del pool el primer héroe que no pertenezca al equipo indicado.
+    private func pooledHero(excluding heroIDs: Set<String>) -> Hero? {
+        guard let index = randomPool.firstIndex(where: { !heroIDs.contains($0.id) }) else {
+            return nil
+        }
+        return randomPool.remove(at: index)
+    }
+
+    // MARK: - Borradores
 
     private func draft(for side: TeamSide) -> TeamDraft {
         switch side {

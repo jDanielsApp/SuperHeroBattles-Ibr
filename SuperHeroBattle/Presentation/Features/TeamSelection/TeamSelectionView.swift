@@ -47,7 +47,7 @@ struct TeamSelectionView: View {
             pickerSheet(target)
         }
         .onAppear {
-            viewModel.loadCatalogIfNeeded()
+            viewModel.prepareRandomPool()
         }
         .onDisappear {
             viewModel.cancelActiveWork()
@@ -200,14 +200,16 @@ struct TeamSelectionView: View {
                 generateRandomHero: GenerateRandomHeroUseCase(
                     catalog: InMemoryHeroCatalogRepository(heroes: FixedRosterHeroRepository.roster)
                 ),
-                buildBattleParticipants: BuildBattleParticipantsUseCase(),
-                preloadHeroes: LoadHeroesByIDsUseCase(
-                    catalog: InMemoryHeroCatalogRepository(),
-                    remote: FixedRosterHeroRepository()
+                drawRandomHeroes: DrawRandomHeroesUseCase(
+                    characterIDs: FixedCharacterIDProvider(
+                        ids: FixedRosterHeroRepository.roster.map(\.id)
+                    ),
+                    loadHeroes: LoadHeroesByIDsUseCase(
+                        catalog: InMemoryHeroCatalogRepository(),
+                        remote: FixedRosterHeroRepository()
+                    )
                 ),
-                characterIDs: FixedCharacterIDProvider(
-                    ids: FixedRosterHeroRepository.roster.map(\.id)
-                )
+                buildBattleParticipants: BuildBattleParticipantsUseCase()
             ),
             container: AppContainer()
         )
