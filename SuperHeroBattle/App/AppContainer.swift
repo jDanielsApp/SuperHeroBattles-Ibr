@@ -131,6 +131,13 @@ final class AppContainer {
         )
     }
 
+    func makeCombatRecordDetailViewModel(record: CombatRecord) -> CombatRecordDetailViewModel {
+        CombatRecordDetailViewModel(
+            record: record,
+            deleteHistory: deleteCombatHistory
+        )
+    }
+
     /// Realm es la caché principal. Si no se puede abrir, la app sigue
     /// funcionando con un catálogo en memoria durante esa sesión.
     private static func makeCatalogRepository() -> any HeroCatalogRepository {

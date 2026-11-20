@@ -6,10 +6,10 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 
 ## Resumen
 
-- **Fase actual:** Fases 11 y 12 cerradas (aleatorio con índice completo y selector de duelos) sobre el proyecto completado.
-- **Última fase cerrada:** Fase 12 — sin badge "VS" en las tarjetas de modo de duelo; Fase 11 — aleatorio precargado desde el índice completo (pool 2/4/6 + sorteo bajo demanda + catálogo local de respaldo).
+- **Fase actual:** Fase 13 cerrada (borrado individual en el detalle de historial) sobre el proyecto completado.
+- **Última fase cerrada:** Fase 13 — las filas del historial ya no tienen papelera; el borrado individual aparece al presionar el combate, en su detalle.
 - **Herramienta nueva:** skill de proyecto `.opencode/skills/iphone-duo` (HIG destilada + mapa de decisiones por pantalla) para las fases siguientes sin releer la documentación.
-- **Estado del build:** compila en Debug sin warnings de código propio; **264 unit tests + 5 UI tests** en verde en iPhone 17 (iOS 27.2).
+- **Estado del build:** compila en Debug sin warnings de código propio; **266 unit tests + 5 UI tests** en verde en iPhone 17 (iOS 27.2).
 - **Dependencias:** RealmSwift 20.0.6 y Lottie 4.6.1 resueltas con SwiftPM.
 
 ## Decisiones confirmadas
@@ -39,6 +39,7 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 | 10. Mejoras de combate | Completada | Afinidad sin paréntesis, familiares por identidad del compañero, suspense hasta la narración, feeling condicional y skill `iphone-duo` |
 | 11. Aleatorio con índice completo | Completada | Pool precargado de 2/4/6 IDs sorteados, sorteo bajo demanda y catálogo local de respaldo |
 | 12. Selector de duelos | Completada | Tarjetas de modo sin badge "VS"; el badge queda solo en la tarjeta "Duelos" de Home |
+| 13. Borrado en el detalle | Completada | Sin papelera en las filas; presionar el combate abre su detalle con borrado y alerta de confirmación |
 
 ## Fase 0 — completada
 
@@ -317,6 +318,19 @@ Verificación Fase 11: build Debug correcto sin warnings de código propio (el l
 - [x] `ComicCard` desacopla el badge "VS" del énfasis: nuevo parámetro `showsVersusBadge` (por defecto `true`).
 - [x] `DuelModeView` pasa `showsVersusBadge: false` en las tres tarjetas de modo; el 3v3 conserva su énfasis (`isPrimary`) pero ninguna tarjeta de modo muestra la etiqueta. La tarjeta "Duelos" de Home conserva su badge, según lo acordado con el usuario.
 - [x] Sin cambios de tests: el badge es decorativo y ningún UI test lo cubre.
+
+## Fase 13 — completada
+
+- [x] **`CombatRecordDetailViewModel`** nuevo, con el patrón de `CombatViewModel`: retiene el registro, expone `isDeleting`/`isDeleted`, `canDelete` como guarda y `delete()` que delega en `DeleteCombatHistoryUseCase`. Fallo de Realm silencioso (reintento sin navegación) y sin doble borrado.
+- [x] **`CombatRecordDetailView`**: pasa a recibir el view model (`AppContainer.makeCombatRecordDetailViewModel`) con botón de papelera en toolbar (`history.detail.delete`, deshabilitado durante/tras el borrado), alerta de confirmación reutilizando `history.delete.confirm.*` con los nombres de ambos equipos y `dismiss` al listado tras borrar (el listado se recarga solo al reaparecer).
+- [x] **`HistoryView`**: la fila es el enlace completo al detalle; desaparecen la papelera por fila, el `recordPendingDeletion` y `deletionMessage`. El vaciado completo no se toca. `CombatHistoryViewModel.delete(record:)` queda sin llamadores y se elimina con sus tests (misma limpieza que la Fase 9).
+- [x] Tests: `CombatRecordDetailViewModelTests` (3: borrado único y marca de borrado, guarda de doble intento con repositorio contador, fallo con reintento); `CombatHistoryViewModelTests` pierde el test de borrado individual; el UI test reordenado cubre fila → detalle → cancelación sin pérdida → confirmación → listado vacío.
+
+Decisiones de la fase:
+
+- La vista hace `dismiss` comprobando `isDeleted` en lugar del callback `onDeleted` de `CombatViewModel`: ahí hace falta porque `RootView` reinicia toda la pila; aquí basta un pop del propio detalle.
+
+Verificación Fase 13: build Debug correcto sin warnings de código propio, **266 unit tests + 5 UI tests en verde** en iPhone 17 (iOS 27.2).
 
 ## Pendientes y riesgos
 

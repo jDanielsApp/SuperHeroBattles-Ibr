@@ -80,7 +80,7 @@ final class SuperHeroBattleUITests: XCTestCase {
     }
 
     /// Flujo con fakes: combate completo → historial con el registro →
-    /// borrado individual → estado vacío.
+    /// borrado individual desde el detalle → estado vacío.
     @MainActor
     func testCombatIsSavedAndDeletableInHistory() throws {
         let app = XCUIApplication()
@@ -143,8 +143,9 @@ final class SuperHeroBattleUITests: XCTestCase {
         )
         history.tap()
 
+        let row = app.buttons["history.row"]
         XCTAssertTrue(
-            app.buttons["history.delete"].waitForExistence(timeout: 10),
+            row.waitForExistence(timeout: 10),
             "El combate no se guardó en el historial"
         )
 
@@ -161,12 +162,19 @@ final class SuperHeroBattleUITests: XCTestCase {
 
         app.alerts.buttons["history.clear.cancel"].firstMatch.tap()
         XCTAssertTrue(
-            app.buttons["history.delete"].waitForExistence(timeout: 5),
+            row.waitForExistence(timeout: 5),
             "Cancelar el vaciado no debe borrar el registro"
         )
 
-        // El alerta de borrado individual: cancelar conserva, confirmar vacía.
-        app.buttons["history.delete"].firstMatch.tap()
+        // Borrado individual: presionar el combate abre su detalle.
+        row.tap()
+
+        let delete = app.buttons["history.detail.delete"]
+        XCTAssertTrue(
+            delete.waitForExistence(timeout: 5),
+            "Falta el botón de borrado en el detalle del combate"
+        )
+        delete.tap()
 
         let deleteConfirm = app.alerts.buttons["history.delete.confirm"].firstMatch
         XCTAssertTrue(
@@ -174,15 +182,17 @@ final class SuperHeroBattleUITests: XCTestCase {
             "El alerta de borrado individual no se presentó"
         )
 
+        // Cancelar conserva el combate en el detalle.
         app.alerts.buttons["history.delete.cancel"].firstMatch.tap()
         XCTAssertTrue(
-            app.buttons["history.delete"].waitForExistence(timeout: 5),
+            app.staticTexts["history.detail.outcome"].waitForExistence(timeout: 5),
             "Cancelar el borrado no debe eliminar el registro"
         )
 
-        app.buttons["history.delete"].firstMatch.tap()
+        delete.tap()
         app.alerts.buttons["history.delete.confirm"].firstMatch.tap()
 
+        // Tras borrar, el detalle vuelve al listado vacío.
         let emptyState = app.staticTexts["history.empty"]
         XCTAssertTrue(
             emptyState.waitForExistence(timeout: 10),

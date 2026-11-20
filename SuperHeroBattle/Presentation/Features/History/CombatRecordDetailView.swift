@@ -1,8 +1,20 @@
 import SwiftUI
 
 /// Detalle de un combate guardado: equipos, resultado y narración persistida.
+///
+/// El borrado individual aparece aquí: el botón de la toolbar pide
+/// confirmación con un alerta que nombra a ambos equipos y, tras borrar,
+/// la vista vuelve al listado.
 struct CombatRecordDetailView: View {
-    let record: CombatRecord
+    @State private var viewModel: CombatRecordDetailViewModel
+    @State private var isPresentingDeleteConfirmation = false
+
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
+
+    init(viewModel: CombatRecordDetailViewModel) {
+        _viewModel = State(initialValue: viewModel)
+    }
 
     var body: some View {
         ZStack {
@@ -13,14 +25,14 @@ struct CombatRecordDetailView: View {
                     dateHeader
 
                     CombatOutcomeBanner(
-                        outcome: record.outcome,
+                        outcome: viewModel.record.outcome,
                         isRevealed: true,
                         outcomeIdentifier: "history.detail.outcome"
                     )
 
-                    teamSection(.teamA, snapshots: record.teamA)
+                    teamSection(.teamA, snapshots: viewModel.record.teamA)
                     ComicVersusDivider()
-                    teamSection(.teamB, snapshots: record.teamB)
+                    teamSection(.teamB, snapshots: viewModel.record.teamB)
                     narrationSection
                 }
                 .padding(.horizontal, 20)
@@ -31,10 +43,59 @@ struct CombatRecordDetailView: View {
         .navigationTitle(L10n.localizedKey(.historyDetailTitle))
         .navigationBarTitleDisplayMode(.inline)
         .accessibilityIdentifier("history.detail")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    isPresentingDeleteConfirmation = true
+                } label: {
+                    Label(L10n.localizedKey(.historyDelete), systemImage: "trash")
+                }
+                .disabled(!viewModel.canDelete)
+                .accessibilityIdentifier("history.detail.delete")
+                .accessibilityLabel(L10n.text(.historyDelete))
+            }
+        }
+        .alert(
+            L10n.localizedKey(.historyDeleteConfirmTitle),
+            isPresented: $isPresentingDeleteConfirmation
+        ) {
+            Button(L10n.localizedKey(.historyDeleteConfirm), role: .destructive) {
+                Task {
+                    await viewModel.delete()
+                    if viewModel.isDeleted {
+                        dismiss()
+                    }
+                }
+            }
+            .accessibilityIdentifier("history.delete.confirm")
+
+            Button(L10n.localizedKey(.commonCancel), role: .cancel) {}
+            .accessibilityIdentifier("history.delete.cancel")
+        } message: {
+            Text(deletionMessage)
+        }
     }
 
+    // MARK: - Borrado
+
+    /// Mensaje del alerta con los equipos del combate.
+    private var deletionMessage: String {
+        String(
+            format: L10n.string(.historyDeleteConfirmMessage, locale: locale),
+            names(viewModel.record.teamA),
+            names(viewModel.record.teamB)
+        )
+    }
+
+    private func names(_ snapshots: [HeroSnapshot]) -> String {
+        let list = snapshots.map(\.name).joined(separator: ", ")
+        return list.isEmpty ? "—" : list
+    }
+
+    // MARK: - Contenido
+
     private var dateHeader: some View {
-        Text(record.date, format: .dateTime.day().month(.abbreviated).year().hour().minute())
+        Text(viewModel.record.date, format: .dateTime.day().month(.abbreviated).year().hour().minute())
             .font(ComicTypography.body)
             .foregroundStyle(ComicPalette.paper.opacity(0.7))
             .frame(maxWidth: .infinity)
@@ -100,8 +161,8 @@ struct CombatRecordDetailView: View {
     private var narrationSection: some View {
         CombatNarrationSection(
             narration: CombatNarrative(
-                text: record.narration,
-                source: record.narrationSource
+                text: viewModel.record.narration,
+                source: viewModel.record.narrationSource
             ),
             textIdentifier: "history.detail.narration",
             sourceIdentifier: "history.detail.narration.source"
@@ -112,14 +173,19 @@ struct CombatRecordDetailView: View {
 #Preview {
     NavigationStack {
         CombatRecordDetailView(
-            record: CombatRecord(
-                date: Date(),
-                mode: .twoVsTwo,
-                teamA: Array(FixedRosterHeroRepository.roster.prefix(2)).map(HeroSnapshot.init(hero:)),
-                teamB: Array(FixedRosterHeroRepository.roster.dropFirst(2).prefix(2)).map(HeroSnapshot.init(hero:)),
-                outcome: .winner(.teamA),
-                narration: "Simulación ficticia: los equipos se enfrentan con todo.",
-                narrationSource: .template
+            viewModel: CombatRecordDetailViewModel(
+                record: CombatRecord(
+                    date: Date(),
+                    mode: .twoVsTwo,
+                    teamA: Array(FixedRosterHeroRepository.roster.prefix(2)).map(HeroSnapshot.init(hero:)),
+                    teamB: Array(FixedRosterHeroRepository.roster.dropFirst(2).prefix(2)).map(HeroSnapshot.init(hero:)),
+                    outcome: .winner(.teamA),
+                    narration: "Simulación ficticia: los equipos se enfrentan con todo.",
+                    narrationSource: .template
+                ),
+                deleteHistory: DeleteCombatHistoryUseCase(
+                    repository: InMemoryCombatHistoryRepository()
+                )
             )
         )
     }

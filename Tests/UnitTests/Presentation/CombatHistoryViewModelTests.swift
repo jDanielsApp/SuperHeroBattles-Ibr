@@ -31,20 +31,6 @@ final class CombatHistoryViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.records.map(\.narration), ["Combate 2", "Combate 1", "Combate 0"])
     }
 
-    func testDeleteRemovesOnlyThatRecord() async {
-        let repository = InMemoryCombatHistoryRepository()
-        let kept = makeRecord(narration: "Se queda")
-        let removed = makeRecord(narration: "Se va")
-        try? await repository.save(kept)
-        try? await repository.save(removed)
-        let viewModel = makeViewModel(repository: repository)
-        await viewModel.load()
-
-        await viewModel.delete(record: removed)
-
-        XCTAssertEqual(viewModel.records.map(\.narration), ["Se queda"])
-    }
-
     func testDeleteAllEmptiesTheList() async {
         let repository = InMemoryCombatHistoryRepository()
         try? await repository.save(makeRecord(narration: "Uno"))

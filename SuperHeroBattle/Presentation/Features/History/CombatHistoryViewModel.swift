@@ -43,15 +43,6 @@ final class CombatHistoryViewModel {
         await load()
     }
 
-    func delete(record: CombatRecord) async {
-        do {
-            try await deleteHistory.execute(id: record.id)
-            records.removeAll { $0.id == record.id }
-        } catch {
-            // Sin cambios: el listado conserva el registro.
-        }
-    }
-
     func deleteAll() async {
         do {
             try await deleteHistory.executeAll()

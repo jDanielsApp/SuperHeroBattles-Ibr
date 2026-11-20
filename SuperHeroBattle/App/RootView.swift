@@ -48,7 +48,9 @@ struct RootView: View {
                             viewModel: container.makeCombatHistoryViewModel()
                         )
                     case let .combatRecord(record):
-                        CombatRecordDetailView(record: record)
+                        CombatRecordDetailView(
+                            viewModel: container.makeCombatRecordDetailViewModel(record: record)
+                        )
                     }
                 }
         }

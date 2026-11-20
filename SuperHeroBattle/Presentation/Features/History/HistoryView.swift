@@ -1,12 +1,10 @@
 import SwiftUI
 
-/// Historial de combates guardados: listado, borrado individual y vaciado.
+/// Historial de combates guardados: listado con borrado desde el detalle y
+/// vaciado completo.
 struct HistoryView: View {
     @State private var viewModel: CombatHistoryViewModel
     @State private var isPresentingClearConfirmation = false
-    @State private var recordPendingDeletion: CombatRecord?
-
-    @Environment(\.locale) private var locale
 
     init(viewModel: CombatHistoryViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -50,26 +48,6 @@ struct HistoryView: View {
             .accessibilityIdentifier("history.clear.cancel")
         } message: {
             L10n.text(.historyClearConfirmMessage)
-        }
-        .alert(
-            L10n.localizedKey(.historyDeleteConfirmTitle),
-            isPresented: Binding(
-                get: { recordPendingDeletion != nil },
-                set: { if !$0 { recordPendingDeletion = nil } }
-            ),
-            presenting: recordPendingDeletion
-        ) { record in
-            Button(L10n.localizedKey(.historyDeleteConfirm), role: .destructive) {
-                Task {
-                    await viewModel.delete(record: record)
-                }
-            }
-            .accessibilityIdentifier("history.delete.confirm")
-
-            Button(L10n.localizedKey(.commonCancel), role: .cancel) {}
-            .accessibilityIdentifier("history.delete.cancel")
-        } message: { record in
-            Text(deletionMessage(for: record))
         }
         .task {
             await viewModel.load()
@@ -189,35 +167,14 @@ struct HistoryView: View {
         .accessibilityIdentifier("history.list")
     }
 
+    /// Fila completa: presionar el combate abre su detalle, donde vive el
+    /// borrado individual.
     private func recordRow(_ record: CombatRecord) -> some View {
-        HStack(spacing: 10) {
-            NavigationLink(value: AppRoute.combatRecord(record)) {
-                recordRowContent(record)
-            }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("history.row")
-
-            Button {
-                recordPendingDeletion = record
-            } label: {
-                Image(systemName: "trash")
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(ComicPalette.paper.opacity(0.7))
-                    .frame(width: 40, height: 44)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(L10n.text(.historyDelete))
-            .accessibilityIdentifier("history.delete")
+        NavigationLink(value: AppRoute.combatRecord(record)) {
+            recordRowContent(record)
         }
-    }
-
-    /// Mensaje del alerta de borrado con los equipos del combate.
-    private func deletionMessage(for record: CombatRecord) -> String {
-        String(
-            format: L10n.string(.historyDeleteConfirmMessage, locale: locale),
-            names(record.teamA),
-            names(record.teamB)
-        )
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("history.row")
     }
 
     private func recordRowContent(_ record: CombatRecord) -> some View {
