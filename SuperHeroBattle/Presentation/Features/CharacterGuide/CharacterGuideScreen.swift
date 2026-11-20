@@ -22,7 +22,8 @@ struct CharacterGuideScreen: View {
     var body: some View {
         if #available(iOS 27.1, *), isWideLayout {
             // Pantalla interior del Duo: `ArrangementView` reparte catálogo y
-            // ficha respetando la región de pliegue (patrón Mail de la HIG).
+            // ficha respetando la región de pliegue (patrón Mail de la HIG),
+            // con el eje forzado a horizontal para no apilar en vertical.
             ArrangementView {
                 CharacterGuideView(viewModel: viewModel) { hero in
                     detailHero = hero
@@ -30,7 +31,7 @@ struct CharacterGuideScreen: View {
             } secondary: {
                 detailPane
             }
-            .arrangementViewStyle(.split)
+            .arrangementViewStyle(.split.axes(.horizontal))
         } else {
             // Compact (pantalla exterior del Duo, iPhone): push clásico.
             CharacterGuideView(viewModel: viewModel)

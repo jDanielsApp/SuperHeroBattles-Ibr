@@ -72,8 +72,9 @@ struct CombatRecordDetailView: View {
     // MARK: - Reparto de paneles
 
     /// Pantalla interior del Duo: `ArrangementView` reparte el resto y la
-    /// narración respetando la región de pliegue. En compact (o iOS 26) el
-    /// reparto manual mantiene la columna actual.
+    /// narración respetando la región de pliegue, con el eje forzado a
+    /// horizontal (en vertical el split por defecto apilaría). En compact
+    /// (o iOS 26) el reparto manual mantiene la columna actual.
     @ViewBuilder
     private var arrangedContent: some View {
         if #available(iOS 27.1, *), isWideLayout {
@@ -82,7 +83,7 @@ struct CombatRecordDetailView: View {
             } secondary: {
                 narrationSection
             }
-            .arrangementViewStyle(.split)
+            .arrangementViewStyle(.split.axes(.horizontal))
         } else {
             CombatArrangementLayout(
                 leading: { restBlocks },

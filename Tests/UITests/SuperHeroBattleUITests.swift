@@ -304,6 +304,55 @@ final class SuperHeroBattleUITests: XCTestCase {
         )
     }
 
+    /// Regresión del arrangement de la pantalla interior: en el iPhone Duo
+    /// abierto los paneles de equipo deben ir lado a lado (el split por
+    /// defecto apila en vertical); en compact, apilados con el divisor.
+    /// El umbral de 600 pt separa los destinos de la suite: iPhone (compact)
+    /// y pantalla interior del Duo (regular).
+    @MainActor
+    func testTeamSelectionPanelsMatchWindowSizeClass() throws {
+        let app = XCUIApplication()
+        app.launchArguments += ["-uitest-fakes"]
+        app.launch()
+
+        let duels = app.buttons["home.duels"]
+        XCTAssertTrue(duels.waitForExistence(timeout: 5))
+        duels.tap()
+
+        let mode = app.buttons["duels.mode.1v1"]
+        XCTAssertTrue(mode.waitForExistence(timeout: 5))
+        mode.tap()
+
+        let teamARandom = app.buttons["team.slot.random.teamA-0"]
+        let teamBRandom = app.buttons["team.slot.random.teamB-0"]
+        XCTAssertTrue(
+            teamARandom.waitForExistence(timeout: 5),
+            "Falta el botón aleatorio del Equipo A"
+        )
+        XCTAssertTrue(
+            teamBRandom.waitForExistence(timeout: 5),
+            "Falta el botón aleatorio del Equipo B"
+        )
+
+        let windowWidth = app.windows.firstMatch.frame.width
+
+        if windowWidth >= 600 {
+            // Duo abierto: Equipo A a un lado y Equipo B al otro.
+            XCTAssertGreaterThanOrEqual(
+                teamBRandom.frame.minX + 1,
+                teamARandom.frame.maxX,
+                "En ancho regular los equipos deben quedar lado a lado, no apilados"
+            )
+        } else {
+            // Compact: la columna actual apila el Equipo B bajo el Equipo A.
+            XCTAssertGreaterThanOrEqual(
+                teamBRandom.frame.minY + 1,
+                teamARandom.frame.maxY,
+                "En compact el Equipo B debe quedar bajo el Equipo A"
+            )
+        }
+    }
+
     /// Espera a que un elemento existente esté habilitado.
     @MainActor
     private func waitForEnabled(

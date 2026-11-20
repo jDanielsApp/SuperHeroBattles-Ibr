@@ -76,8 +76,10 @@ struct TeamSelectionView: View {
     // MARK: - Equipos
 
     /// Pantalla interior del Duo: `ArrangementView` reparte los paneles
-    /// respetando la bisagra (el pliegue hace de separador visual). En
-    /// compact se mantiene la columna actual con el divisor "VS".
+    /// respetando la bisagra (el pliegue hace de separador visual). El eje
+    /// se fuerza a horizontal porque en vertical el split por defecto
+    /// apilaría los equipos. En compact se mantiene la columna actual con
+    /// el divisor "VS".
     @ViewBuilder
     private var teamsSection: some View {
         if #available(iOS 27.1, *), isWideLayout {
@@ -86,7 +88,7 @@ struct TeamSelectionView: View {
             } secondary: {
                 teamPanel(.teamB)
             }
-            .arrangementViewStyle(.split)
+            .arrangementViewStyle(.split.axes(.horizontal))
         } else {
             VStack(spacing: 18) {
                 teamPanel(.teamA)
