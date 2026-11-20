@@ -1,6 +1,6 @@
 import Foundation
 
-/// Fuente de tiempo inyectable para que la expiración de la caché sea determinista en tests.
+/// Injectable time source that makes cache expiration deterministic in tests.
 nonisolated protocol TimeProvider: Sendable {
     var now: Date { get }
 }

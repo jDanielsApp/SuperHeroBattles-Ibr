@@ -1,6 +1,6 @@
 import Foundation
 
-/// Stub de `URLProtocol` para probar `URLSessionHTTPClient` sin red.
+/// `URLProtocol` stub for testing `URLSessionHTTPClient` without networking.
 nonisolated final class URLProtocolStub: URLProtocol {
     struct Stub {
         var onStart: (() -> Void)?

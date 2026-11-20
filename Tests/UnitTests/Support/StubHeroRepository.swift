@@ -7,7 +7,7 @@ nonisolated enum StubHeroOutcome: Sendable {
     case cancellation
 }
 
-/// Repositorio falso con un único resultado inmediato.
+/// Fake repository with a single immediate outcome.
 nonisolated struct StubHeroRepository: HeroRepository {
     let outcome: StubHeroOutcome
 
@@ -37,7 +37,7 @@ nonisolated struct StubHeroRepository: HeroRepository {
     }
 }
 
-/// Repositorio falso con una secuencia de resultados y las queries recibidas.
+/// Fake repository with a sequence of outcomes that records received queries.
 actor ScriptedHeroRepository: HeroRepository {
     private var outcomes: [StubHeroOutcome]
     private var queries: [String] = []
@@ -72,7 +72,7 @@ actor ScriptedHeroRepository: HeroRepository {
     }
 }
 
-/// Repositorio que cuenta llamadas para verificar la caché.
+/// Repository that counts calls to verify the cache.
 actor CountingHeroRepository: HeroRepository {
     let heroes: [Hero]
     private var searchCount = 0

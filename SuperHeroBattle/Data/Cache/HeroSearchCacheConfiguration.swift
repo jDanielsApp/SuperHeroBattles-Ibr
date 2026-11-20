@@ -1,6 +1,6 @@
 import Foundation
 
-/// Configuración de la caché TTL de búsquedas.
+/// Configuration for the hero search TTL cache.
 nonisolated struct HeroSearchCacheConfiguration: Equatable, Sendable {
     static let minimumTimeToLive: TimeInterval = 120
     static let maximumTimeToLive: TimeInterval = 300

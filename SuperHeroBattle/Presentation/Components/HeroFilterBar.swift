@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Filtros locales sobre los héroes ya cargados en el catálogo.
+/// Local filters applied to the heroes already loaded in the catalog.
 struct HeroFilterBar: View {
     let publisherOptions: [String]
     let genderOptions: [String]

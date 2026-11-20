@@ -154,12 +154,12 @@ final class GenerateCombatNarrationUseCaseTests: XCTestCase {
     }
 
     func testPromptMarksClearVictoryWhenGapIsAtLeastThirty() {
-        // 100 + 7 frente a 70 + 7: diferencia exacta de 30.
+        // 100 + 7 versus 70 + 7: exactly a 30-point difference.
         let clear = NarrationPrompts.combatPrompt(
             context: makeContext(intelligenceA: 100, intelligenceB: 70, luck: [7, 7]),
             language: .english
         )
-        // 99 + 7 frente a 70 + 7: diferencia 29.
+        // 99 + 7 versus 70 + 7: a 29-point difference.
         let close = NarrationPrompts.combatPrompt(
             context: makeContext(intelligenceA: 99, intelligenceB: 70, luck: [7, 7]),
             language: .english

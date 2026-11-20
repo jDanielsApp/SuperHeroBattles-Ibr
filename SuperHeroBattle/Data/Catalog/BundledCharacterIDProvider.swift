@@ -1,9 +1,9 @@
 import Foundation
 
-/// Lee `data/character_ids.json` desde el bundle de la app.
+/// Reads `data/character_ids.json` from the app bundle.
 ///
-/// El archivo contiene únicamente una lista de enteros. El proveedor la valida,
-/// la ordena y la convierte a `String` para el resto de la aplicación.
+/// The file contains only a list of integers. The provider validates it,
+/// sorts it, and converts it to `String` for the rest of the app.
 nonisolated struct BundledCharacterIDProvider: CharacterIDProviding {
     static let resourceName = "character_ids"
 

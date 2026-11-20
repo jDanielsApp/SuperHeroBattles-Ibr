@@ -177,7 +177,7 @@ final class TeamSelectionViewModelTests: XCTestCase {
         viewModel.prepareRandomPool()
         await waitFor { await loadCatalog.storedIDs().count == 4 }
 
-        // El héroe 1 fue elegido a mano para el Equipo A: el pool lo salta.
+        // Hero 1 was picked by hand for Team A: the pool skips it.
         viewModel.assign(makeHero(id: "1"), to: .teamA, slot: 0)
 
         viewModel.fillRandom(side: .teamA, slot: 1)
@@ -203,14 +203,14 @@ final class TeamSelectionViewModelTests: XCTestCase {
         viewModel.prepareRandomPool()
         await waitFor { await catalog.storedIDs().count == 2 }
 
-        // Se agota el pool consumiendo y liberando el hueco.
+        // Exhaust the pool by consuming it and then clearing the slot.
         for expectedID in ["1", "2"] {
             viewModel.fillRandom(side: .teamA, slot: 0)
             XCTAssertEqual(viewModel.hero(in: 0, side: .teamA)?.id, expectedID)
             viewModel.clear(side: .teamA, slot: 0)
         }
 
-        // Pool agotado: sorteo bajo demanda que excluye lo ya sorteado.
+        // Pool exhausted: on-demand random draw that excludes already drawn IDs.
         viewModel.fillRandom(side: .teamA, slot: 0)
         await waitFor { viewModel.hero(in: 0, side: .teamA)?.id == "3" }
 
@@ -218,7 +218,7 @@ final class TeamSelectionViewModelTests: XCTestCase {
         XCTAssertNil(viewModel.message)
         XCTAssertNil(viewModel.busySlot)
 
-        // Y tampoco repite el ID recién sorteado bajo demanda.
+        // Nor does it repeat the ID just drawn on demand.
         viewModel.clear(side: .teamA, slot: 0)
         viewModel.fillRandom(side: .teamA, slot: 0)
         await waitFor { viewModel.hero(in: 0, side: .teamA)?.id == "4" }
@@ -318,8 +318,8 @@ final class TeamSelectionViewModelTests: XCTestCase {
         characterIDs: (any CharacterIDProviding)? = nil,
         idPicker: (any RandomIDPicker)? = nil
     ) -> TeamSelectionViewModel {
-        // Las construcciones por defecto se hacen en el cuerpo: los actores
-        // no pueden aparecer como argumentos por defecto.
+        // Default constructions happen in the body: actors cannot appear
+        // as default arguments.
         let resolvedCatalog = catalog ?? SpyCatalogRepository()
         let resolvedPreload = preload ?? LoadHeroesByIDsUseCase(
             catalog: InMemoryHeroCatalogRepository(),
@@ -376,21 +376,21 @@ final class TeamSelectionViewModelTests: XCTestCase {
     }
 }
 
-/// Picker determinista: devuelve el primer héroe no excluido.
+/// Deterministic picker: returns the first hero not excluded.
 private struct FirstAvailablePicker: RandomHeroPicker {
     func pick(from heroes: [Hero], excluding heroIDs: Set<String>) -> Hero? {
         heroes.first { !heroIDs.contains($0.id) }
     }
 }
 
-/// Picker determinista de IDs: devuelve los primeros disponibles en orden.
+/// Deterministic ID picker: returns the first available IDs in order.
 private struct SequentialIDPicker: RandomIDPicker {
     func pickIDs(from ids: [String], excluding excludedIDs: Set<String>, count: Int) -> [String] {
         Array(ids.filter { !excludedIDs.contains($0) }.prefix(count))
     }
 }
 
-/// Catálogo cuyo `allHeroes` siempre falla con error de transporte.
+/// Catalog whose `allHeroes` always fails with a transport error.
 private struct FailingCatalog: HeroCatalogRepository {
     func allHeroes() async throws -> [Hero] {
         throw HeroRepositoryError.transport
@@ -403,7 +403,7 @@ private struct FailingCatalog: HeroCatalogRepository {
     func upsert(_ heroes: [Hero]) async throws {}
 }
 
-/// Catálogo que suspende `allHeroes` hasta que el test lo libera.
+/// Catalog that suspends `allHeroes` until the test releases it.
 private actor GatedCatalog: HeroCatalogRepository {
     private var continuations: [CheckedContinuation<[Hero], Error>] = []
 

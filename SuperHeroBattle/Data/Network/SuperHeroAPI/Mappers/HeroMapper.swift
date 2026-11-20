@@ -1,8 +1,8 @@
 import Foundation
 
-/// Traduce DTOs de SuperHeroAPI a entidades de dominio.
-/// Los marcadores `"-"`, `"null"` y `""` se tratan como datos no disponibles;
-/// el resto del texto se conserva sin reinterpretarlo.
+/// Translates SuperHeroAPI DTOs into domain entities.
+/// The markers `"-"`, `"null"` and `""` are treated as unavailable data;
+/// any other text is preserved without reinterpretation.
 nonisolated struct HeroMapper: Sendable {
     init() {}
 
@@ -91,7 +91,7 @@ nonisolated struct HeroMapper: Sendable {
         return url
     }
 
-    /// Devuelve `nil` para los marcadores de dato ausente.
+    /// Returns `nil` for markers that indicate missing data.
     static func text(_ raw: String?) -> String? {
         guard let raw else { return nil }
 

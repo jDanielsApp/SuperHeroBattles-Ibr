@@ -1,6 +1,6 @@
 import Foundation
 
-/// Entidad de dominio que representa un superhéroe de SuperHeroAPI.
+/// Domain entity representing a superhero from SuperHeroAPI.
 nonisolated struct Hero: Identifiable, Hashable, Sendable {
     let id: String
     let name: String
@@ -36,7 +36,7 @@ nonisolated struct Hero: Identifiable, Hashable, Sendable {
     var alignment: HeroAlignment { biography.alignment }
     var gender: String? { appearance.gender }
 
-    /// Texto plano utilizado por la búsqueda y los filtros locales.
+    /// Plain text used by search and local filters.
     var searchableText: String {
         [
             name,

@@ -1,10 +1,10 @@
 import Foundation
 
-/// Representación persistible y estable de `CombatRecord`.
+/// Persistable, stable representation of `CombatRecord`.
 ///
-/// Se guarda como JSON dentro de Realm para no acoplar el esquema a los
-/// cambios de las entidades de dominio. `CombatOutcome` lleva valor asociado,
-/// así que se descompone en `outcomeKind` y `winnerSide`.
+/// Stored as JSON inside Realm so the schema stays decoupled from
+/// changes in the domain entities. `CombatOutcome` carries an associated value,
+/// so it is decomposed into `outcomeKind` and `winnerSide`.
 nonisolated struct CombatRecordSnapshot: Codable, Sendable {
     let id: UUID
     let date: Date

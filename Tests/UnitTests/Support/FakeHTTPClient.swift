@@ -1,7 +1,7 @@
 import Foundation
 @testable import SuperHeroBattle
 
-/// Cliente HTTP falso con respuestas en cola y peticiones registradas.
+/// Fake HTTP client with queued responses and recorded requests.
 actor FakeHTTPClient: HTTPClient {
     enum Outcome: Sendable {
         case success(HTTPResponse)

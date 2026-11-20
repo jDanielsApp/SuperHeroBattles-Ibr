@@ -1,11 +1,11 @@
 import Foundation
 import RealmSwift
 
-/// Catálogo local persistido en Realm.
+/// Local catalog persisted in Realm.
 ///
-/// Realm queda confinado al actor principal, tal y como exige la arquitectura.
-/// Nunca se exponen objetos gestionados: solo se devuelven entidades de dominio.
-/// Los métodos del protocolo son `nonisolated` y delegan en helpers aislados.
+/// Realm is confined to the main actor, as the architecture requires.
+/// Managed objects are never exposed: only domain entities are returned.
+/// Protocol methods are `nonisolated` and delegate to isolated helpers.
 @MainActor
 final class RealmHeroCatalogRepository: HeroCatalogRepository {
     private let realm: Realm
@@ -14,7 +14,7 @@ final class RealmHeroCatalogRepository: HeroCatalogRepository {
         realm = try Realm(configuration: configuration)
     }
 
-    /// Configuración de producción con el esquema y las migraciones centralizados.
+    /// Production configuration with centralized schema and migrations.
     static func live() throws -> RealmHeroCatalogRepository {
         try RealmHeroCatalogRepository(configuration: RealmStore.configuration())
     }

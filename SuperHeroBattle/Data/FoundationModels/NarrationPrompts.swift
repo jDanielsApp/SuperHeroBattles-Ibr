@@ -1,17 +1,17 @@
 import Foundation
 
-/// Prompts de narración. Único punto de definición y versionados: cualquier
-/// cambio de comportamiento de la IA pasa por aquí y por `version`.
+/// Narration prompts: the single, versioned point of definition. Any
+/// change to the AI's behavior goes through this file and `version`.
 ///
-/// Contienen exclusivamente datos del dominio (nombres, fichas conocidas y
-/// resultado matemático). Nunca tokens, credenciales ni datos personales.
+/// They contain only domain data (names, known character sheets, and the
+/// mathematical result). Never tokens, credentials, or personal data.
 nonisolated enum NarrationPrompts {
     static let version = 4
 
-    /// Instrucciones del sistema: estilo, reglas invariables e idioma.
+    /// System instructions: style, invariant rules, and language.
     ///
-    /// `safeMode` suaviza el vocabulario (acción familiar y no gráfica,
-    /// ejemplos neutros) para el reintento tras un rechazo del guardrail.
+    /// `safeMode` softens the vocabulary (family-friendly, non-graphic
+    /// action, neutral examples) for the retry after a guardrail rejection.
     static func instructions(language: NarrationLanguage, safeMode: Bool) -> String {
         if safeMode {
             return """
@@ -107,10 +107,10 @@ nonisolated enum NarrationPrompts {
         """
     }
 
-    /// Prompt del combate concreto a partir del contexto etiquetado.
+    /// Prompt for the concrete combat, built from the labeled context.
     ///
-    /// Las etiquetas de bando se generan en el idioma de la narración para
-    /// que el modelo ecoar `Equipo A` en español o `Team A` en inglés.
+    /// Side labels are generated in the narration language so the model
+    /// echoes `Equipo A` in Spanish or `Team A` in English.
     static func combatPrompt(
         context: NarrationContext,
         language: NarrationLanguage
@@ -139,13 +139,13 @@ nonisolated enum NarrationPrompts {
         return lines.joined(separator: "\n")
     }
 
-    // MARK: - Detalles
+    // MARK: - Details
 
     private static func rosterSummary(_ context: NarrationContext, side: TeamSide) -> String {
         context.heroes(in: side).map(\.hero.name).joined(separator: ", ")
     }
 
-    /// Nombre del bando en el idioma de la narración.
+    /// Side name in the narration language.
     private static func teamName(_ side: TeamSide, language: NarrationLanguage) -> String {
         switch language {
         case .english:
@@ -301,7 +301,7 @@ nonisolated enum NarrationPrompts {
 }
 
 nonisolated extension NarrationLanguage {
-    /// Nombre del idioma tal y como se pide al modelo.
+    /// Language name as requested from the model.
     var displayName: String {
         switch self {
         case .english: "English"

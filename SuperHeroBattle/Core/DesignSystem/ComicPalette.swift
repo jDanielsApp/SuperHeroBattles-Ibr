@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Colores base de la identidad visual comic book.
+/// Base colors of the comic book visual identity.
 nonisolated enum ComicPalette {
     static let ink = Color(red: 0.04, green: 0.05, blue: 0.09)
     static let midnight = Color(red: 0.07, green: 0.10, blue: 0.20)
@@ -12,7 +12,7 @@ nonisolated enum ComicPalette {
     static let panelBorder = Color.black.opacity(0.85)
 }
 
-/// Colores diferenciados para los dos equipos.
+/// Distinct colors for the two teams.
 nonisolated enum TeamPalette {
     static let teamA = Color(red: 0.93, green: 0.24, blue: 0.18)
     static let teamB = Color(red: 0.10, green: 0.48, blue: 0.95)

@@ -1,6 +1,6 @@
 import Foundation
 
-/// Implementación de `HTTPClient` basada en `URLSession` y `async/await`.
+/// `HTTPClient` implementation built on `URLSession` and `async/await`.
 nonisolated final class URLSessionHTTPClient: HTTPClient {
     private let session: URLSession
 

@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// Divisor decorativo "VS" compartido por el combate, la selección de
-/// equipos y el detalle de combates guardados. Decorativo: nunca forma
-/// parte del árbol de accesibilidad y puede vivir en la zona de pliegue.
+/// Decorative "VS" divider shared by combat, team selection, and saved
+/// battle detail. Purely decorative: never part of the accessibility
+/// tree and it may live in the fold zone.
 struct ComicVersusDivider: View {
     var body: some View {
         HStack(spacing: 12) {

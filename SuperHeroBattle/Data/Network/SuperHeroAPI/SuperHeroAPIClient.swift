@@ -1,7 +1,7 @@
 import Foundation
 
-/// Cliente de SuperHeroAPI. Devuelve DTOs y traduce HTTP/decoding a errores de dominio.
-/// Nunca registra la URL completa porque contiene el token.
+/// Client for SuperHeroAPI. Returns DTOs and maps HTTP/decoding failures to domain errors.
+/// Never logs the full URL because it contains the token.
 nonisolated struct SuperHeroAPIClient: Sendable {
     private let configuration: SuperHeroAPIConfiguration
     private let httpClient: any HTTPClient
@@ -97,8 +97,8 @@ nonisolated struct SuperHeroAPIClient: Sendable {
         return classifiedAPIError(message: error.error)
     }
 
-    /// La API puede devolver errores de autenticación con HTTP 200.
-    /// Se clasifican como `unauthorized` para no mostrarlos como fallo genérico.
+    /// The API can return authentication errors with HTTP 200.
+    /// They are classified as `unauthorized` so they are not shown as a generic failure.
     private func classifiedAPIError(message: String?) -> HeroRepositoryError {
         guard let message = message?.trimmingCharacters(in: .whitespacesAndNewlines),
               !message.isEmpty else {

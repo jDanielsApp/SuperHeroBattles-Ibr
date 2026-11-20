@@ -1,6 +1,6 @@
 import Foundation
 
-/// Presentación de cada modalidad de combate: claves localizadas e icono.
+/// Presentation layer for each combat mode: localized keys and icon.
 extension CombatMode {
     var titleKey: LocalizableStringKey {
         switch self {

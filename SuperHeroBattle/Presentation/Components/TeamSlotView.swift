@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Tarjeta de un hueco de equipo: héroe ocupante o estado vacío con acciones.
+/// Team slot card: the occupying hero, or an empty state with actions.
 struct TeamSlotView: View {
     let side: TeamSide
     let slot: Int
@@ -14,7 +14,7 @@ struct TeamSlotView: View {
         side == .teamA ? TeamPalette.teamA : TeamPalette.teamB
     }
 
-    /// Contexto extra para VoiceOver: equipo y número de hueco.
+    /// Extra context for VoiceOver: team and slot number.
     private var slotContext: String {
         let team = L10n.string(side == .teamA ? .teamSelectionTeamA : .teamSelectionTeamB)
         return "\(team), \(slot + 1)"
@@ -28,7 +28,7 @@ struct TeamSlotView: View {
         }
     }
 
-    // MARK: - Hueco ocupado
+    // MARK: - Occupied Slot
 
     private func occupiedCard(_ hero: Hero) -> some View {
         HStack(spacing: 12) {
@@ -78,7 +78,7 @@ struct TeamSlotView: View {
         .accessibilityElement(children: .contain)
     }
 
-    // MARK: - Hueco vacío
+    // MARK: - Empty Slot
 
     private var emptyCard: some View {
         HStack(spacing: 12) {
@@ -143,7 +143,7 @@ struct TeamSlotView: View {
         .accessibilityElement(children: .contain)
     }
 
-    // MARK: - Acciones
+    // MARK: - Actions
 
     private func slotButton(
         titleKey: LocalizableStringKey,

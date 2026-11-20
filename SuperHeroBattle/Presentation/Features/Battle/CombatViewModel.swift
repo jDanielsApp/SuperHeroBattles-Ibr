@@ -1,12 +1,12 @@
 import Foundation
 
-/// Estado de la pantalla de combate. El resultado del motor es inmutable;
-/// la narración se genera aparte y nunca altera puntuaciones ni ganador.
+/// State for the combat screen. The engine result is immutable;
+/// the narration is generated separately and never alters scores or the winner.
 ///
-/// El guardado en el historial es **explícito**: el usuario pulsa Guardar,
-/// confirma el alerta y el combate se registra (snapshots de ambos equipos,
-/// modalidad, ganador o empate y narración con su origen) antes de volver a
-/// Home. Sin suerte, feeling ni cálculos intermedios.
+/// Saving to history is **explicit**: the user taps Save,
+/// confirms the alert and the combat is recorded (snapshots of both teams,
+/// mode, winner or tie, and the narration with its source) before returning
+/// Home. No luck, affinity or intermediate calculations.
 @MainActor
 @Observable
 final class CombatViewModel {
@@ -44,21 +44,21 @@ final class CombatViewModel {
         result = resolveCombat.execute(participants: participants)
     }
 
-    /// El registro exige narración y su origen: Guardar se habilita solo
-    /// cuando la narración está publicada y el combate no se guardó ya.
+    /// Recording requires the narration and its origin: Save is enabled only
+    /// when the narration is published and the combat hasn't already been saved.
     var canSave: Bool {
         narration != nil && !isSaved && !isSaving
     }
 
-    /// ¿Está publicada la narración? Gobierna la revelación del ganador y
-    /// de las puntuaciones reales: hasta entonces la pantalla mantiene el
-    /// suspense y el resultado matemático sigue siendo inmutable.
+    /// Is the narration published? It governs revealing the winner and the
+    /// real scores: until then the screen keeps the suspense and the
+    /// mathematical result remains immutable.
     var isNarrationPublished: Bool {
         narration != nil
     }
 
-    /// Genera la narración una vez por resultado. La cancelación no publica:
-    /// la guarda de generación evita que una tarea antigua toque el estado.
+    /// Generates the narration once per result. Cancellation publishes nothing:
+    /// the generation guard keeps a stale task from touching the state.
     func loadNarration() async {
         guard narration == nil else { return }
 
@@ -75,18 +75,18 @@ final class CombatViewModel {
             guard narrationGeneration == generation else { return }
             narration = narrative
         } catch {
-            // Cancelación o fallo del servicio: nada que publicar ni guardar.
+            // Cancellation or service failure: nothing to publish or save.
         }
 
         guard narrationGeneration == generation else { return }
         isGeneratingNarration = false
     }
 
-    // MARK: - Historial
+    // MARK: - History
 
-    /// Guarda el combate en el historial tras la confirmación del usuario y
-    /// navega de vuelta a Home. Un fallo de Realm es silencioso: el combate
-    /// sigue en pantalla y el usuario puede reintentar.
+    /// Saves the combat to history after the user confirms and
+    /// navigates back Home. A Realm failure is silent: the combat
+    /// stays on screen and the user can retry.
     func save() async {
         guard let narration, !isSaved, !isSaving else { return }
 
@@ -106,7 +106,7 @@ final class CombatViewModel {
         do {
             try await saveCombatHistory.execute(record)
         } catch {
-            // Fallo silencioso: sin navegación ni estado guardado.
+            // Silent failure: no navigation and no saved state.
             return
         }
 

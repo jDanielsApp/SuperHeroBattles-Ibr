@@ -1,9 +1,9 @@
 import Foundation
 
-/// Proveedor fijo de IDs para UI tests y previews.
+/// Fixed ID provider for UI tests and previews.
 ///
-/// Nunca sustituye al índice real: solo se inyecta cuando la app arranca
-/// en modo fakes (`-uitest-fakes`).
+/// Never replaces the real index: it is only injected when the app
+/// launches in fakes mode (`-uitest-fakes`).
 nonisolated struct FixedCharacterIDProvider: CharacterIDProviding {
     let ids: [String]
 

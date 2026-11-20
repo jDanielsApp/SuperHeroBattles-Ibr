@@ -141,7 +141,7 @@ final class SuperHeroRepositoryTests: XCTestCase {
             _ = try await makeRepository(client: cancellationClient).search(query: "x")
             XCTFail("Expected cancellation")
         } catch is CancellationError {
-            // Correcto: la cancelación no se convierte en error de dominio.
+            // Correct: cancellation is not converted into a domain error.
         }
     }
 

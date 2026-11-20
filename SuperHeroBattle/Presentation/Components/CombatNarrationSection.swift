@@ -1,11 +1,11 @@
 import SwiftUI
 
-/// Sección de narración compartida por el combate en vivo y el detalle de
-/// combates guardados: título, badge de origen y texto publicado.
+/// Narration section shared by the live combat and saved battle detail
+/// screens: title, source badge, and published text.
 ///
-/// En el combate en vivo, `isLoading` muestra el indicador de generación
-/// mientras la narración no está disponible; el detalle de historial pasa
-/// directamente el texto persistido.
+/// In live combat, `isLoading` shows the generation indicator while the
+/// narration is not yet available; the history detail passes the
+/// persisted text directly.
 struct CombatNarrationSection: View {
     let narration: CombatNarrative?
     var isLoading = false
@@ -45,7 +45,7 @@ struct CombatNarrationSection: View {
         }
     }
 
-    // MARK: - Carga
+    // MARK: - Loading
 
     private var loadingRow: some View {
         HStack(spacing: 10) {
@@ -62,7 +62,7 @@ struct CombatNarrationSection: View {
         .accessibilityIdentifier(loadingIdentifier)
     }
 
-    // MARK: - Origen
+    // MARK: - Source
 
     @ViewBuilder
     private func sourceBadge(_ source: NarrativeSource) -> some View {

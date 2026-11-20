@@ -1,13 +1,14 @@
 import Foundation
 import FoundationModels
 
-/// Clasifica los errores de Foundation Models en errores tipados propios.
+/// Classifies Foundation Models errors into our own typed errors.
 ///
-/// Distingue la cancelación (se preserva tal cual) y las violaciones del
-/// guardrail de seguridad (iOS 26 e iOS 27, con respaldo textual para poder
-/// probarlo sin invocar el modelo real). El resto de errores pasan intactos.
+/// It distinguishes cancellation (preserved as-is) and safety guardrail
+/// violations (iOS 26 and iOS 27, with a text-based fallback so it can be
+/// tested without invoking the real model). All other errors pass through
+/// unchanged.
 nonisolated enum NarrationErrorClassifier {
-    /// Devuelve el error clasificado sin alterar la cancelación.
+    /// Returns the classified error, leaving cancellation untouched.
     static func classify(_ error: Error) -> Error {
         if error is CancellationError {
             return error
@@ -21,9 +22,9 @@ nonisolated enum NarrationErrorClassifier {
         return error
     }
 
-    /// ¿Es una violación del guardrail de seguridad?
+    /// Is this a safety guardrail violation?
     static func isGuardrail(_ error: Error) -> Bool {
-        // iOS 27+: el framework tipa el guardrail en LanguageModelError.
+        // iOS 27+: the framework types the guardrail as a LanguageModelError.
         if #available(iOS 27, *) {
             if let modelError = error as? LanguageModelError,
                case .guardrailViolation = modelError {
@@ -31,14 +32,14 @@ nonisolated enum NarrationErrorClassifier {
             }
         }
 
-        // iOS 26: el guardrail llega como GenerationError.guardrailViolation.
+        // iOS 26: the guardrail arrives as GenerationError.guardrailViolation.
         if let generationError = error as? LanguageModelSession.GenerationError,
            case .guardrailViolation = generationError {
             return true
         }
 
-        // Respaldo textual: robusto ante variantes del framework y permite
-        // probar la clasificación sin depender del modelo real.
+        // Text-based fallback: robust against framework variants and lets
+        // the classification be tested without the real model.
         let description = String(describing: error).lowercased()
         return description.contains("guardrail")
     }

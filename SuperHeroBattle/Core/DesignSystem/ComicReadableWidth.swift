@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// Ancho legible compartido para columnas únicas en pantallas anchas
-/// (iPhone Duo abierto, iPad, Split View): acota el contenido a un máximo
-/// y lo centra cuando sobra espacio. En compact es un no-op, así que se
-/// aplica sin condiciones — sin anchos fijos (regla de la skill iphone-duo).
+/// Shared readable width for single-column layouts on wide screens
+/// (open iPhone Duo, iPad, Split View): caps content at a maximum width
+/// and centers it when there is room to spare. It is a no-op in compact,
+/// so it is applied unconditionally — no fixed widths.
 struct ComicReadableWidth: ViewModifier {
     var maxWidth: CGFloat = 640
 
@@ -15,7 +15,7 @@ struct ComicReadableWidth: ViewModifier {
 }
 
 extension View {
-    /// Acota la columna a un ancho legible y la centra en pantallas anchas.
+    /// Caps the column at a readable width and centers it on wide screens.
     func comicReadableWidth(maxWidth: CGFloat = 640) -> some View {
         modifier(ComicReadableWidth(maxWidth: maxWidth))
     }

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Imagen remota con placeholder y estados de carga/error.
+/// Remote image with placeholder and loading/error states.
 struct HeroImageView: View {
     let url: URL?
     let size: CGFloat

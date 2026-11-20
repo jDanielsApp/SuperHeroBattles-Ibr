@@ -1,7 +1,7 @@
 import Foundation
 
-/// Configuración de SuperHeroAPI leída de `Info.plist`.
-/// El token nunca se registra ni se incluye en mensajes de error.
+/// SuperHeroAPI configuration read from `Info.plist`.
+/// The token is never logged nor included in error messages.
 nonisolated struct SuperHeroAPIConfiguration: Equatable, Sendable {
     let baseURL: URL
     let token: String
@@ -11,8 +11,8 @@ nonisolated struct SuperHeroAPIConfiguration: Equatable, Sendable {
         let trimmedToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
         let uppercaseToken = trimmedToken.uppercased()
 
-        // Rechaza marcadores de build sin resolver (`$(...)`) y la plantilla
-        // de ejemplo. Si el token llega con comillas, también se detecta aquí.
+        // Rejects unresolved build markers (`$(...)`) and the example template.
+        // A token wrapped in quotes is also caught here.
         guard !trimmedToken.isEmpty,
               !trimmedToken.contains("$("),
               !uppercaseToken.hasPrefix("YOUR_"),
@@ -27,7 +27,7 @@ nonisolated struct SuperHeroAPIConfiguration: Equatable, Sendable {
         self.token = trimmedToken
     }
 
-    /// Lee `SuperHeroAPIBaseURL` y `SuperHeroAPIToken` del bundle principal.
+    /// Reads `SuperHeroAPIBaseURL` and `SuperHeroAPIToken` from the main bundle.
     static func live(bundle: Bundle = .main) -> SuperHeroAPIConfiguration? {
         guard let baseURL = bundle.object(forInfoDictionaryKey: "SuperHeroAPIBaseURL") as? String,
               let token = bundle.object(forInfoDictionaryKey: "SuperHeroAPIToken") as? String else {
@@ -39,7 +39,7 @@ nonisolated struct SuperHeroAPIConfiguration: Equatable, Sendable {
 }
 
 extension SuperHeroAPIConfiguration: CustomStringConvertible {
-    /// Evita que el token acabe en logs o mensajes de error.
+    /// Prevents the token from ending up in logs or error messages.
     var description: String {
         "SuperHeroAPIConfiguration(baseURL: \(baseURL.absoluteString), token: <redacted>)"
     }

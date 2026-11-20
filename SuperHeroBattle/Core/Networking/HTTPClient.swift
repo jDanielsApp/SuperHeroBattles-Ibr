@@ -1,6 +1,6 @@
 import Foundation
 
-/// Respuesta HTTP normalizada para desacoplar la capa de datos de `URLSession`.
+/// Normalized HTTP response that decouples the data layer from `URLSession`.
 nonisolated struct HTTPResponse: Sendable, Equatable {
     let data: Data
     let statusCode: Int
@@ -13,7 +13,7 @@ nonisolated struct HTTPResponse: Sendable, Equatable {
     }
 }
 
-/// Cliente HTTP mínimo. Permite sustituirlo por un fake en los tests.
+/// Minimal HTTP client that tests can replace with a fake.
 nonisolated protocol HTTPClient: Sendable {
     func execute(_ request: URLRequest) async throws -> HTTPResponse
 }

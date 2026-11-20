@@ -1,15 +1,15 @@
 import Foundation
 
-/// Errores al preparar los participantes de un combate.
+/// Errors thrown while preparing combat participants.
 nonisolated enum BattleParticipantsError: Error, Equatable, Sendable {
     case incompleteTeam(TeamSide)
     case mismatchedDrafts
 }
 
-/// Convierte dos borradores completos en los participantes del combate.
+/// Turns two completed drafts into the combat participants.
 ///
-/// No decide nada del combate: solo valida que ambos equipos estén completos
-/// y conserva el orden de los huecos tal y como los formó el usuario.
+/// It makes no combat decisions: it only validates that both teams are
+/// complete and preserves the slot order exactly as the user built it.
 nonisolated struct BuildBattleParticipantsUseCase: Sendable {
     init() {}
 

@@ -1,13 +1,13 @@
 import Foundation
 
-/// Motor matemático de combate.
+/// Mathematical combat engine.
 ///
-/// Determinista: la única fuente de aleatoriedad es el `LuckProvider`
-/// inyectable. Foundation Models nunca participa en el cálculo.
+/// Deterministic: the only source of randomness is the injectable
+/// `LuckProvider`. Foundation Models never takes part in the calculation.
 ///
-/// Orden de consumo de la suerte: primero el Equipo A y luego el Equipo B,
-/// en el orden de los huecos. El mismo héroe en ambos equipos produce dos
-/// combatientes con tiradas independientes.
+/// Luck consumption order: Team A first, then Team B, in slot order.
+/// The same hero on both teams produces two combatants with independent
+/// rolls.
 nonisolated struct CombatEngine: Sendable {
     private let luckProvider: any LuckProvider
 
@@ -15,8 +15,8 @@ nonisolated struct CombatEngine: Sendable {
         self.luckProvider = luckProvider
     }
 
-    /// Resuelve el combate completo y devuelve un resultado trazable con
-    /// base, suerte, totales, feeling y ganador o empate.
+    /// Resolves the full combat and returns a traceable result with
+    /// base score, luck, totals, affinity bonus, and winner or draw.
     func resolve(_ participants: BattleParticipants) -> CombatResult {
         let teamA = resolveTeam(.teamA, heroes: participants.teamA)
         let teamB = resolveTeam(.teamB, heroes: participants.teamB)
@@ -54,8 +54,8 @@ nonisolated struct CombatEngine: Sendable {
         )
     }
 
-    /// Feeling entre compañeros del mismo equipo. 1v1 no tiene parejas,
-    /// 2v2 tiene una y 3v3 tiene tres. Nunca se compara entre equipos.
+    /// Affinity between teammates of the same team. 1v1 has no pairs,
+    /// 2v2 has one, and 3v3 has three. Never compared across teams.
     private func feelingBonuses(heroes: [Hero]) -> [AffinityBonus] {
         var bonuses: [AffinityBonus] = []
 

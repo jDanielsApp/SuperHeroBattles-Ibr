@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// Etiqueta compartida de los CTA comic (cápsula amarilla).
+/// Shared label for comic CTAs (yellow capsule).
 ///
-/// Sirve igual dentro de un `Button` que de un `NavigationLink`; el llamador
-/// decide el estado enfatizado (habilitado) y si muestra indicador de carga.
+/// Works the same inside a `Button` or a `NavigationLink`; the caller
+/// decides the emphasized (enabled) state and whether to show a loading indicator.
 struct ComicCTALabel: View {
     let titleKey: LocalizableStringKey
     var systemImage: String?

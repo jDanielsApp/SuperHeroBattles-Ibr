@@ -1,10 +1,10 @@
 import Foundation
 @testable import SuperHeroBattle
 
-/// Proveedor de suerte con secuencia fija. Al agotarse repite el último valor.
+/// Luck provider with a fixed sequence. Once exhausted, it repeats the last value.
 ///
-/// Solo para tests: mantiene estado mutable sin bloqueo porque el motor de
-/// combate lo consume de forma síncrona desde un único contexto.
+/// Test-only: it keeps mutable state without a lock because the combat
+/// engine consumes it synchronously from a single context.
 final class SequenceLuckProvider: LuckProvider, @unchecked Sendable {
     private let values: [Int]
     private var index = 0

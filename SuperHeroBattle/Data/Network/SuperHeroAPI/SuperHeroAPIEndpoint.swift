@@ -1,7 +1,7 @@
 import Foundation
 
-/// Construye peticiones GET para SuperHeroAPI.
-/// La query se codifica como componente de ruta con `URL.appending(component:)`.
+/// Builds GET requests for SuperHeroAPI.
+/// The query is encoded as a path component using `URL.appending(component:)`.
 nonisolated struct SuperHeroAPIEndpoint: Sendable {
     private let configuration: SuperHeroAPIConfiguration
 

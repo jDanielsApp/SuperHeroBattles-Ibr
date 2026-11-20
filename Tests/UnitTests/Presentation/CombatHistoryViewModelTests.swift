@@ -50,7 +50,7 @@ final class CombatHistoryViewModelTests: XCTestCase {
 
         XCTAssertTrue(viewModel.loadFailed)
 
-        // El reintento con el mismo repositorio fallido no repone datos.
+        // Retrying with the same failing repository restores no data.
         await viewModel.retry()
         XCTAssertTrue(viewModel.loadFailed)
     }
@@ -82,7 +82,7 @@ final class CombatHistoryViewModelTests: XCTestCase {
     }
 }
 
-/// Repositorio cuyo `all()` siempre falla.
+/// Repository whose `all()` always fails.
 private struct FailingHistoryRepository: CombatHistoryRepository {
     func save(_ record: CombatRecord) async throws {}
 

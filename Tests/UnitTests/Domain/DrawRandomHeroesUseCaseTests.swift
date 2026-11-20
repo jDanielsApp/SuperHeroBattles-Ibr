@@ -54,7 +54,7 @@ final class DrawRandomHeroesUseCaseTests: XCTestCase {
     }
 
     func testDrawnIDsIncludeIDsThatDidNotResolve() async throws {
-        // "3" no existe en el remoto: se sortea pero no resuelve a héroe.
+        // "3" does not exist in the remote: it is drawn but does not resolve to a hero.
         let roster = ["1", "2"].map { makeHero(id: $0) }
         let useCase = makeUseCase(ids: ["1", "2", "3"], remote: StubHeroRepository(outcome: .success(roster)))
 
@@ -129,7 +129,7 @@ final class DrawRandomHeroesUseCaseTests: XCTestCase {
     }
 }
 
-/// Picker determinista: devuelve los primeros IDs disponibles en orden.
+/// Deterministic picker: returns the first available IDs in order.
 private struct SequentialIDPicker: RandomIDPicker {
     func pickIDs(from ids: [String], excluding excludedIDs: Set<String>, count: Int) -> [String] {
         Array(ids.filter { !excludedIDs.contains($0) }.prefix(count))

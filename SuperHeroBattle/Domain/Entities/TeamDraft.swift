@@ -5,7 +5,7 @@ nonisolated enum TeamValidationError: Error, Equatable, Sendable {
     case duplicateHero
 }
 
-/// Borrador de equipo con huecos. Permite seleccionar, sustituir y vaciar de forma individual.
+/// Team draft with slots. Supports selecting, replacing, and clearing slots individually.
 nonisolated struct TeamDraft: Equatable, Sendable {
     let side: TeamSide
     let mode: CombatMode

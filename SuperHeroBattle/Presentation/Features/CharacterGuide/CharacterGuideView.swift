@@ -1,15 +1,15 @@
 import SwiftUI
 
-/// Guía de personajes: catálogo paginado por IDs con búsqueda unificada.
+/// Character guide: a paginated, ID-based catalog with unified search.
 ///
-/// Con `onHeroDetailRequested`, las filas piden la ficha en vez de
-/// empujarla (split de la pantalla interior del iPhone Duo); sin cierre,
-/// mantienen el push clásico dentro de la pila de navegación.
+/// With `onHeroDetailRequested`, rows request the detail instead of
+/// pushing it (iPhone Duo inner-screen split); without the closure,
+/// they keep the classic push on the navigation stack.
 struct CharacterGuideView: View {
     @State private var viewModel: CharacterGuideViewModel
 
-    /// Selección directa de héroe para el panel de detalle en ancho
-    /// regular; anula el push de ficha cuando está presente.
+    /// Direct hero selection for the detail pane in regular
+    /// width; overrides the detail push when present.
     let onHeroDetailRequested: ((Hero) -> Void)?
 
     init(
@@ -81,7 +81,7 @@ struct CharacterGuideView: View {
         }
     }
 
-    // MARK: - Búsqueda
+    // MARK: - Search
 
     @ViewBuilder
     private var searchContent: some View {
@@ -127,7 +127,7 @@ struct CharacterGuideView: View {
         .accessibilityIdentifier("search.results")
     }
 
-    // MARK: - Catálogo
+    // MARK: - Catalog
 
     @ViewBuilder
     private var catalogContent: some View {
@@ -268,7 +268,7 @@ struct CharacterGuideView: View {
     @ViewBuilder
     private func heroRow(_ hero: Hero, prefetch: Bool) -> some View {
         if let onSelect = viewModel.onHeroSelected {
-            // Hoja selectora de equipos: la fila elige y cierra.
+            // Team picker sheet: the row selects and dismisses.
             Button {
                 onSelect(hero)
             } label: {
@@ -277,7 +277,7 @@ struct CharacterGuideView: View {
             .buttonStyle(.plain)
             .prefetchActions(prefetch, hero: hero, viewModel: viewModel)
         } else if let onHeroDetailRequested {
-            // Split de la pantalla interior: la fila pide la ficha al panel.
+            // Inner-screen split: the row asks the pane for the detail.
             Button {
                 onHeroDetailRequested(hero)
             } label: {
@@ -294,7 +294,7 @@ struct CharacterGuideView: View {
         }
     }
 
-    // MARK: - Estados compartidos
+    // MARK: - Shared states
 
     private func statusView(
         systemImage: String,
@@ -393,9 +393,9 @@ struct CharacterGuideView: View {
     }
 }
 
-// MARK: - Precarga compartida
+// MARK: - Shared prefetch
 
-/// Encapsula la precarga de página para reutilizarla en las dos variantes de fila.
+/// Wraps page prefetching so both row variants can reuse it.
 private extension View {
     @ViewBuilder
     func prefetchActions(

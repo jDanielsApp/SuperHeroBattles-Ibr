@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Detalle local de un héroe del catálogo.
+/// Detail of a hero from the local catalog.
 struct HeroDetailView: View {
     let hero: Hero
 

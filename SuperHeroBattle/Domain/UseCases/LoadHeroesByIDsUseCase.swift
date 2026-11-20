@@ -1,11 +1,11 @@
 import Foundation
 
-/// Carga las fichas de una página de IDs usando la caché local primero.
+/// Loads the profiles for a page of IDs using the local cache first.
 ///
-/// - Los IDs ya persistidos no generan peticiones de red.
-/// - Los IDs ausentes se descargan con concurrencia acotada.
-/// - Un `notFound` se omite sin romper la página.
-/// - Cualquier otro error de red se propaga para que la UI ofrezca reintento.
+/// - IDs already persisted generate no network requests.
+/// - Missing IDs are downloaded with bounded concurrency.
+/// - A `notFound` is skipped without breaking the page.
+/// - Any other network error is propagated so the UI can offer a retry.
 nonisolated struct LoadHeroesByIDsUseCase: Sendable {
     static let defaultMaxConcurrentRequests = 6
 

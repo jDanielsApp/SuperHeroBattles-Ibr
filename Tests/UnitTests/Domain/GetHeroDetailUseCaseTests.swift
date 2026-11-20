@@ -1,7 +1,7 @@
 import XCTest
 @testable import SuperHeroBattle
 
-/// Cubre el caso de uso conservado para futuras mejoras del detalle.
+/// Covers the use case kept for future detail improvements.
 final class GetHeroDetailUseCaseTests: XCTestCase {
     func testReturnsHeroById() async throws {
         let hero = Hero(id: "70", name: "Batman")

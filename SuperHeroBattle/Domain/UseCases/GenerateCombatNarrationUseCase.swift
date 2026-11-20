@@ -1,12 +1,13 @@
 import Foundation
 
-/// Genera la narración del combate con IA cuando está disponible y con la
-/// plantilla determinista en cualquier otro caso.
+/// Generates the combat narration with AI when available and with the
+/// deterministic template otherwise.
 ///
-/// Reglas de la arquitectura:
-/// - La IA solo narra: el `CombatResult` llega ya resuelto e inmutable.
-/// - La cancelación se propaga: una narración cancelada nunca se publica
-///   ni se sustituye por la plantilla.
+/// Rules:
+/// - The AI only narrates: the `CombatResult` arrives already resolved
+///   and immutable.
+/// - Cancellation propagates: a cancelled narration is never published
+///   nor replaced with the template.
 nonisolated struct GenerateCombatNarrationUseCase: Sendable {
     private let service: any CombatNarrationService
     private let fallback: any CombatNarrationService

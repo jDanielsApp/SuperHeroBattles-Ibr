@@ -1,10 +1,10 @@
 import SwiftUI
 
-/// Detalle de un combate guardado: equipos, resultado y narración persistida.
+/// Detail of a saved combat: teams, outcome, and persisted narration.
 ///
-/// El borrado individual aparece aquí: el botón de la toolbar pide
-/// confirmación con un alerta que nombra a ambos equipos y, tras borrar,
-/// la vista vuelve al listado.
+/// Individual deletion lives here: the toolbar button asks for
+/// confirmation with an alert naming both teams and, after deleting,
+/// the view returns to the list.
 struct CombatRecordDetailView: View {
     @State private var viewModel: CombatRecordDetailViewModel
     @State private var isPresentingDeleteConfirmation = false
@@ -13,7 +13,7 @@ struct CombatRecordDetailView: View {
     @Environment(\.locale) private var locale
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
-    /// iPhone Duo abierto (o iPad): la narración va a la derecha del resto.
+    /// Open iPhone Duo (or iPad): the narration goes to the right of everything else.
     private var isWideLayout: Bool {
         horizontalSizeClass == .regular
     }
@@ -76,12 +76,12 @@ struct CombatRecordDetailView: View {
         }
     }
 
-    // MARK: - Reparto de pantalla
+    // MARK: - Layout
 
-    /// Pantalla interior del Duo: `ArrangementView` decide el eje con la
-    /// geometría real —resto y narración lado a lado en horizontal, apilados
-    /// en vertical— con scroll independiente por panel. Nunca dentro de un
-    /// ScrollView común.
+    /// Duo inner screen: `ArrangementView` picks the axis from the real
+    /// geometry — rest and narration side by side in horizontal, stacked
+    /// in vertical — with each panel scrolling independently. Never
+    /// inside a common ScrollView.
     @available(iOS 27.1, *)
     private var wideLayout: some View {
         ArrangementView {
@@ -100,7 +100,7 @@ struct CombatRecordDetailView: View {
         .arrangementViewStyle(.split)
     }
 
-    /// Bloques del registro: fecha, veredicto y equipos.
+    /// Record blocks: date, verdict, and teams.
     private var restBlocks: some View {
         VStack(spacing: 18) {
             dateHeader
@@ -119,9 +119,9 @@ struct CombatRecordDetailView: View {
         }
     }
 
-    // MARK: - Borrado
+    // MARK: - Deletion
 
-    /// Mensaje del alerta con los equipos del combate.
+    /// Alert message naming both teams of the combat.
     private var deletionMessage: String {
         String(
             format: L10n.string(.historyDeleteConfirmMessage, locale: locale),
@@ -135,7 +135,7 @@ struct CombatRecordDetailView: View {
         return list.isEmpty ? "—" : list
     }
 
-    // MARK: - Contenido
+    // MARK: - Content
 
     private var dateHeader: some View {
         Text(viewModel.record.date, format: .dateTime.day().month(.abbreviated).year().hour().minute())

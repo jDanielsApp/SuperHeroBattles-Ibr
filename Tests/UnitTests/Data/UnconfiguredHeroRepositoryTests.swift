@@ -1,8 +1,8 @@
 import XCTest
 @testable import SuperHeroBattle
 
-/// Cubre la ruta real de producción cuando falta el token de SuperHeroAPI:
-/// la app sigue funcionando y toda operación remota falla como no configurada.
+/// Covers the real production path when the SuperHeroAPI token is missing:
+/// the app keeps working and every remote operation fails as not configured.
 final class UnconfiguredHeroRepositoryTests: XCTestCase {
     func testSearchThrowsNotConfigured() async {
         do {

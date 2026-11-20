@@ -1,10 +1,10 @@
 import FoundationModels
 
-/// Salida estructurada de la narración generada con Foundation Models.
+/// Structured output of the narration generated with Foundation Models.
 ///
-/// Cuatro beats que se unen en párrafos tras validarlos: obligan al modelo a
-/// presentar ambos equipos, desarrollar el combate y proclamar el resultado
-/// exactamente como se le dio.
+/// Four beats joined into paragraphs after validation: they force the model
+/// to present both teams, develop the combat, and proclaim the result
+/// exactly as given.
 @Generable
 struct GeneratedNarration: Sendable {
     @Guide(

@@ -1,16 +1,16 @@
 import Foundation
 
-/// Valida la salida estructurada de la narración antes de publicarla.
+/// Validates the structured narration output before publishing it.
 ///
-/// Reglas: los cuatro beats obligatorios; ambos bandos representados y, si
-/// hay ganador, el veredicto lo proclama. Un bando cuenta como presente si
-/// aparece su nombre de equipo (inglés o español, con o sin corchetes) o
-/// cualquiera de sus héroes: el modelo suele narrar por nombres de personaje.
-/// Si el mismo héroe está en ambos bandos, su nombre satisface a los dos.
-/// Si algo falla, lanza `invalidResponse` para que el caso de uso caiga
-/// honestamente a la plantilla.
+/// Rules: all four beats are required; both sides are represented and, when
+/// there is a winner, the verdict proclaims it. A side counts as present if
+/// its team name appears (English or Spanish, with or without brackets) or
+/// any of its heroes does: the model tends to narrate by character name.
+/// If the same hero is on both sides, their name satisfies both. If
+/// anything fails, it throws `invalidResponse` so the use case honestly
+/// falls back to the template.
 nonisolated enum NarrationOutputValidator {
-    /// Une los beats validados y devuelve el texto final en párrafos.
+    /// Joins the validated beats and returns the final text as paragraphs.
     static func validatedText(
         from narration: GeneratedNarration,
         context: NarrationContext
@@ -45,11 +45,11 @@ nonisolated enum NarrationOutputValidator {
         return text
     }
 
-    // MARK: - Detalles
+    // MARK: - Details
 
-    /// ¿El texto representa a un bando? Vale su nombre de equipo o el nombre
-    /// de cualquiera de sus héroes. La coincidencia de nombres es por
-    /// contención sin distinguir mayúsculas: preferimos no rechazar de más.
+    /// Does the text represent a side? Its team name or any of its
+    /// heroes' names counts. Name matching is case-insensitive containment:
+    /// we prefer not to over-reject.
     private static func mentions(
         _ side: TeamSide,
         in text: String,
@@ -65,7 +65,7 @@ nonisolated enum NarrationOutputValidator {
         }
     }
 
-    /// ¿El texto nombra al equipo? Acepta inglés y español.
+    /// Does the text name the team? Accepts English and Spanish.
     private static func mentionsTeamName(_ side: TeamSide, in text: String) -> Bool {
         let lowered = text.lowercased()
         let englishName = side == .teamA ? "team a" : "team b"

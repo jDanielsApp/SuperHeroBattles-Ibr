@@ -1,15 +1,15 @@
 import SwiftUI
 
-/// Reparto manual de las pantallas de combate por size class: respaldo
-/// para compact y para iOS 26, donde `ArrangementView` (iOS 27.1+) no está
-/// disponible. En compact apila los bloques en el orden de la columna
-/// única; en regular los coloca lado a lado con el `footer` cerrando la
-/// columna izquierda.
+/// Manual arrangement of the combat screens by size class: fallback for
+/// compact and for iOS 26, where `ArrangementView` (iOS 27.1+) is not
+/// available. In compact it stacks the blocks in single-column order;
+/// in regular it places them side by side, with the `footer` closing the
+/// left column.
 ///
-/// - `leading`: banners, equipos y acciones (columna izquierda).
-/// - `trailing`: narración (columna derecha).
-/// - `footer`: cierre de la pantalla. En compact termina la columna; en
-///   regular cierra la columna izquierda bajo los equipos.
+/// - `leading`: banners, teams, and actions (left column).
+/// - `trailing`: narration (right column).
+/// - `footer`: screen footer. In compact it ends the column; in regular
+///   it closes the left column below the teams.
 struct CombatArrangementLayout<Leading: View, Trailing: View, Footer: View>: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 

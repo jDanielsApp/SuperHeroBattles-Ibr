@@ -2,10 +2,10 @@ import Foundation
 import Realm
 import RealmSwift
 
-/// Modelo Realm del catálogo local.
+/// Realm model for the local catalog.
 ///
-/// Los campos indexables permiten filtrar sin deserializar el payload. El héroe
-/// completo se conserva como JSON inmutable para no guardar objetos de dominio.
+/// Indexable fields allow filtering without deserializing the payload. The
+/// complete hero is kept as immutable JSON so domain objects are never stored.
 nonisolated final class HeroObject: Object {
     @Persisted(primaryKey: true) var id: String = ""
     @Persisted var name: String = ""

@@ -1,10 +1,10 @@
 import Foundation
 
-/// Narrativa determinista y localizada.
+/// Deterministic, localized narration.
 ///
-/// Se usa como fallback cuando el modelo no está disponible, falla o se
-/// agota su tiempo, y directamente en el modo de UI tests con fakes.
-/// No simula IA: siempre declara `source: .template`.
+/// Used as the fallback when the model is unavailable, fails, or runs out
+/// of time, and used directly in the UI test fakes mode. It never pretends
+/// to be AI: it always reports `source: .template`.
 nonisolated struct TemplateNarrationService: CombatNarrationService {
     var availability: NarrationAvailability {
         get async { .available }

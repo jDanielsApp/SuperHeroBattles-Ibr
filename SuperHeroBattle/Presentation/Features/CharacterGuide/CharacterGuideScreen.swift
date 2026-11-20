@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// Pantalla de Guía para iPhone Duo: lista y ficha lado a lado en la
-/// pantalla interior (el `HStack` adaptativo que la HIG mapea a un
-/// *split arrangement*) y push clásico de ficha en compact, donde la
-/// Guía se muestra tal cual con su propio destino de navegación.
+/// Guide screen for iPhone Duo: list and detail side by side on the
+/// inner screen (the adaptive `HStack` the HIG maps to a
+/// *split arrangement*) and a classic detail push in compact, where the
+/// Guide is shown as-is with its own navigation destination.
 struct CharacterGuideScreen: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
@@ -14,16 +14,16 @@ struct CharacterGuideScreen: View {
         _viewModel = State(initialValue: container.makeCharacterGuideViewModel())
     }
 
-    /// iPhone Duo abierto (o iPad): lista y ficha lado a lado.
+    /// iPhone Duo open (or iPad): list and detail side by side.
     private var isWideLayout: Bool {
         horizontalSizeClass == .regular
     }
 
     var body: some View {
         if #available(iOS 27.1, *), isWideLayout {
-            // Pantalla interior del Duo: `ArrangementView` decide el eje con
-            // la geometría real (patrón Mail de la HIG); catálogo y ficha ya
-            // llevan scroll propio. En compact, push clásico de ficha.
+            // Duo inner screen: `ArrangementView` decides the axis from
+            // the real geometry (the Mail-style pattern from the HIG); catalog and detail
+            // already have their own scroll. In compact, a classic detail push.
             ArrangementView {
                 CharacterGuideView(viewModel: viewModel) { hero in
                     detailHero = hero
@@ -33,7 +33,7 @@ struct CharacterGuideScreen: View {
             }
             .arrangementViewStyle(.split)
         } else {
-            // Compact (pantalla exterior del Duo, iPhone): push clásico.
+            // Compact (Duo outer screen, iPhone): classic push.
             CharacterGuideView(viewModel: viewModel)
         }
     }

@@ -1,12 +1,12 @@
 import Foundation
 
-/// Estado del detalle de un combate guardado.
+/// State for a saved combat's detail.
 ///
-/// El borrado individual vive aquí: el usuario presiona el combate en el
-/// listado y el detalle ofrece el botón de eliminar con alerta de
-/// confirmación. Tras borrar, la vista hace `dismiss` y el listado se
-/// recarga solo al reaparecer. Un fallo de Realm es silencioso: el
-/// registro sigue en pantalla y el usuario puede reintentar.
+/// Individual deletion lives here: the user taps a combat in the list and
+/// the detail offers a delete button with a confirmation alert. After
+/// deleting, the view dismisses and the list reloads on reappearance. A
+/// Realm failure is silent: the record stays on screen and the user can
+/// retry.
 @MainActor
 @Observable
 final class CombatRecordDetailViewModel {
@@ -21,14 +21,13 @@ final class CombatRecordDetailViewModel {
         self.deleteHistory = deleteHistory
     }
 
-    /// El botón se deshabilita durante el borrado y tras haber borrado.
+    /// The button is disabled while deleting and after deletion.
     var canDelete: Bool {
         !isDeleting && !isDeleted
     }
 
-    /// Elimina el combate tras la confirmación del usuario. Silencioso
-    /// ante fallos de Realm: el combate sigue en pantalla y se puede
-    /// reintentar.
+    /// Deletes the combat after the user confirms. Silent on Realm
+    /// failures: the combat stays on screen and can be retried.
     func delete() async {
         guard canDelete else { return }
 
@@ -38,7 +37,7 @@ final class CombatRecordDetailViewModel {
         do {
             try await deleteHistory.execute(id: record.id)
         } catch {
-            // Fallo silencioso: sin navegación ni estado borrado.
+            // Silent failure: no navigation and no deleted state.
             return
         }
 

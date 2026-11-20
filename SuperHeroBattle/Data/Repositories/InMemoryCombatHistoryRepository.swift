@@ -1,7 +1,7 @@
 import Foundation
 
-/// Historial en memoria usado como respaldo cuando Realm no está disponible
-/// y como implementación de apoyo en tests y UI tests con fakes.
+/// In-memory combat history used as a fallback when Realm is unavailable
+/// and as a supporting implementation in tests and UI tests with fakes.
 actor InMemoryCombatHistoryRepository: CombatHistoryRepository {
     private var storage: [UUID: CombatRecord] = [:]
 
