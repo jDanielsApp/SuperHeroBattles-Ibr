@@ -47,9 +47,9 @@ aquí, aplica "columna única con ancho legible acotado" en regular.
 
 | Pantalla | Compact (cerrado) | Regular (Duo abierto) |
 |---|---|---|
-| TeamSelectionView | Columna actual con divisor "VS". | Equipo A y Equipo B lado a lado con `ArrangementView(.split.axes(.horizontal))`; el pliegue hace de separador. CTA de inicio debajo a todo el ancho. |
-| CombatView y CombatRecordDetailView | Columna actual (banners, equipos, narración, guardado). | Resto a la izquierda (banners, equipos, guardado al final de la columna) y narración a la derecha con `ArrangementView(.split.axes(.horizontal))`. |
-| CharacterGuideView (ruta standalone desde Home) | Push actual de `HeroDetailView`. | Lista + ficha lado a lado con `ArrangementView(.split.axes(.horizontal))` (patrón Mail); la ficha se muestra por selección de fila. |
+| TeamSelectionView | Columna actual con divisor "VS". | `ArrangementView(.split)` adaptativo: equipos lado a lado en horizontal y apilados en vertical; scroll propio por panel y CTA fijo debajo a todo el ancho. |
+| CombatView y CombatRecordDetailView | Columna actual (banners, equipos, narración, guardado). | `ArrangementView(.split)` adaptativo: resto (guardado al final de su panel) y narración lado a lado en horizontal, apilados en vertical; scroll propio por panel. |
+| CharacterGuideView (ruta standalone desde Home) | Push actual de `HeroDetailView`. | `ArrangementView(.split)` adaptativo (patrón Mail); la ficha se muestra por selección de fila. |
 | Hoja selectora de equipos (CharacterGuideView embebida) | Sin cambios: las filas eligen héroe, no navegan a detalle. | Igual, sin split. |
 | HomeView, DuelModeView, HistoryView, SettingsView | Columna actual. | Columna única con ancho legible acotado (helper compartido). |
 
@@ -65,11 +65,12 @@ Helper compartido para el ancho legible: componente/módifier reutilizable
   así que se usa con `if #available(iOS 27.1, *)` y size class regular;
   el respaldo manual (`CombatArrangementLayout` y equivalentes) cubre
   compact e iOS 26.
-- **Forza el eje horizontal** con `.split.axes(.horizontal)`: en la
-  pantalla interior en vertical (más alta que ancha) el split por defecto
-  APILA los paneles; si el diseño exige lado a lado siempre (equipos,
-  narración a la derecha, lista + ficha), limita el eje tal como permite
-  la HIG.
+- **Nunca metas `ArrangementView` dentro de un `ScrollView`**: el scroll
+  propone altura infinita y rompe su decisión de eje (apila en horizontal,
+  colapsa paneles). Ponlo a nivel de contenedor y dale a cada panel su
+  propio scroll; el split por defecto es adaptativo —lado a lado en
+  horizontal, apilado en vertical— tal como pide la HIG. Restringe
+  `.axes(_:)` solo si el diseño exige un eje fijo.
 - `HStack`/`ZStack` adaptativos como respaldo pre-27.1 o cuando el orden
   del contenido exige control fino (la HIG los mapea a *arrangement
   views*).

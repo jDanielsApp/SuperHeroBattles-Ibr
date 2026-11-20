@@ -29,12 +29,20 @@ struct CombatView: View {
         ZStack {
             ComicBackground()
 
-            ScrollView {
-                arrangedContent
+            if #available(iOS 27.1, *), isWideLayout {
+                wideLayout
+            } else {
+                ScrollView {
+                    CombatArrangementLayout(
+                        leading: { restBlocks },
+                        trailing: { narrationSection },
+                        footer: { saveSection }
+                    )
                     .padding(.horizontal, 20)
                     .padding(.top, 12)
                     .padding(.bottom, 16)
                     .animation(revealAnimation, value: viewModel.isNarrationPublished)
+                }
             }
         }
         .navigationTitle(L10n.localizedKey(.combatResultTitle))
@@ -44,32 +52,33 @@ struct CombatView: View {
         }
     }
 
-    // MARK: - Reparto de paneles
+    // MARK: - Reparto de pantalla
 
-    /// Pantalla interior del Duo: `ArrangementView` reparte el resto y la
-    /// narración respetando la región de pliegue, con el eje forzado a
-    /// horizontal (en vertical el split por defecto apilaría). En compact
-    /// (o iOS 26) el reparto manual mantiene la columna actual: narración
-    /// y guardado al final.
-    @ViewBuilder
-    private var arrangedContent: some View {
-        if #available(iOS 27.1, *), isWideLayout {
-            ArrangementView {
+    /// Pantalla interior del Duo: `ArrangementView` decide el eje con la
+    /// geometría real —resto y narración lado a lado en horizontal, apilados
+    /// en vertical— y cada panel scrollea por su cuenta. Nunca dentro de un
+    /// ScrollView común: la altura infinita del scroll rompe su decisión
+    /// de eje.
+    @available(iOS 27.1, *)
+    private var wideLayout: some View {
+        ArrangementView {
+            ScrollView {
                 VStack(spacing: 18) {
                     restBlocks
                     saveSection
                 }
-            } secondary: {
-                narrationSection
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .animation(revealAnimation, value: viewModel.isNarrationPublished)
             }
-            .arrangementViewStyle(.split.axes(.horizontal))
-        } else {
-            CombatArrangementLayout(
-                leading: { restBlocks },
-                trailing: { narrationSection },
-                footer: { saveSection }
-            )
+        } secondary: {
+            ScrollView {
+                narrationSection
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+            }
         }
+        .arrangementViewStyle(.split)
     }
 
     /// Bloques de resultado: cabecera en suspense, veredicto y equipos.

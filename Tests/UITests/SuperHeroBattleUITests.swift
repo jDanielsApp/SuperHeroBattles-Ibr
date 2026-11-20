@@ -304,11 +304,10 @@ final class SuperHeroBattleUITests: XCTestCase {
         )
     }
 
-    /// Regresión del arrangement de la pantalla interior: en el iPhone Duo
-    /// abierto los paneles de equipo deben ir lado a lado (el split por
-    /// defecto apila en vertical); en compact, apilados con el divisor.
-    /// El umbral de 600 pt separa los destinos de la suite: iPhone (compact)
-    /// y pantalla interior del Duo (regular).
+    /// Regresión del arrangement de la pantalla interior: el split es
+    /// adaptativo (HIG) — equipos lado a lado en horizontal y apilados en
+    /// vertical. El umbral de 600 pt separa los destinos de la suite:
+    /// iPhone (compact) y pantalla interior del Duo (regular).
     @MainActor
     func testTeamSelectionPanelsMatchWindowSizeClass() throws {
         let app = XCUIApplication()
@@ -334,21 +333,23 @@ final class SuperHeroBattleUITests: XCTestCase {
             "Falta el botón aleatorio del Equipo B"
         )
 
-        let windowWidth = app.windows.firstMatch.frame.width
+        let window = app.windows.firstMatch.frame
+        let isRegular = window.width >= 600
+        let isLandscape = window.width > window.height
 
-        if windowWidth >= 600 {
-            // Duo abierto: Equipo A a un lado y Equipo B al otro.
+        if isRegular, isLandscape {
+            // Duo abierto en horizontal: Equipo A a la izquierda, B a la derecha.
             XCTAssertGreaterThanOrEqual(
                 teamBRandom.frame.minX + 1,
                 teamARandom.frame.maxX,
-                "En ancho regular los equipos deben quedar lado a lado, no apilados"
+                "En el Duo abierto en horizontal los equipos deben quedar lado a lado"
             )
         } else {
-            // Compact: la columna actual apila el Equipo B bajo el Equipo A.
+            // Compact o Duo abierto en vertical: A arriba, B abajo.
             XCTAssertGreaterThanOrEqual(
                 teamBRandom.frame.minY + 1,
                 teamARandom.frame.maxY,
-                "En compact el Equipo B debe quedar bajo el Equipo A"
+                "En compact o en vertical el Equipo B debe quedar bajo el Equipo A"
             )
         }
     }

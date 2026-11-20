@@ -6,9 +6,9 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 
 ## Resumen
 
-- **Fase actual:** Fase 15 cerrada (corrección del arrangement en Duo vertical) sobre el proyecto completado.
-- **Última fase cerrada:** Fase 15 — `.split.axes(.horizontal)` en los tres arrangements para que la pantalla interior en vertical no apile paneles, con test de regresión geométrico.
-- **Herramienta nueva:** skill de proyecto `.opencode/skills/iphone-duo` (HIG destilada + mapa de decisiones por pantalla), actualizada con la API real `ArrangementView` (iOS 27.1+).
+- **Fase actual:** Fase 16 cerrada (arrangement adaptativo fuera del scroll) sobre el proyecto completado.
+- **Última fase cerrada:** Fase 16 — `ArrangementView` a nivel de contenedor con scroll propio por panel: lado a lado en horizontal, apilado en vertical, en las cuatro pantallas de paneles.
+- **Herramienta nueva:** skill de proyecto `.opencode/skills/iphone-duo` (HIG destilada + mapa de decisiones por pantalla), con la lección del arrangement-fuera-del-scroll.
 - **Estado del build:** compila en Debug sin warnings de código propio; **266 unit tests + 6 UI tests en verde en iPhone 17 (compact) y en iPhone Duo (regular, iOS 27.2)**.
 - **Dependencias:** RealmSwift 20.0.6 y Lottie 4.6.1 resueltas con SwiftPM.
 
@@ -42,6 +42,7 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 | 13. Borrado en el detalle | Completada | Sin papelera en las filas; presionar el combate abre su detalle con borrado y alerta de confirmación |
 | 14. Adaptación iPhone Duo | Completada | `ArrangementView(.split)` en pantalla interior, ancho legible acotado y suite en verde en el simulador Duo |
 | 15. Corrección arrangement en Duo vertical | Completada | `.split.axes(.horizontal)` para no apilar paneles y test de regresión geométrico |
+| 16. Arrangement adaptativo | Completada | ArrangementView fuera del scroll con paneles de scroll propio: lado a lado en horizontal, apilado en vertical |
 
 ## Fase 0 — completada
 
@@ -362,6 +363,18 @@ Verificación Fase 14: builds sin warnings de código propio, **266 unit tests +
 - [x] Skill `iphone-duo` actualizada con la regla del eje horizontal y el mapa con la API exacta.
 
 Verificación Fase 15: build sin warnings de código propio, **266 unit tests + 6 UI tests en verde en iPhone 17 (compact) y en el simulador iPhone Duo (regular)**, incluido el test geométrico en ambos.
+
+## Fase 16 — completada
+
+- [x] **Causa**: reporte del usuario — con el Duo abierto en horizontal solo se veía el Equipo A a todo el ancho y el CTA encima; el Equipo B desaparecía. El `ArrangementView` vivía dentro del `ScrollView` común: la altura infinita que propone el scroll rompía su decisión de eje (primero apilaba siempre; tras restringir `.axes(.horizontal)`, colapsaba el panel secundario en horizontal).
+- [x] **Corrección**: el arrangement pasa a nivel de contenedor —fuera de todo scroll— en las cuatro pantallas de paneles, con `ScrollView` propio dentro de cada panel; el split por defecto vuelve a ser **adaptativo** (la HIG: lado a lado cuando es más ancho que alto, apilado cuando es más alto que ancho):
+  - **Selección de equipos**: en horizontal A izquierda | B derecha con el CTA fijo debajo; en vertical A arriba, B abajo, con el CTA debajo (lo que el usuario pidió explícitamente).
+  - **Combate y detalle de historial**: resto (guardado al final de su panel) y narración con scroll independiente, adaptativos a la orientación.
+  - **Guía**: sin cambio estructural (ya estaba fuera del scroll); se retira la restricción de eje.
+- [x] **Test geométrico actualizado** a la especificación adaptativa: rama por ancho ≥600 pt **y** ventana en horizontal (lado a lado) frente al resto (apilado). En el Duo en vertical (estado por defecto del simulador) valida A arriba, B abajo.
+- [x] Skill actualizada con la regla real: nunca anidar `ArrangementView` en un `ScrollView`; paneles con scroll propio y eje por geometría.
+
+Verificación Fase 16: build sin warnings de código propio, **266 unit tests + 6 UI tests en verde en iPhone 17 y en el simulador iPhone Duo**. La rama horizontal del test (lado a lado) queda cubierta por el comportamiento por defecto del arrangement con geometría real y pendiente del pase visual del usuario en landscape.
 
 ## Pendientes y riesgos
 

@@ -26,11 +26,18 @@ struct CombatRecordDetailView: View {
         ZStack {
             ComicBackground()
 
-            ScrollView {
-                arrangedContent
+            if #available(iOS 27.1, *), isWideLayout {
+                wideLayout
+            } else {
+                ScrollView {
+                    CombatArrangementLayout(
+                        leading: { restBlocks },
+                        trailing: { narrationSection }
+                    )
                     .padding(.horizontal, 20)
                     .padding(.top, 12)
                     .padding(.bottom, 16)
+                }
             }
         }
         .navigationTitle(L10n.localizedKey(.historyDetailTitle))
@@ -69,27 +76,28 @@ struct CombatRecordDetailView: View {
         }
     }
 
-    // MARK: - Reparto de paneles
+    // MARK: - Reparto de pantalla
 
-    /// Pantalla interior del Duo: `ArrangementView` reparte el resto y la
-    /// narración respetando la región de pliegue, con el eje forzado a
-    /// horizontal (en vertical el split por defecto apilaría). En compact
-    /// (o iOS 26) el reparto manual mantiene la columna actual.
-    @ViewBuilder
-    private var arrangedContent: some View {
-        if #available(iOS 27.1, *), isWideLayout {
-            ArrangementView {
+    /// Pantalla interior del Duo: `ArrangementView` decide el eje con la
+    /// geometría real —resto y narración lado a lado en horizontal, apilados
+    /// en vertical— con scroll independiente por panel. Nunca dentro de un
+    /// ScrollView común.
+    @available(iOS 27.1, *)
+    private var wideLayout: some View {
+        ArrangementView {
+            ScrollView {
                 restBlocks
-            } secondary: {
-                narrationSection
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
             }
-            .arrangementViewStyle(.split.axes(.horizontal))
-        } else {
-            CombatArrangementLayout(
-                leading: { restBlocks },
-                trailing: { narrationSection }
-            )
+        } secondary: {
+            ScrollView {
+                narrationSection
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+            }
         }
+        .arrangementViewStyle(.split)
     }
 
     /// Bloques del registro: fecha, veredicto y equipos.
