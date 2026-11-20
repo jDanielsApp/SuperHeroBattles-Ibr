@@ -6,10 +6,10 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 
 ## Resumen
 
-- **Fase actual:** Fase 13 cerrada (borrado individual en el detalle de historial) sobre el proyecto completado.
-- **Última fase cerrada:** Fase 13 — las filas del historial ya no tienen papelera; el borrado individual aparece al presionar el combate, en su detalle.
-- **Herramienta nueva:** skill de proyecto `.opencode/skills/iphone-duo` (HIG destilada + mapa de decisiones por pantalla) para las fases siguientes sin releer la documentación.
-- **Estado del build:** compila en Debug sin warnings de código propio; **266 unit tests + 5 UI tests** en verde en iPhone 17 (iOS 27.2).
+- **Fase actual:** Fase 16 cerrada (arrangement adaptativo fuera del scroll) sobre el proyecto completado.
+- **Última fase cerrada:** Fase 16 — `ArrangementView` a nivel de contenedor con scroll propio por panel: lado a lado en horizontal, apilado en vertical, en las cuatro pantallas de paneles.
+- **Herramienta nueva:** skill de proyecto `.opencode/skills/iphone-duo` (HIG destilada + mapa de decisiones por pantalla), con la lección del arrangement-fuera-del-scroll.
+- **Estado del build:** compila en Debug sin warnings de código propio; **266 unit tests + 6 UI tests en verde en iPhone 17 (compact) y en iPhone Duo (regular, iOS 27.2)**.
 - **Dependencias:** RealmSwift 20.0.6 y Lottie 4.6.1 resueltas con SwiftPM.
 
 ## Decisiones confirmadas
@@ -40,6 +40,9 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 | 11. Aleatorio con índice completo | Completada | Pool precargado de 2/4/6 IDs sorteados, sorteo bajo demanda y catálogo local de respaldo |
 | 12. Selector de duelos | Completada | Tarjetas de modo sin badge "VS"; el badge queda solo en la tarjeta "Duelos" de Home |
 | 13. Borrado en el detalle | Completada | Sin papelera en las filas; presionar el combate abre su detalle con borrado y alerta de confirmación |
+| 14. Adaptación iPhone Duo | Completada | `ArrangementView(.split)` en pantalla interior, ancho legible acotado y suite en verde en el simulador Duo |
+| 15. Corrección arrangement en Duo vertical | Completada | `.split.axes(.horizontal)` para no apilar paneles y test de regresión geométrico |
+| 16. Arrangement adaptativo | Completada | ArrangementView fuera del scroll con paneles de scroll propio: lado a lado en horizontal, apilado en vertical |
 
 ## Fase 0 — completada
 
@@ -331,6 +334,47 @@ Decisiones de la fase:
 - La vista hace `dismiss` comprobando `isDeleted` en lugar del callback `onDeleted` de `CombatViewModel`: ahí hace falta porque `RootView` reinicia toda la pila; aquí basta un pop del propio detalle.
 
 Verificación Fase 13: build Debug correcto sin warnings de código propio, **266 unit tests + 5 UI tests en verde** en iPhone 17 (iOS 27.2).
+
+## Fase 14 — completada
+
+- [x] **Ancho legible compartido**: `.comicReadableWidth()` en `Core/DesignSystem` (≈640 pt centrado, no-op en compact) aplicado a Home, selector de duelos, listado de historial y Ajustes (560 pt por su densidad).
+- [x] **`ArrangementView` (iOS 27.1+) con `.split`** en las tres pantallas de dos paneles de la pantalla interior, gated con `#available` + size class regular (el target sigue en iOS 26.0, así que `CombatArrangementLayout` queda como respaldo manual para compact e iOS 26):
+  - **Selección de equipos**: Equipo A primario y Equipo B secundario; el pliegue hace de separador y el CTA de inicio queda debajo a todo el ancho.
+  - **Combate y detalle de historial**: resto (banners, equipos y guardado al final de la columna, decisión del usuario) primario y narración secundaria; el suspense y su animación de revelado se mantienen.
+  - **Guía (ruta standalone)**: catálogo primario y ficha secundaria (patrón Mail); `CharacterGuideView` gana `onHeroDetailRequested` para que las filas pidan la ficha al panel en vez de empujar.
+- [x] **Detalle vacío de la Guía**: `FeaturePlaceholderView` reutilizado (revive el componente sin referencias desde la Fase 4) con el badge "Próximamente" desactivable y claves nuevas `guide.split.placeholder.*` en `en`/`es`.
+- [x] **UI tests**: el smoke test de detalle de héroe vuelve a Home relanzando la app, determinista en cualquier pose (en el Duo los controles de navegación se montan en el lateral y el botón atrás de `navigationBars.buttons` no siempre es localizable; además el detalle ya no es un nivel de navegación en regular).
+- [x] **Skill `iphone-duo` actualizada** con la API real: `ArrangementView` como opción primaria con su gate de disponibilidad, y la advertencia de que `NavigationSplitView` empujado dentro de un `NavigationStack` no renderiza su sidebar en compact (hallazgo real de esta fase).
+
+Decisiones de la fase:
+
+- Primera implementación con `HStack` por size class (lo que la HIG mapea conceptualmente a *arrangement views*); el usuario pidió explícitamente la API que indica la documentación y se migró a `ArrangementView(.split)`, que además gestiona la región de pliegue en poses parcialmente abiertas.
+- La columna compacta no cambia ni un píxel (orden actual con narración antes del guardado y divisor "VS"); `ArrangementView` solo entra en ancho regular con iOS 27.1+.
+- El divisor "VS" vertical se descartó: `ArrangementView` no permite inyectar vistas entre paneles y el pliegue ya separa; el horizontal de compact se conserva.
+- `NavigationSplitView` se descartó para la Guía empujada: en compact el sidebar no renderizaba (tests lo detectaron); `ArrangementView` + selección cumple el mismo patrón Mail.
+
+Verificación Fase 14: builds sin warnings de código propio, **266 unit tests + 5 UI tests en verde en iPhone 17 (compact) y en el simulador iPhone Duo (regular, iOS 27.2)**, `xcodebuild -list` correcto. La revisión de poses en Device Hub queda pendiente de pase visual del usuario.
+
+## Fase 15 — completada
+
+- [x] **Causa**: reporte del usuario — con el Duo abierto en vertical, la selección de equipos apilaba Equipo A, Equipo B y el CTA en un monto. El split arrangement por defecto divide verticalmente cuando la disposición es más alta que ancha (HIG: "splits vertically when the arrangement is taller than it is wide"), y la pantalla interior en portrait lo es.
+- [x] **Corrección**: `.arrangementViewStyle(.split.axes(.horizontal))` — el límite de ejes que la HIG documenta — en las cuatro pantallas de paneles: selección de equipos, combate, detalle de historial y Guía. Lado a lado siempre en ancho regular, en cualquier orientación; el CTA de inicio queda debajo a todo el ancho, fuera del arrangement.
+- [x] **Test de regresión geométrico**: `testTeamSelectionPanelsMatchWindowSizeClass` compara los frames de los botones aleatorios de ambos equipos: en ventana ancha (≥600 pt, pantalla interior del Duo) exige `minX(B) ≥ maxX(A)` (lado a lado); en compact exige `minY(B) ≥ maxY(A)` (apilados). Un mismo test valida ambos destinos de la suite y habría cazado el bug original (los tests existentes solo comprueban existencia y tap, no geometría).
+- [x] Skill `iphone-duo` actualizada con la regla del eje horizontal y el mapa con la API exacta.
+
+Verificación Fase 15: build sin warnings de código propio, **266 unit tests + 6 UI tests en verde en iPhone 17 (compact) y en el simulador iPhone Duo (regular)**, incluido el test geométrico en ambos.
+
+## Fase 16 — completada
+
+- [x] **Causa**: reporte del usuario — con el Duo abierto en horizontal solo se veía el Equipo A a todo el ancho y el CTA encima; el Equipo B desaparecía. El `ArrangementView` vivía dentro del `ScrollView` común: la altura infinita que propone el scroll rompía su decisión de eje (primero apilaba siempre; tras restringir `.axes(.horizontal)`, colapsaba el panel secundario en horizontal).
+- [x] **Corrección**: el arrangement pasa a nivel de contenedor —fuera de todo scroll— en las cuatro pantallas de paneles, con `ScrollView` propio dentro de cada panel; el split por defecto vuelve a ser **adaptativo** (la HIG: lado a lado cuando es más ancho que alto, apilado cuando es más alto que ancho):
+  - **Selección de equipos**: en horizontal A izquierda | B derecha con el CTA fijo debajo; en vertical A arriba, B abajo, con el CTA debajo (lo que el usuario pidió explícitamente).
+  - **Combate y detalle de historial**: resto (guardado al final de su panel) y narración con scroll independiente, adaptativos a la orientación.
+  - **Guía**: sin cambio estructural (ya estaba fuera del scroll); se retira la restricción de eje.
+- [x] **Test geométrico actualizado** a la especificación adaptativa: rama por ancho ≥600 pt **y** ventana en horizontal (lado a lado) frente al resto (apilado). En el Duo en vertical (estado por defecto del simulador) valida A arriba, B abajo.
+- [x] Skill actualizada con la regla real: nunca anidar `ArrangementView` en un `ScrollView`; paneles con scroll propio y eje por geometría.
+
+Verificación Fase 16: build sin warnings de código propio, **266 unit tests + 6 UI tests en verde en iPhone 17 y en el simulador iPhone Duo**. La rama horizontal del test (lado a lado) queda cubierta por el comportamiento por defecto del arrangement con geometría real y pendiente del pase visual del usuario en landscape.
 
 ## Pendientes y riesgos
 

@@ -32,6 +32,8 @@ nonisolated enum LocalizableStringKey: String, CaseIterable, Sendable {
     case guideDetailBiography = "guide.detail.biography"
     case guideDetailAlterEgos = "guide.detail.alterEgos"
     case guideDetailAliases = "guide.detail.aliases"
+    case guideSplitPlaceholderHeadline = "guide.split.placeholder.headline"
+    case guideSplitPlaceholderMessage = "guide.split.placeholder.message"
     case guideDetailPlaceOfBirth = "guide.detail.placeOfBirth"
     case guideDetailFirstAppearance = "guide.detail.firstAppearance"
     case guideDetailAlignment = "guide.detail.alignment"

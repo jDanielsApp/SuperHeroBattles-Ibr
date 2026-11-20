@@ -1,11 +1,23 @@
 import SwiftUI
 
 /// Guía de personajes: catálogo paginado por IDs con búsqueda unificada.
+///
+/// Con `onHeroDetailRequested`, las filas piden la ficha en vez de
+/// empujarla (split de la pantalla interior del iPhone Duo); sin cierre,
+/// mantienen el push clásico dentro de la pila de navegación.
 struct CharacterGuideView: View {
     @State private var viewModel: CharacterGuideViewModel
 
-    init(viewModel: CharacterGuideViewModel) {
+    /// Selección directa de héroe para el panel de detalle en ancho
+    /// regular; anula el push de ficha cuando está presente.
+    let onHeroDetailRequested: ((Hero) -> Void)?
+
+    init(
+        viewModel: CharacterGuideViewModel,
+        onHeroDetailRequested: ((Hero) -> Void)? = nil
+    ) {
         _viewModel = State(initialValue: viewModel)
+        self.onHeroDetailRequested = onHeroDetailRequested
     }
 
     var body: some View {
@@ -256,8 +268,18 @@ struct CharacterGuideView: View {
     @ViewBuilder
     private func heroRow(_ hero: Hero, prefetch: Bool) -> some View {
         if let onSelect = viewModel.onHeroSelected {
+            // Hoja selectora de equipos: la fila elige y cierra.
             Button {
                 onSelect(hero)
+            } label: {
+                HeroResultRow(hero: hero)
+            }
+            .buttonStyle(.plain)
+            .prefetchActions(prefetch, hero: hero, viewModel: viewModel)
+        } else if let onHeroDetailRequested {
+            // Split de la pantalla interior: la fila pide la ficha al panel.
+            Button {
+                onHeroDetailRequested(hero)
             } label: {
                 HeroResultRow(hero: hero)
             }

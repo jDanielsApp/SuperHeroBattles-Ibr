@@ -163,6 +163,7 @@ struct HistoryView: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
+            .comicReadableWidth()
         }
         .accessibilityIdentifier("history.list")
     }

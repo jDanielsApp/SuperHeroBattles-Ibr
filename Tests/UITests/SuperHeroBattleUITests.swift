@@ -226,12 +226,11 @@ final class SuperHeroBattleUITests: XCTestCase {
             "No se abrió el detalle del héroe"
         )
 
-        // Volver a Home: dos niveles atrás (detalle → Guía → Home).
-        for _ in 0..<2 {
-            let back = app.navigationBars.buttons.element(boundBy: 0)
-            XCTAssertTrue(back.waitForExistence(timeout: 5))
-            back.tap()
-        }
+        // Volver a Home relanzando la app: determinista en cualquier pose
+        // del iPhone Duo, donde los controles de navegación se montan en el
+        // lateral y el botón atrás no siempre es localizable.
+        app.terminate()
+        app.launch()
 
         // Ajustes desde la barra de Home.
         let settings = app.buttons["home.settings"]
@@ -303,6 +302,56 @@ final class SuperHeroBattleUITests: XCTestCase {
             app.staticTexts["history.detail.narration"].waitForExistence(timeout: 5),
             "Falta la narración en el detalle del combate"
         )
+    }
+
+    /// Regresión del arrangement de la pantalla interior: el split es
+    /// adaptativo (HIG) — equipos lado a lado en horizontal y apilados en
+    /// vertical. El umbral de 600 pt separa los destinos de la suite:
+    /// iPhone (compact) y pantalla interior del Duo (regular).
+    @MainActor
+    func testTeamSelectionPanelsMatchWindowSizeClass() throws {
+        let app = XCUIApplication()
+        app.launchArguments += ["-uitest-fakes"]
+        app.launch()
+
+        let duels = app.buttons["home.duels"]
+        XCTAssertTrue(duels.waitForExistence(timeout: 5))
+        duels.tap()
+
+        let mode = app.buttons["duels.mode.1v1"]
+        XCTAssertTrue(mode.waitForExistence(timeout: 5))
+        mode.tap()
+
+        let teamARandom = app.buttons["team.slot.random.teamA-0"]
+        let teamBRandom = app.buttons["team.slot.random.teamB-0"]
+        XCTAssertTrue(
+            teamARandom.waitForExistence(timeout: 5),
+            "Falta el botón aleatorio del Equipo A"
+        )
+        XCTAssertTrue(
+            teamBRandom.waitForExistence(timeout: 5),
+            "Falta el botón aleatorio del Equipo B"
+        )
+
+        let window = app.windows.firstMatch.frame
+        let isRegular = window.width >= 600
+        let isLandscape = window.width > window.height
+
+        if isRegular, isLandscape {
+            // Duo abierto en horizontal: Equipo A a la izquierda, B a la derecha.
+            XCTAssertGreaterThanOrEqual(
+                teamBRandom.frame.minX + 1,
+                teamARandom.frame.maxX,
+                "En el Duo abierto en horizontal los equipos deben quedar lado a lado"
+            )
+        } else {
+            // Compact o Duo abierto en vertical: A arriba, B abajo.
+            XCTAssertGreaterThanOrEqual(
+                teamBRandom.frame.minY + 1,
+                teamARandom.frame.maxY,
+                "En compact o en vertical el Equipo B debe quedar bajo el Equipo A"
+            )
+        }
     }
 
     /// Espera a que un elemento existente esté habilitado.

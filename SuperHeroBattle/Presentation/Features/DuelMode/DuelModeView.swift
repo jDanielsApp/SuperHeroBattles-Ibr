@@ -26,6 +26,7 @@ struct DuelModeView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
+                .comicReadableWidth()
             }
         }
         .navigationTitle(L10n.localizedKey(.duelsTitle))

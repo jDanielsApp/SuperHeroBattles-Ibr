@@ -14,6 +14,7 @@ struct HomeView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 12)
                 .padding(.bottom, 32)
+                .comicReadableWidth()
             }
         }
         .navigationBarTitleDisplayMode(.inline)

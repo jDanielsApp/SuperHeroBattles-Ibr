@@ -7,6 +7,13 @@ struct TeamSelectionView: View {
 
     @State private var pickerTarget: PickerTarget?
 
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    /// iPhone Duo abierto (o iPad): los equipos van lado a lado.
+    private var isWideLayout: Bool {
+        horizontalSizeClass == .regular
+    }
+
     init(viewModel: TeamSelectionViewModel, container: AppContainer) {
         _viewModel = State(initialValue: viewModel)
         self.container = container
@@ -24,21 +31,10 @@ struct TeamSelectionView: View {
         ZStack {
             ComicBackground()
 
-            ScrollView {
-                VStack(spacing: 18) {
-                    modeHeader
-
-                    teamPanel(.teamA)
-
-                    ComicVersusDivider()
-
-                    teamPanel(.teamB)
-
-                    startSection
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 12)
-                .padding(.bottom, 16)
+            if #available(iOS 27.1, *), isWideLayout {
+                wideLayout
+            } else {
+                compactLayout
             }
         }
         .navigationTitle(L10n.localizedKey(.teamSelectionTitle))
@@ -51,6 +47,65 @@ struct TeamSelectionView: View {
         }
         .onDisappear {
             viewModel.cancelActiveWork()
+        }
+    }
+
+    // MARK: - Reparto de pantalla
+
+    /// Compact (pantalla exterior del Duo, iPhone): columna actual en un
+    /// único scroll, con el divisor "VS" y el CTA al final.
+    private var compactLayout: some View {
+        ScrollView {
+            VStack(spacing: 18) {
+                modeHeader
+
+                teamPanel(.teamA)
+
+                ComicVersusDivider()
+
+                teamPanel(.teamB)
+
+                startSection
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .padding(.bottom, 16)
+        }
+    }
+
+    /// Pantalla interior del Duo: `ArrangementView` decide el eje con la
+    /// geometría real —equipos lado a lado en horizontal y apilados en
+    /// vertical— y cada equipo scrollea dentro de su panel, con el CTA
+    /// fijo debajo. El arrangement nunca va dentro de un ScrollView: la
+    /// altura infinita del scroll rompe su decisión de eje.
+    @available(iOS 27.1, *)
+    private var wideLayout: some View {
+        VStack(spacing: 0) {
+            modeHeader
+                .padding(.horizontal, 20)
+                .padding(.top, 12)
+                .padding(.bottom, 12)
+
+            ArrangementView {
+                scrollablePanel(.teamA)
+            } secondary: {
+                scrollablePanel(.teamB)
+            }
+            .arrangementViewStyle(.split)
+
+            startSection
+                .padding(.horizontal, 20)
+                .padding(.top, 10)
+                .padding(.bottom, 12)
+        }
+    }
+
+    /// Panel de equipo con scroll propio para su mitad del arrangement.
+    private func scrollablePanel(_ side: TeamSide) -> some View {
+        ScrollView {
+            teamPanel(side)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 12)
         }
     }
 

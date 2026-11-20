@@ -11,6 +11,12 @@ struct CombatRecordDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    /// iPhone Duo abierto (o iPad): la narración va a la derecha del resto.
+    private var isWideLayout: Bool {
+        horizontalSizeClass == .regular
+    }
 
     init(viewModel: CombatRecordDetailViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -20,24 +26,18 @@ struct CombatRecordDetailView: View {
         ZStack {
             ComicBackground()
 
-            ScrollView {
-                VStack(spacing: 18) {
-                    dateHeader
-
-                    CombatOutcomeBanner(
-                        outcome: viewModel.record.outcome,
-                        isRevealed: true,
-                        outcomeIdentifier: "history.detail.outcome"
+            if #available(iOS 27.1, *), isWideLayout {
+                wideLayout
+            } else {
+                ScrollView {
+                    CombatArrangementLayout(
+                        leading: { restBlocks },
+                        trailing: { narrationSection }
                     )
-
-                    teamSection(.teamA, snapshots: viewModel.record.teamA)
-                    ComicVersusDivider()
-                    teamSection(.teamB, snapshots: viewModel.record.teamB)
-                    narrationSection
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                    .padding(.bottom, 16)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 12)
-                .padding(.bottom, 16)
             }
         }
         .navigationTitle(L10n.localizedKey(.historyDetailTitle))
@@ -73,6 +73,49 @@ struct CombatRecordDetailView: View {
             .accessibilityIdentifier("history.delete.cancel")
         } message: {
             Text(deletionMessage)
+        }
+    }
+
+    // MARK: - Reparto de pantalla
+
+    /// Pantalla interior del Duo: `ArrangementView` decide el eje con la
+    /// geometría real —resto y narración lado a lado en horizontal, apilados
+    /// en vertical— con scroll independiente por panel. Nunca dentro de un
+    /// ScrollView común.
+    @available(iOS 27.1, *)
+    private var wideLayout: some View {
+        ArrangementView {
+            ScrollView {
+                restBlocks
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+            }
+        } secondary: {
+            ScrollView {
+                narrationSection
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+            }
+        }
+        .arrangementViewStyle(.split)
+    }
+
+    /// Bloques del registro: fecha, veredicto y equipos.
+    private var restBlocks: some View {
+        VStack(spacing: 18) {
+            dateHeader
+
+            CombatOutcomeBanner(
+                outcome: viewModel.record.outcome,
+                isRevealed: true,
+                outcomeIdentifier: "history.detail.outcome"
+            )
+
+            teamSection(.teamA, snapshots: viewModel.record.teamA)
+
+            ComicVersusDivider()
+
+            teamSection(.teamB, snapshots: viewModel.record.teamB)
         }
     }
 

@@ -23,9 +23,7 @@ struct RootView: View {
                 .navigationDestination(for: AppRoute.self) { route in
                     switch route {
                     case .characterGuide:
-                        CharacterGuideView(
-                            viewModel: container.makeCharacterGuideViewModel()
-                        )
+                        CharacterGuideScreen(container: container)
                     case .duelMode:
                         DuelModeView()
                     case .settings:

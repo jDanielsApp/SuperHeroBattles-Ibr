@@ -30,6 +30,7 @@ struct SettingsView: View {
                 L10n.text(.settingsAbout)
             }
         }
+        .comicReadableWidth(maxWidth: 560)
         .navigationTitle(LocalizedStringKey(LocalizableStringKey.settingsTitle.rawValue))
         .navigationBarTitleDisplayMode(.inline)
         .accessibilityIdentifier("settings.root")

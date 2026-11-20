@@ -18,41 +18,31 @@ struct CombatView: View {
 
     @Environment(\.locale) private var locale
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    /// iPhone Duo abierto (o iPad): la narración va a la derecha del resto.
+    private var isWideLayout: Bool {
+        horizontalSizeClass == .regular
+    }
 
     var body: some View {
         ZStack {
             ComicBackground()
 
-            ScrollView {
-                VStack(spacing: 18) {
-                    // La cabecera de choque se retira cuando hay narración.
-                    if !viewModel.isNarrationPublished {
-                        introBanner
-                            .transition(introTransition)
-                    }
-
-                    CombatOutcomeBanner(
-                        outcome: viewModel.result.outcome,
-                        isRevealed: viewModel.isNarrationPublished
+            if #available(iOS 27.1, *), isWideLayout {
+                wideLayout
+            } else {
+                ScrollView {
+                    CombatArrangementLayout(
+                        leading: { restBlocks },
+                        trailing: { narrationSection },
+                        footer: { saveSection }
                     )
-
-                    teamSection(viewModel.result.teamA)
-
-                    ComicVersusDivider()
-
-                    teamSection(viewModel.result.teamB)
-
-                    CombatNarrationSection(
-                        narration: viewModel.narration,
-                        isLoading: viewModel.isGeneratingNarration
-                    )
-
-                    saveSection
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                    .padding(.bottom, 16)
+                    .animation(revealAnimation, value: viewModel.isNarrationPublished)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 12)
-                .padding(.bottom, 16)
-                .animation(revealAnimation, value: viewModel.isNarrationPublished)
             }
         }
         .navigationTitle(L10n.localizedKey(.combatResultTitle))
@@ -60,6 +50,64 @@ struct CombatView: View {
         .task {
             await viewModel.loadNarration()
         }
+    }
+
+    // MARK: - Reparto de pantalla
+
+    /// Pantalla interior del Duo: `ArrangementView` decide el eje con la
+    /// geometría real —resto y narración lado a lado en horizontal, apilados
+    /// en vertical— y cada panel scrollea por su cuenta. Nunca dentro de un
+    /// ScrollView común: la altura infinita del scroll rompe su decisión
+    /// de eje.
+    @available(iOS 27.1, *)
+    private var wideLayout: some View {
+        ArrangementView {
+            ScrollView {
+                VStack(spacing: 18) {
+                    restBlocks
+                    saveSection
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .animation(revealAnimation, value: viewModel.isNarrationPublished)
+            }
+        } secondary: {
+            ScrollView {
+                narrationSection
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+            }
+        }
+        .arrangementViewStyle(.split)
+    }
+
+    /// Bloques de resultado: cabecera en suspense, veredicto y equipos.
+    private var restBlocks: some View {
+        VStack(spacing: 18) {
+            // La cabecera de choque se retira cuando hay narración.
+            if !viewModel.isNarrationPublished {
+                introBanner
+                    .transition(introTransition)
+            }
+
+            CombatOutcomeBanner(
+                outcome: viewModel.result.outcome,
+                isRevealed: viewModel.isNarrationPublished
+            )
+
+            teamSection(viewModel.result.teamA)
+
+            ComicVersusDivider()
+
+            teamSection(viewModel.result.teamB)
+        }
+    }
+
+    private var narrationSection: some View {
+        CombatNarrationSection(
+            narration: viewModel.narration,
+            isLoading: viewModel.isGeneratingNarration
+        )
     }
 
     // MARK: - Suspense

@@ -1,12 +1,15 @@
 import SwiftUI
 
-/// Vista común para pantallas que llegarán en fases posteriores.
+/// Vista común de estados ilustrativos: grande, centrada y decorativa.
+/// Reutilizada por la columna de detalle vacía del split de la Guía.
 struct FeaturePlaceholderView: View {
     let titleKey: LocalizableStringKey
     let headlineKey: LocalizableStringKey
     let messageKey: LocalizableStringKey
     let systemImage: String
     let accent: Color
+    /// Badge "Próximamente": solo para funciones aún no disponibles.
+    var showsComingSoonBadge = true
 
     var body: some View {
         ZStack {
@@ -36,16 +39,36 @@ struct FeaturePlaceholderView: View {
                         .multilineTextAlignment(.center)
                 }
 
-                L10n.text(.commonComingSoon)
-                    .font(ComicTypography.caption)
-                    .foregroundStyle(ComicPalette.ink)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 6)
-                    .background(ComicPalette.yellow, in: Capsule())
+                if showsComingSoonBadge {
+                    comingSoonBadge
+                }
             }
             .padding(28)
         }
         .navigationTitle(LocalizedStringKey(titleKey.rawValue))
         .navigationBarTitleDisplayMode(.inline)
     }
+
+    private var comingSoonBadge: some View {
+        L10n.text(.commonComingSoon)
+            .font(ComicTypography.caption)
+            .foregroundStyle(ComicPalette.ink)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 6)
+            .background(ComicPalette.yellow, in: Capsule())
+    }
+}
+
+#Preview {
+    NavigationStack {
+        FeaturePlaceholderView(
+            titleKey: .guideTitle,
+            headlineKey: .guideSplitPlaceholderHeadline,
+            messageKey: .guideSplitPlaceholderMessage,
+            systemImage: "person.crop.circle.badge.viewfinder",
+            accent: ComicPalette.blue,
+            showsComingSoonBadge: false
+        )
+    }
+    .preferredColorScheme(.dark)
 }
