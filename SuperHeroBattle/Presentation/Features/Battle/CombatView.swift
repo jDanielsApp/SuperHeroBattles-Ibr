@@ -1,10 +1,16 @@
 import SwiftUI
 
 /// Pantalla de resultado del combate: puntuaciones trazables, feeling y ganador.
+///
+/// El veredicto y las puntuaciones reales permanecen en suspense hasta que
+/// la narración está publicada: hasta entonces el banner muestra la
+/// incógnita, los totales rotan números aleatorios y VoiceOver anuncia la
+/// puntuación como pendiente. Al publicarse la narración se retira la
+/// cabecera de choque, se revela el ganador y los marcadores muestran los
+/// valores reales. El resultado matemático es inmutable en todo momento.
 struct CombatView: View {
     @State private var viewModel: CombatViewModel
     @State private var isPresentingSaveConfirmation = false
-    @State private var isBannerAppeared = false
 
     init(viewModel: CombatViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -19,23 +25,34 @@ struct CombatView: View {
 
             ScrollView {
                 VStack(spacing: 18) {
-                    introBanner
+                    // La cabecera de choque se retira cuando hay narración.
+                    if !viewModel.isNarrationPublished {
+                        introBanner
+                            .transition(introTransition)
+                    }
 
-                    outcomeBanner
+                    CombatOutcomeBanner(
+                        outcome: viewModel.result.outcome,
+                        isRevealed: viewModel.isNarrationPublished
+                    )
 
                     teamSection(viewModel.result.teamA)
 
-                    versusDivider
+                    ComicVersusDivider()
 
                     teamSection(viewModel.result.teamB)
 
-                    narrationSection
+                    CombatNarrationSection(
+                        narration: viewModel.narration,
+                        isLoading: viewModel.isGeneratingNarration
+                    )
 
                     saveSection
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 12)
                 .padding(.bottom, 16)
+                .animation(revealAnimation, value: viewModel.isNarrationPublished)
             }
         }
         .navigationTitle(L10n.localizedKey(.combatResultTitle))
@@ -43,6 +60,18 @@ struct CombatView: View {
         .task {
             await viewModel.loadNarration()
         }
+    }
+
+    // MARK: - Suspense
+
+    /// Transición de salida de la cabecera de choque; sin movimiento con
+    /// Reduce Motion.
+    private var introTransition: AnyTransition {
+        reduceMotion ? .opacity : .opacity.combined(with: .scale)
+    }
+
+    private var revealAnimation: Animation? {
+        reduceMotion ? nil : .easeOut(duration: 0.4)
     }
 
     // MARK: - Inicio del combate
@@ -138,143 +167,6 @@ struct CombatView: View {
         }
     }
 
-    // MARK: - Narración
-
-    @ViewBuilder
-    private var narrationSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            L10n.text(.combatNarrationTitle)
-                .font(ComicTypography.headline)
-                .foregroundStyle(ComicPalette.yellow)
-                .accessibilityAddTraits(.isHeader)
-
-            if let narration = viewModel.narration {
-                sourceBadge(narration.source)
-
-                Text(narration.text)
-                    .font(ComicTypography.body)
-                    .foregroundStyle(ComicPalette.paper.opacity(0.9))
-                    .lineSpacing(4)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityIdentifier("combat.narration")
-            } else if viewModel.isGeneratingNarration {
-                HStack(spacing: 10) {
-                    ProgressView()
-                        .tint(ComicPalette.yellow)
-
-                    L10n.text(.combatNarrationLoading)
-                        .font(ComicTypography.body)
-                        .foregroundStyle(ComicPalette.paper.opacity(0.7))
-                }
-                .padding(.vertical, 8)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(L10n.text(.combatNarrationLoading))
-                .accessibilityIdentifier("combat.narration.loading")
-            }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(ComicPalette.midnight.opacity(0.86))
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(ComicPalette.paper.opacity(0.18), lineWidth: 2)
-        }
-    }
-
-    @ViewBuilder
-    private func sourceBadge(_ source: NarrativeSource) -> some View {
-        let key: LocalizableStringKey = source == .foundationModels
-            ? .combatNarrationSourceFoundationModels
-            : .combatNarrationSourceTemplate
-        let accent: Color = source == .foundationModels
-            ? ComicPalette.yellow
-            : ComicPalette.blue
-
-        L10n.text(key)
-            .font(ComicTypography.caption)
-            .foregroundStyle(ComicPalette.ink)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(accent, in: Capsule())
-            .accessibilityIdentifier("combat.narration.source")
-    }
-
-    // MARK: - Resultado global
-
-    @ViewBuilder
-    private var outcomeBanner: some View {
-        Group {
-            switch viewModel.result.outcome {
-            case .winner(let side):
-                VStack(spacing: 10) {
-                    // Slot de Lottie para la presentación del ganador.
-                    ComicLottieView(
-                        animationName: "combat_winner",
-                        fallbackIcon: "trophy.fill",
-                        loopMode: .playOnce
-                    )
-                    .frame(width: 60, height: 60)
-
-                    L10n.text(.combatResultWinner)
-                        .font(ComicTypography.caption)
-                        .foregroundStyle(ComicPalette.paper.opacity(0.75))
-
-                    L10n.text(side == .teamA ? .teamSelectionTeamA : .teamSelectionTeamB)
-                        .font(ComicTypography.title)
-                        .foregroundStyle(side == .teamA ? TeamPalette.teamA : TeamPalette.teamB)
-                        .accessibilityIdentifier("combat.outcome")
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 18)
-                .background(
-                    ComicPalette.midnight.opacity(0.86),
-                    in: RoundedRectangle(cornerRadius: 22, style: .continuous)
-                )
-                .overlay {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .stroke(ComicPalette.yellow, lineWidth: 2)
-                }
-            case .draw:
-                VStack(spacing: 10) {
-                    Image(systemName: "equal.circle.fill")
-                        .font(.system(size: 44, weight: .black))
-                        .foregroundStyle(ComicPalette.paper)
-                        .accessibilityHidden(true)
-
-                    L10n.text(.combatResultDraw)
-                        .font(ComicTypography.title)
-                        .foregroundStyle(ComicPalette.paper)
-                        .accessibilityIdentifier("combat.outcome")
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 18)
-                .background(
-                    ComicPalette.midnight.opacity(0.86),
-                    in: RoundedRectangle(cornerRadius: 22, style: .continuous)
-                )
-                .overlay {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .stroke(ComicPalette.paper.opacity(0.35), lineWidth: 2)
-                }
-            }
-        }
-        // Entrada sutil del banner de resultado; sin movimiento con Reduce Motion.
-        .scaleEffect(isBannerAppeared ? 1 : 0.85)
-        .opacity(isBannerAppeared ? 1 : 0)
-        .onAppear {
-            if reduceMotion {
-                isBannerAppeared = true
-            } else {
-                withAnimation(.spring(response: 0.45, dampingFraction: 0.7)) {
-                    isBannerAppeared = true
-                }
-            }
-        }
-    }
-
     // MARK: - Panel de equipo
 
     private func teamSection(_ summary: TeamCombatSummary) -> some View {
@@ -294,10 +186,15 @@ struct CombatView: View {
 
                 Spacer(minLength: 8)
 
-                Text(summary.totalScore, format: scoreFormat)
-                    .font(ComicTypography.headline)
-                    .foregroundStyle(ComicPalette.yellow)
-                    .accessibilityIdentifier("combat.total.\(summary.side.rawValue)")
+                SuspenseScoreText(
+                    realValue: summary.totalScore,
+                    isRevealed: viewModel.isNarrationPublished,
+                    range: SuspenseScore.teamRange(forTeamSize: viewModel.result.mode.teamSize),
+                    format: scoreFormat
+                )
+                .font(ComicTypography.headline)
+                .foregroundStyle(ComicPalette.yellow)
+                .accessibilityIdentifier("combat.total.\(summary.side.rawValue)")
             }
             .accessibilityElement(children: .combine)
 
@@ -335,7 +232,7 @@ struct CombatView: View {
                     statDivider
                     statCaption(.combatResultLuck, value: String(score.luck))
                     statDivider
-                    statCaption(.combatResultTotal, value: score.totalScore.formatted(scoreFormat))
+                    statTotalCaption(score)
                 }
             }
 
@@ -357,18 +254,16 @@ struct CombatView: View {
 
     // MARK: - Feeling
 
+    /// La sección de feeling solo aparece si el equipo tiene bonus; un
+    /// equipo sin coincidencias (y el 1v1, sin parejas) no la muestra.
     @ViewBuilder
     private func affinitySection(_ summary: TeamCombatSummary) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            L10n.text(.combatResultAffinity)
-                .font(ComicTypography.caption)
-                .foregroundStyle(ComicPalette.paper.opacity(0.55))
-
-            if summary.affinityBonuses.isEmpty {
-                L10n.text(.combatResultAffinityNone)
+        if !summary.affinityBonuses.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                L10n.text(.combatResultAffinity)
                     .font(ComicTypography.caption)
-                    .foregroundStyle(ComicPalette.paper.opacity(0.45))
-            } else {
+                    .foregroundStyle(ComicPalette.paper.opacity(0.55))
+
                 ForEach(summary.affinityBonuses) { bonus in
                     affinityRow(bonus, in: summary)
                 }
@@ -419,23 +314,6 @@ struct CombatView: View {
 
     // MARK: - Detalles de estilo
 
-    private var versusDivider: some View {
-        HStack(spacing: 12) {
-            Rectangle()
-                .fill(ComicPalette.paper.opacity(0.25))
-                .frame(height: 2)
-
-            L10n.text(.homeVersus)
-                .font(ComicTypography.headline)
-                .foregroundStyle(ComicPalette.yellow)
-
-            Rectangle()
-                .fill(ComicPalette.paper.opacity(0.25))
-                .frame(height: 2)
-        }
-        .accessibilityHidden(true)
-    }
-
     private var statDivider: some View {
         Text("·")
             .font(ComicTypography.caption)
@@ -454,6 +332,23 @@ struct CombatView: View {
         }
     }
 
+    /// Total del combatiente: en suspense hasta que la narración se publica.
+    private func statTotalCaption(_ score: CombatantScore) -> some View {
+        HStack(spacing: 3) {
+            L10n.text(.combatResultTotal)
+                .font(ComicTypography.caption)
+                .foregroundStyle(ComicPalette.paper.opacity(0.55))
+
+            SuspenseScoreText(
+                realValue: score.totalScore,
+                isRevealed: viewModel.isNarrationPublished,
+                format: scoreFormat
+            )
+            .font(ComicTypography.caption)
+            .foregroundStyle(ComicPalette.paper.opacity(0.8))
+        }
+    }
+
     private var scoreFormat: FloatingPointFormatStyle<Double> {
         .number.precision(.fractionLength(0...1))
     }
@@ -463,8 +358,14 @@ struct CombatView: View {
         let luck = L10n.string(.combatResultLuck, locale: locale)
         let total = L10n.string(.combatResultTotal, locale: locale)
 
+        // En suspense el total real no se anuncia: el marcador está pendiente
+        // de narración y el número visible es aleatorio.
+        let totalDescription = viewModel.isNarrationPublished
+            ? score.totalScore.formatted(scoreFormat)
+            : L10n.string(.combatScorePending, locale: locale)
+
         return "\(score.hero.name): \(base) \(score.baseScore.formatted(scoreFormat)), "
-            + "\(luck) \(score.luck), \(total) \(score.totalScore.formatted(scoreFormat))"
+            + "\(luck) \(score.luck), \(total) \(totalDescription)"
     }
 }
 

@@ -57,8 +57,13 @@ final class SuperHeroBattleUITests: XCTestCase {
         start.tap()
 
         XCTAssertTrue(
+            app.staticTexts["combat.narration"].waitForExistence(timeout: 10),
+            "No se mostró la narración"
+        )
+        // El ganador y los totales reales se revelan con la narración publicada.
+        XCTAssertTrue(
             app.staticTexts["combat.outcome"].waitForExistence(timeout: 5),
-            "No se mostró el resultado del combate"
+            "No se reveló el ganador tras la narración"
         )
         XCTAssertTrue(
             app.staticTexts["combat.total.teamA"].waitForExistence(timeout: 5),
@@ -67,10 +72,6 @@ final class SuperHeroBattleUITests: XCTestCase {
         XCTAssertTrue(
             app.staticTexts["combat.total.teamB"].waitForExistence(timeout: 5),
             "Falta el total del Equipo B"
-        )
-        XCTAssertTrue(
-            app.staticTexts["combat.narration"].waitForExistence(timeout: 10),
-            "No se mostró la narración"
         )
         XCTAssertTrue(
             app.staticTexts["combat.narration.source"].waitForExistence(timeout: 5),
@@ -114,8 +115,8 @@ final class SuperHeroBattleUITests: XCTestCase {
         XCTAssertTrue(start.isEnabled)
         start.tap()
 
-        XCTAssertTrue(app.staticTexts["combat.outcome"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["combat.narration"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["combat.outcome"].waitForExistence(timeout: 5))
 
         // Guardado explícito: habilitado con la narración publicada.
         let save = app.buttons["combat.save"]
@@ -262,6 +263,7 @@ final class SuperHeroBattleUITests: XCTestCase {
         XCTAssertTrue(start.waitForExistence(timeout: 5))
         start.tap()
 
+        XCTAssertTrue(app.staticTexts["combat.narration"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["combat.outcome"].waitForExistence(timeout: 5))
 
         // Guardar y volver a Home.

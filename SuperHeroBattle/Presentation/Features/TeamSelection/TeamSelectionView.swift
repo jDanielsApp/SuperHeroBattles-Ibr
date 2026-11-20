@@ -30,7 +30,7 @@ struct TeamSelectionView: View {
 
                     teamPanel(.teamA)
 
-                    versusDivider
+                    ComicVersusDivider()
 
                     teamPanel(.teamB)
 
@@ -130,23 +130,6 @@ struct TeamSelectionView: View {
         (0..<viewModel.mode.teamSize)
             .filter { viewModel.hero(in: $0, side: side) != nil }
             .count
-    }
-
-    private var versusDivider: some View {
-        HStack(spacing: 12) {
-            Rectangle()
-                .fill(ComicPalette.paper.opacity(0.25))
-                .frame(height: 2)
-
-            L10n.text(.homeVersus)
-                .font(ComicTypography.headline)
-                .foregroundStyle(ComicPalette.yellow)
-
-            Rectangle()
-                .fill(ComicPalette.paper.opacity(0.25))
-                .frame(height: 2)
-        }
-        .accessibilityHidden(true)
     }
 
     // MARK: - Arranque del combate

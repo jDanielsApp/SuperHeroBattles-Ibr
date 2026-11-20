@@ -10,9 +10,16 @@ struct CombatRecordDetailView: View {
 
             ScrollView {
                 VStack(spacing: 18) {
-                    header
+                    dateHeader
+
+                    CombatOutcomeBanner(
+                        outcome: record.outcome,
+                        isRevealed: true,
+                        outcomeIdentifier: "history.detail.outcome"
+                    )
+
                     teamSection(.teamA, snapshots: record.teamA)
-                    versusDivider
+                    ComicVersusDivider()
                     teamSection(.teamB, snapshots: record.teamB)
                     narrationSection
                 }
@@ -26,54 +33,11 @@ struct CombatRecordDetailView: View {
         .accessibilityIdentifier("history.detail")
     }
 
-    private var header: some View {
-        VStack(spacing: 10) {
-            Text(record.date, format: .dateTime.day().month(.abbreviated).year().hour().minute())
-                .font(ComicTypography.body)
-                .foregroundStyle(ComicPalette.paper.opacity(0.7))
-
-            outcomeBanner
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .background(
-            ComicPalette.midnight.opacity(0.86),
-            in: RoundedRectangle(cornerRadius: 22, style: .continuous)
-        )
-        .overlay {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(ComicPalette.yellow.opacity(0.6), lineWidth: 2)
-        }
-    }
-
-    @ViewBuilder
-    private var outcomeBanner: some View {
-        switch record.outcome {
-        case .winner(let side):
-            VStack(spacing: 6) {
-                Image(systemName: "trophy.fill")
-                    .font(.system(size: 36, weight: .black))
-                    .foregroundStyle(ComicPalette.yellow)
-                    .accessibilityHidden(true)
-
-                L10n.text(side == .teamA ? .teamSelectionTeamA : .teamSelectionTeamB)
-                    .font(ComicTypography.title)
-                    .foregroundStyle(side == .teamA ? TeamPalette.teamA : TeamPalette.teamB)
-                    .accessibilityIdentifier("history.detail.outcome")
-            }
-        case .draw:
-            VStack(spacing: 6) {
-                Image(systemName: "equal.circle.fill")
-                    .font(.system(size: 36, weight: .black))
-                    .foregroundStyle(ComicPalette.paper)
-                    .accessibilityHidden(true)
-
-                L10n.text(.combatResultDraw)
-                    .font(ComicTypography.title)
-                    .foregroundStyle(ComicPalette.paper)
-                    .accessibilityIdentifier("history.detail.outcome")
-            }
-        }
+    private var dateHeader: some View {
+        Text(record.date, format: .dateTime.day().month(.abbreviated).year().hour().minute())
+            .font(ComicTypography.body)
+            .foregroundStyle(ComicPalette.paper.opacity(0.7))
+            .frame(maxWidth: .infinity)
     }
 
     private func teamSection(_ side: TeamSide, snapshots: [HeroSnapshot]) -> some View {
@@ -134,63 +98,14 @@ struct CombatRecordDetailView: View {
     }
 
     private var narrationSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            L10n.text(.combatNarrationTitle)
-                .font(ComicTypography.headline)
-                .foregroundStyle(ComicPalette.yellow)
-
-            sourceBadge
-
-            Text(record.narration)
-                .font(ComicTypography.body)
-                .foregroundStyle(ComicPalette.paper.opacity(0.9))
-                .lineSpacing(4)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityIdentifier("history.detail.narration")
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(ComicPalette.midnight.opacity(0.86))
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(ComicPalette.paper.opacity(0.18), lineWidth: 2)
-        }
-    }
-
-    private var sourceBadge: some View {
-        let key: LocalizableStringKey = record.narrationSource == .foundationModels
-            ? .combatNarrationSourceFoundationModels
-            : .combatNarrationSourceTemplate
-        let accent: Color = record.narrationSource == .foundationModels
-            ? ComicPalette.yellow
-            : ComicPalette.blue
-
-        return L10n.text(key)
-            .font(ComicTypography.caption)
-            .foregroundStyle(ComicPalette.ink)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(accent, in: Capsule())
-    }
-
-    private var versusDivider: some View {
-        HStack(spacing: 12) {
-            Rectangle()
-                .fill(ComicPalette.paper.opacity(0.25))
-                .frame(height: 2)
-
-            L10n.text(.homeVersus)
-                .font(ComicTypography.headline)
-                .foregroundStyle(ComicPalette.yellow)
-
-            Rectangle()
-                .fill(ComicPalette.paper.opacity(0.25))
-                .frame(height: 2)
-        }
-        .accessibilityHidden(true)
+        CombatNarrationSection(
+            narration: CombatNarrative(
+                text: record.narration,
+                source: record.narrationSource
+            ),
+            textIdentifier: "history.detail.narration",
+            sourceIdentifier: "history.detail.narration.source"
+        )
     }
 }
 

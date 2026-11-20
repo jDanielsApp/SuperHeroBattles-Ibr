@@ -1,15 +1,15 @@
 # Estado de implementación — SuperHeroBattle
 
-Última actualización: 19/11/2026
+Última actualización: 20/11/2026
 
 Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fase y antes de cada commit relevante.
 
 ## Resumen
 
-- **Fase actual:** Fase 9 cerrada. **Proyecto completado.**
-- **Última fase cerrada:** Fase 9 — calidad final: limpieza, cobertura 84,9 %, build Release verificado y documentación de entrega.
-- **Herramienta nueva:** índice público de IDs (`data/character_ids.json`) con actualización semanal mediante GitHub Actions.
-- **Estado del build:** compila en Debug y Release sin warnings de código; **233 unit tests + 5 UI tests** en verde en Xcode 27.2 / iOS Simulator 27.0; cobertura del 84,9 % en la app.
+- **Fase actual:** Fase 10 cerrada (mejoras de combate) sobre el proyecto completado.
+- **Última fase cerrada:** Fase 10 — afinidad sin paréntesis y familiares por identidad del compañero; suspense del veredicto y los marcadores hasta que la narración se publica; feeling solo con bonus; skill `iphone-duo` para las adaptaciones a iPhone Duo.
+- **Herramienta nueva:** skill de proyecto `.opencode/skills/iphone-duo` (HIG destilada + mapa de decisiones por pantalla) para las fases siguientes sin releer la documentación.
+- **Estado del build:** compila en Debug sin warnings de código; **250 unit tests + 5 UI tests** en verde en iPhone 17 (iOS 27.2).
 - **Dependencias:** RealmSwift 20.0.6 y Lottie 4.6.1 resueltas con SwiftPM.
 
 ## Decisiones confirmadas
@@ -36,6 +36,7 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 | 7. Combate, resultados e historial | Completada | Historial Realm schemaVersion 2, guardado tras narración, listado con borrado/vaciado y detalle |
 | 8. Diseño comic, Lottie, idiomas y accesibilidad | Completada | Wrapper con fallbacks y Reduce Motion, halftone, ComicCTALabel, cabecera de choque y assets `combat_intro`/`combat_winner` activos |
 | 9. Calidad final | Completada | Limpieza de código muerto, cobertura 84,9 %, smoke tests de pantallas, build Release y docs de entrega |
+| 10. Mejoras de combate | Completada | Afinidad sin paréntesis, familiares por identidad del compañero, suspense hasta la narración, feeling condicional y skill `iphone-duo` |
 
 ## Fase 0 — completada
 
@@ -269,6 +270,27 @@ Hallazgos documentados de la auditoría:
 - `FeaturePlaceholderView` (127 líneas) quedó **sin referencias** tras reescribir `DuelModeView` en Fase 4. Se conserva como componente reutilizable para pantallas futuras; si no se usa, es candidato a eliminación.
 - La cobertura restante se concentra en ramas defensivas (payload corrupto, migraciones) y en vistas SwiftUI puras sin lógica extraíble; no se persigue el 100 % por decisión de alcance.
 - `FoundationModelsNarrationService` marca ~37 % por diseño: los tests usan el seam inyectable y nunca invocan el modelo real (exigencia de AGENTS.md); la ruta real se verificó en dispositivo en Fase 6.
+
+## Fase 10 — completada
+
+- [x] **Skill `iphone-duo`** (`.opencode/skills/iphone-duo/`): HIG de Apple destilada en `references/hig-duo-guidelines.md`, reglas de oro por size class y mapa de decisiones pantalla a pantalla acordado con el usuario, para las fases siguientes sin releer la documentación oficial.
+- [x] **Afiliaciones sin paréntesis**: `AffinityMatcher` descarta el contenido entre paréntesis y corchetes antes de comparar ("Avengers (honorary member)" → "avengers") y acepta `;` como separador adicional.
+- [x] **Familiares por identidad del compañero**: la regla antigua de intersección de listas queda sustituida; ahora un familiar de un héroe debe coincidir con el nombre o alias biográfico de su compañero, en ambas direcciones ("Loki (adoptive brother)" + compañero Loki → +33). Los marcadores `unknown`, guiones y paréntesis vacíos se descartan.
+- [x] **Suspense hasta la narración**: `CombatViewModel.isNarrationPublished` gobierna la revelación. El banner muestra la incógnita con "El combate se está librando…" y al publicarse la narración entra el ganador/empate con el spring existente (desactivado con Reduce Motion).
+- [x] **Marcadores en suspense**: `SuspenseScoreText` rota números aleatorios plausibles (rango puro y testeable en `SuspenseScore`, escalado por tamaño de equipo) en el total de cada equipo y el total de cada combatiente; al revelarse muestra el valor real. Reduce Motion congela un único número y VoiceOver anuncia "Puntuación pendiente de narración" en vez del aleatorio; la etiqueta de accesibilidad del combatiente tampoco revela el total real en suspense.
+- [x] **Cabecera de choque oculta con narración**: la vista con `combat_intro` se retira del layout cuando la narración está publicada (transición suave, sin movimiento con Reduce Motion).
+- [x] **Feeling condicional**: la sección de feeling solo aparece si el equipo tiene bonus (1v1 nunca la muestra); la clave `combat.result.affinity.none` queda sin uso y se retira de `en`/`es`.
+- [x] **Componentes compartidos**: `ComicVersusDivider` (antes triplicada), `CombatOutcomeBanner` (con variante de suspense e identificadores por pantalla), `CombatNarrationSection` (con estado de carga) y `SuspenseScoreText` reutilizados por combate y detalle de historial; identificadores de UI test estables.
+- [x] Localización en inglés y español con paridad; claves nuevas `combat.outcome.pending` y `combat.score.pending`.
+- [x] UI tests reordenados: la narración se espera primero y después se comprueba la revelación del ganador y los totales reales.
+
+Decisiones de la fase:
+
+- Base y suerte permanecen visibles durante el suspense (decisión del usuario); solo los totales se enmascaran.
+- El número aleatorio de Reduce Motion se congela en un único valor: la información de "pendiente" sigue presente sin animación.
+- La regla de familiares se sustituye en lugar de acumularse: compartir el mismo familiar entre dos héroes ya no otorga feeling (decisión del usuario).
+
+Verificación Fase 10: build Debug correcto sin warnings de código, **250 unit tests + 5 UI tests en verde** en iPhone 17 (iOS 27.2), `xcodebuild -list` correcto. Suites nuevas: AffinityMatcherTests (19), SuspenseScoreTests (6) y cobertura de `isNarrationPublished` en CombatViewModelTests (11).
 
 ## Pendientes y riesgos
 
