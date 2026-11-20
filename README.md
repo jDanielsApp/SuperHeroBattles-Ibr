@@ -13,6 +13,7 @@ Proyecto construido con SwiftUI, Clean Architecture + MVVM, Swift Concurrency es
 
 - [Estado actual](#estado-actual)
 - [Arquitectura](#arquitectura)
+- [Decisiones técnicas](#decisiones-técnicas)
 - [Stack tecnológico](#stack-tecnológico)
 - [Requisitos previos](#requisitos-previos)
 - [Instalación y configuración](#instalación-y-configuración)
@@ -40,8 +41,8 @@ Proyecto construido con SwiftUI, Clean Architecture + MVVM, Swift Concurrency es
 | Narración con Apple Foundation Models | ✅ Operativa | En dispositivo con Apple Intelligence genera con IA; sin modelo cae a plantilla honesta con badge de origen |
 | Animaciones Lottie | ✅ Operativas | `combat_intro` (bucle) y `combat_winner` (una vez) activas; Reduce Motion y ausencia de asset caen a fallback comic |
 | Historial de combates con Realm | ✅ Operativa | Guardado explícito con confirmación y vuelta a Home; listado con borrado/vaciado y detalle |
-| Calidad final | ✅ Cerrada | 233 tests unitarios + 5 UI en verde; cobertura 84,9 %; build Release verificado sin secretos |
-| Caché de imágenes remotas | ⚠️ Bloqueada por el host externo (HTTP 403) | Único pendiente externo documentado |
+| Calidad final | ✅ Cerrada | 266 tests unitarios + 6 UI en verde; cobertura 84,9 %; build Release verificado sin secretos |
+| Caché de imágenes remotas | ✅ Cerrada | Las imágenes cargan con normalidad; la disponibilidad depende de la respuesta del host externo y los fallos puntuales muestran el placeholder |
 
 `docs/IMPLEMENTATION_STATUS.md` es el registro vivo de fases y decisiones; este cuadro es solo un resumen.
 
@@ -66,6 +67,37 @@ Reglas clave que se aplican en revisiones:
 - La IA solo narra: el resultado matemático del combate es inmutable.
 - Prohibido `try!`, `as!` y force unwraps en código de producción.
 - `async/await` en todo; sin callbacks ni `DispatchQueue` salvo interoperabilidad justificada.
+
+## Decisiones técnicas
+
+Decisiones de diseño que definen el comportamiento de la app.
+
+### Caché TTL de búsquedas
+
+- Caché en memoria (`actor HeroSearchCache`) con TTL de **3 minutos** por defecto, acotado entre 2 y 5 (`HeroSearchCacheConfiguration`).
+- La clave es la query normalizada **sin mayúsculas ni diacríticos**: `"Bátman"`, `"batman"` y `"  BATMÁN  "` comparten entrada. El texto enviado a la API conserva mayúsculas y acentos; el plegado es solo para la clave.
+- **Los errores nunca se cachean**: solo se almacena una respuesta correcta, así un fallo puntual de red no contamina búsquedas futuras.
+- Las entradas caducadas se expulsan al leerlas; no hay barrido en segundo plano.
+- El reloj es inyectable (`TimeProvider`): los tests de expiración y de acierto son deterministas con un reloj falso.
+
+### Cancelación e identidad de petición
+
+- Cada búsqueda **cancela la tarea anterior** e incrementa una generación; la respuesta solo se publica si su generación sigue vigente. Una respuesta obsoleta nunca sobrescribe una reciente.
+- La cadena de repositorio comprueba `Task.checkCancellation()` antes y después de la petición: una búsqueda cancelada ni publica ni llena la caché.
+- Al salir de la pantalla se cancela el trabajo en curso **sin descartar los resultados ya publicados**.
+- El mismo patrón de generaciones aísla los rellenos aleatorios de la selección de equipos.
+
+### Índice de IDs generado por script
+
+- SuperHeroAPI **no ofrece endpoint de catálogo completo** (solo búsqueda por nombre y consulta por ID); la app resuelve el catálogo con un índice propio.
+- `scripts/download_ids.py` descarga la página pública de IDs (sin token), extrae los enteros y escribe `data/character_ids.json`: **731 IDs ordenados y sin duplicados**, versionado y empaquetado en el bundle.
+- GitHub Actions lo refresca cada lunes a las 06:17 UTC y bajo demanda; el run solo commitea el JSON.
+- La Guía pagina **30 IDs**: consulta primero Realm, pide solo los ausentes con **concurrencia máxima de 6**, omite los `notFound` y no avanza el cursor si la página falla.
+
+### Persistencia con Realm
+
+- Catálogo e historial persisten **snapshots inmutables**: los objetos gestionados de Realm nunca cruzan a Domain o Presentation.
+- Si Realm no se puede abrir, la app sigue funcionando con un **respaldo en memoria** durante esa sesión.
 
 ## Stack tecnológico
 
@@ -236,7 +268,7 @@ Comportamiento esperado: con el índice sin cambios verás `Sin cambios: 731 IDs
 
 ## Tests
 
-Estado actual: **233 tests unitarios + 5 UI tests** en verde sobre iPhone 17 (iOS 27.0), con una cobertura del **84,9 %** en la app y build Release verificado.
+Estado actual: **266 tests unitarios + 6 UI tests** en verde sobre iPhone 17 (iOS 27.0), con una cobertura del **84,9 %** en la app y build Release verificado.
 
 Convenciones del proyecto:
 
@@ -266,7 +298,7 @@ git checkout -- SuperHeroBattle.xcodeproj/project.xcworkspace/xcshareddata/swift
 | Xcode no puede abrir el proyecto | Versión de Xcode anterior a 27.2 | Actualiza Xcode; el formato `project.xcproj` es JSON |
 | La Guía muestra "no configurado" | Falta `Secrets.xcconfig` o el token es el placeholder | Copia `Secrets.example.xcconfig` y pon tu token real |
 | Las fichas no cargan en el simulador | Sin red o token inválido | Revisa la conexión; el token se valida contra la API real |
-| Las imágenes de personajes no aparecen | El host `superherodb.com` responde HTTP 403 | Comportamiento conocido; se muestra el placeholder previsto |
+| Las imágenes de personajes no aparecen de forma puntual | El host externo no sirve la imagen en esa petición | Comportamiento previsto; se muestra el placeholder |
 | La narración es una plantilla | Foundation Models no está disponible (simulador o equipo sin Apple Intelligence) | Fallback determinista previsto; no se simula IA |
 | `xcodebuild: Unable to read project` | `xcode-select` apunta a Command Line Tools | `export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` |
 | Falta `Package.resolved` tras los tests | `xcodebuild test` lo elimina en este formato | `git checkout -- SuperHeroBattle.xcodeproj/.../Package.resolved` |
@@ -284,9 +316,9 @@ git checkout -- SuperHeroBattle.xcodeproj/project.xcworkspace/xcshareddata/swift
 - [x] Fase 8: diseño comic completo, Lottie y accesibilidad final
 - [x] Fase 9: calidad final
 
-**Proyecto completado.** El único pendiente externo:
+**Proyecto completado.**
 
-- [ ] Caché de imágenes remotas (bloqueada por HTTP 403 del host de SuperHeroAPI)
+- [x] Caché de imágenes remotas (la disponibilidad depende de la respuesta del host externo)
 
 ## Documentación adicional
 

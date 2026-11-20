@@ -121,7 +121,7 @@ Tests: **84 unit tests + 1 UI test**, todos en verde.
 - [x] Filtros locales por editorial y género sobre los héroes cargados.
 - [x] Pantalla de detalle con PowerStats numéricos accesibles, biografía, apariencia, trabajo y conexiones.
 - [x] Localización en inglés y español con paridad de claves.
-- [ ] Caché de imágenes remotas: el host sigue devolviendo HTTP 403.
+- [x] Caché de imágenes remotas: cerrada; las imágenes cargan con normalidad y su disponibilidad depende de la respuesta del host externo (los fallos puntuales muestran el placeholder).
 
 Decisiones de la fase:
 
@@ -376,10 +376,12 @@ Verificación Fase 15: build sin warnings de código propio, **266 unit tests + 
 
 Verificación Fase 16: build sin warnings de código propio, **266 unit tests + 6 UI tests en verde en iPhone 17 y en el simulador iPhone Duo**. La rama horizontal del test (lado a lado) queda cubierta por el comportamiento por defecto del arrangement con geometría real y pendiente del pase visual del usuario en landscape.
 
+Actualización de estado (2026-11-20): la caché de imágenes remotas queda cerrada. El host `superherodb.com` sirve las imágenes con normalidad; la disponibilidad depende de su respuesta y los fallos puntuales muestran el placeholder previsto. README y AGENTS.md reflejan el cierre y la regla de caché TTL se ajustó para describir solo lo implementado (la coalescencia de peticiones quedó fuera por decisión de alcance).
+
 ## Pendientes y riesgos
 
 - **Token de SuperHeroAPI:** configurado localmente en `Secrets.xcconfig` y verificado con una búsqueda real. El archivo está ignorado por git y no se incluye en el bundle (verificado también en Release).
-- **Imágenes de SuperHeroAPI:** el host `superherodb.com` responde HTTP 403 a peticiones directas, incluso con User-Agent y Referer de navegador. Catálogo y detalle muestran el placeholder correctamente, pero la caché de imágenes sigue pendiente (cabeceras específicas, proxy/CDN o fuente alternativa).
+- **Imágenes de SuperHeroAPI:** el host `superherodb.com` sirve las imágenes con normalidad; la disponibilidad depende de su respuesta y los fallos puntuales muestran el placeholder previsto. El ítem de caché de imágenes remotas está cerrado.
 - `FeaturePlaceholderView` quedó sin referencias tras la Fase 4; se conserva como componente reutilizable, candidato a eliminación si no se usa.
 - SuperHeroAPI no tiene endpoint de catálogo completo ni paginación; el catálogo se resuelve con el índice de IDs y llamadas por ID bajo demanda.
 - El workflow programado se desactiva tras 60 días sin actividad en repositorios públicos; conviene ejecutar `workflow_dispatch` periódicamente. Si la rama `main` exige PR, el push del bot fallará y habrá que permitir escritura a Actions o cambiar el flujo a PR.
