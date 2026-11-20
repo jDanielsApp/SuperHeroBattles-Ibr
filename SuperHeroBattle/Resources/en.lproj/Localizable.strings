@@ -91,7 +91,7 @@
 "team.selection.slot.replace" = "Replace";
 "team.selection.slot.remove" = "Remove";
 "team.selection.error.duplicate" = "That hero is already on this team.";
-"team.selection.error.noHeroes" = "No downloaded heroes available yet. Open a slot, load the guide and try again.";
+"team.selection.error.noHeroes" = "Couldn't get a random hero. Check your connection or pick one from the guide.";
 "team.selection.error.invalidSlot" = "That slot is not valid.";
 "team.selection.start" = "Start combat";
 "team.selection.start.hint" = "Available when both teams are complete.";

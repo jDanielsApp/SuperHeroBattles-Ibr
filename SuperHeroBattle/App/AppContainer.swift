@@ -11,6 +11,7 @@ final class AppContainer {
     let searchHeroes: SearchHeroesUseCase
     let loadHeroesByIDs: LoadHeroesByIDsUseCase
     let generateRandomHero: GenerateRandomHeroUseCase
+    let drawRandomHeroes: DrawRandomHeroesUseCase
     let selectHero: SelectHeroUseCase
     let buildBattleParticipants: BuildBattleParticipantsUseCase
     let resolveCombat: ResolveCombatUseCase
@@ -80,6 +81,11 @@ final class AppContainer {
             ? FixedCharacterIDProvider(ids: FixedRosterHeroRepository.roster.map(\.id))
             : BundledCharacterIDProvider()
         catalogRepository = catalog
+
+        drawRandomHeroes = DrawRandomHeroesUseCase(
+            characterIDs: characterIDs,
+            loadHeroes: loadHeroesByIDs
+        )
     }
 
     func makeCharacterGuideViewModel(
@@ -98,9 +104,8 @@ final class AppContainer {
             mode: mode,
             selectHero: selectHero,
             generateRandomHero: generateRandomHero,
-            buildBattleParticipants: buildBattleParticipants,
-            preloadHeroes: loadHeroesByIDs,
-            characterIDs: characterIDs
+            drawRandomHeroes: drawRandomHeroes,
+            buildBattleParticipants: buildBattleParticipants
         )
     }
 
