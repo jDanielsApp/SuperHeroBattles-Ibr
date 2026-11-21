@@ -39,8 +39,10 @@ struct HeroSearchBar: View {
                         .font(.headline)
                         .foregroundStyle(ComicPalette.paper.opacity(0.65))
                         .frame(width: 44, height: 44)
+                        .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
+                .frame(width: 44, height: 44)
                 .accessibilityLabel(L10n.text(.accessibilitySearchClear))
                 .accessibilityIdentifier("search.clear")
             }
@@ -53,8 +55,10 @@ struct HeroSearchBar: View {
                     .font(.title2)
                     .foregroundStyle(canSubmit ? ComicPalette.yellow : ComicPalette.paper.opacity(0.35))
                     .frame(width: 44, height: 44)
+                    .contentShape(.rect)
             }
             .buttonStyle(.plain)
+            .frame(width: 44, height: 44)
             .disabled(!canSubmit)
             .accessibilityLabel(L10n.text(.accessibilitySearchSubmit))
             .accessibilityIdentifier("search.submit")

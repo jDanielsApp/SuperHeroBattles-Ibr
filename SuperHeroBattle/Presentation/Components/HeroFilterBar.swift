@@ -41,8 +41,11 @@ struct HeroFilterBar: View {
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
                         .background(ComicPalette.red.opacity(0.30), in: Capsule())
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(.rect)
                     }
                     .buttonStyle(.plain)
+                    .frame(minWidth: 44, minHeight: 44)
                     .accessibilityIdentifier("guide.filter.clear")
                 }
             }
@@ -112,7 +115,9 @@ struct HeroFilterBar: View {
                         lineWidth: 1.5
                     )
             }
+            .frame(minHeight: 44)
         }
+        .frame(minHeight: 44)
         .accessibilityIdentifier(identifier)
         .disabled(options.isEmpty)
     }

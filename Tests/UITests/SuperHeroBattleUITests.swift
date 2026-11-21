@@ -15,6 +15,71 @@ final class SuperHeroBattleUITests: XCTestCase {
         guide.tap()
 
         XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 5))
+
+        // Regression: the declared accessibility target must be 44×44 pt.
+        assertMinimumTarget(app.buttons["search.submit"])
+    }
+
+    /// Search flow with fakes: type a query, submit and open a result.
+    ///
+    /// Launched with the app forced to Spanish while the process language
+    /// stays English (`-AppleLanguages (en)`): regression test for the
+    /// mixed-language bug, where `L10n.string` answered in the system
+    /// language ("Alineación: Bad") instead of the app language.
+    @MainActor
+    func testSearchFlowOpensResultInAppLanguage() throws {
+        let app = XCUIApplication()
+        app.launchArguments += [
+            "-uitest-fakes",
+            "-app.language", "es",
+            "-AppleLanguages", "(en)"
+        ]
+        app.launch()
+
+        let guide = app.buttons["home.guide"]
+        XCTAssertTrue(guide.waitForExistence(timeout: 5))
+        guide.tap()
+
+        let field = app.textFields["search.field"]
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        field.tap()
+        field.typeText("Hero 1")
+
+        let submit = app.buttons["search.submit"]
+        XCTAssertTrue(submit.waitForExistence(timeout: 5))
+        XCTAssertTrue(submit.isEnabled)
+        submit.tap()
+
+        // The fixed roster matches "UITest Hero 1" (and 10-12); the
+        // exact label pins the first row.
+        let firstResult = app.staticTexts["UITest Hero 1"].firstMatch
+        XCTAssertTrue(
+            firstResult.waitForExistence(timeout: 10),
+            "La búsqueda no publicó resultados"
+        )
+        firstResult.tap()
+
+        // Detail: pushed in compact, pane on the Duo inner screen.
+        XCTAssertTrue(
+            app.otherElements["hero.detail.powerstats"].waitForExistence(timeout: 5)
+                || app.staticTexts["hero.detail.powerstats"].waitForExistence(timeout: 5),
+            "No se abrió el detalle del héroe"
+        )
+
+        // Regression: the alignment answers in the app language (Spanish),
+        // never in the system language ("Bad"/"Good").
+        XCTAssertFalse(
+            app.staticTexts["Bad"].exists,
+            "La alineación respondió en el idioma del sistema"
+        )
+        XCTAssertFalse(
+            app.staticTexts["Good"].exists,
+            "La alineación respondió en el idioma del sistema"
+        )
+        XCTAssertTrue(
+            app.staticTexts["Bueno"].exists,
+            "La alineación no se localizó al idioma de la app"
+        )
     }
 
     /// Main team selection flow with fakes: Duels → 3v3 →
@@ -40,6 +105,7 @@ final class SuperHeroBattleUITests: XCTestCase {
                     random.waitForExistence(timeout: 5),
                     "Falta el botón aleatorio de \(side)-\(slot)"
                 )
+                assertMinimumTarget(random)
                 scrollToHittable(random, in: app)
                 random.tap()
 
@@ -213,6 +279,15 @@ final class SuperHeroBattleUITests: XCTestCase {
         XCTAssertTrue(guide.waitForExistence(timeout: 5))
         guide.tap()
 
+        // Regression: filter menus declare a 44 pt tall target.
+        let publisherFilter = app.descendants(matching: .any)
+            .matching(identifier: "guide.filter.publisher").firstMatch
+        XCTAssertTrue(
+            publisherFilter.waitForExistence(timeout: 10),
+            "La barra de filtros no apareció"
+        )
+        assertMinimumTarget(publisherFilter)
+
         let firstHero = app.staticTexts["UITest Hero 1"]
         XCTAssertTrue(
             firstHero.waitForExistence(timeout: 10),
@@ -352,6 +427,23 @@ final class SuperHeroBattleUITests: XCTestCase {
                 "En compact o en vertical el Equipo B debe quedar bajo el Equipo A"
             )
         }
+    }
+
+    /// Regression for sub-44pt declared targets: the accessibility frame
+    /// must be at least 44×44 pt so Voice Control and Switch Control hit
+    /// the control reliably. Finger taps are not enough evidence.
+    @MainActor
+    private func assertMinimumTarget(_ element: XCUIElement) {
+        XCTAssertGreaterThanOrEqual(
+            element.frame.width,
+            44,
+            "\(element) declara un ancho menor que 44 pt"
+        )
+        XCTAssertGreaterThanOrEqual(
+            element.frame.height,
+            44,
+            "\(element) declara una altura menor que 44 pt"
+        )
     }
 
     /// Waits until an existing element is enabled.

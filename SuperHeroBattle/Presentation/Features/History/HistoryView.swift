@@ -6,6 +6,8 @@ struct HistoryView: View {
     @State private var viewModel: CombatHistoryViewModel
     @State private var isPresentingClearConfirmation = false
 
+    @Environment(\.locale) private var locale
+
     init(viewModel: CombatHistoryViewModel) {
         _viewModel = State(initialValue: viewModel)
     }
@@ -228,17 +230,10 @@ struct HistoryView: View {
         .accessibilityElement(children: .combine)
     }
 
-    @ViewBuilder
     private func outcomeText(_ record: CombatRecord) -> some View {
-        switch record.outcome {
-        case .winner(let side):
-            let teamName = L10n.string(
-                side == .teamA ? .teamSelectionTeamA : .teamSelectionTeamB
-            )
-            Text(String(format: L10n.string(.historyWinner), teamName))
-        case .draw:
-            L10n.text(.combatResultDraw)
-        }
+        Text(HistoryOutcomeText.text(for: record.outcome, locale: locale))
+            .font(ComicTypography.caption)
+            .foregroundStyle(ComicPalette.paper.opacity(0.8))
     }
 
     private func names(_ snapshots: [HeroSnapshot]) -> String {
