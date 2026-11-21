@@ -13,7 +13,7 @@ final class HeroMapperTests: XCTestCase {
         XCTAssertEqual(hero.fullName, "Bruce Wayne")
         XCTAssertEqual(hero.publisher, "DC Comics")
         XCTAssertEqual(hero.alignment, .unknown)
-        XCTAssertEqual(hero.biography.alterEgos, "No alter egos found.")
+        XCTAssertNil(hero.biography.alterEgos, "El marcador 'No alter egos found.' debe tratarse como dato ausente")
         XCTAssertEqual(hero.biography.aliases, ["Insider", "Matches Malone"])
         XCTAssertEqual(hero.appearance.gender, "Male")
         XCTAssertEqual(hero.appearance.race, "Human")
@@ -89,6 +89,15 @@ final class HeroMapperTests: XCTestCase {
         XCTAssertNil(HeroMapper.text(nil))
         XCTAssertEqual(HeroMapper.text("  Batman  "), "Batman")
         XCTAssertEqual(HeroMapper.text("No alter egos found."), "No alter egos found.")
+    }
+
+    func testAlterEgosMarkerIsTreatedAsUnavailable() {
+        XCTAssertNil(HeroMapper.alterEgos("No alter egos found."))
+        XCTAssertNil(HeroMapper.alterEgos("  no ALTER egos FOUND.  "))
+        XCTAssertNil(HeroMapper.alterEgos("-"))
+        XCTAssertNil(HeroMapper.alterEgos(nil))
+        XCTAssertEqual(HeroMapper.alterEgos("  Matches Malone  "), "Matches Malone")
+        XCTAssertEqual(HeroMapper.alterEgos("No alter egos were harmed."), "No alter egos were harmed.")
     }
 
     func testInvalidImageURLIsIgnored() throws {
