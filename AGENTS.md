@@ -190,7 +190,7 @@ Inyección de dependencias:
 - El catálogo se construye a partir de `data/character_ids.json`, un índice público de IDs generado por `scripts/download_ids.py` y actualizado semanalmente por GitHub Actions. La app conoce todos los IDs al arrancar y pide las fichas por ID bajo demanda, nunca mediante búsquedas masivas.
 - El índice de IDs solo contiene enteros ordenados y sin duplicados; no incluye nombres, fichas ni imágenes. No requiere token y no debe commitearse ningún dato sensible junto a él.
 - La Guía carga páginas de 30 IDs con concurrencia máxima de 6 para las fichas. Consulta primero Realm, pide solo los IDs ausentes, omite los `notFound` y no avanza el cursor si la página falla.
-- La carga de imágenes remotas está cerrada: las imágenes cargan con normalidad y su disponibilidad depende de la respuesta del host externo; los fallos puntuales muestran el placeholder.
+- La carga de imágenes remotas pasa por `Core/Images/HeroImageStore`: caché en memoria con coalescing de descargas (una descarga por URL compartida por todas las vistas, propiedad del store, nunca cancelada por una vista que desaparece) y `NSCache` con límite de entradas. Los fallos no se cachean (el siguiente intento reintenta) y muestran el placeholder; la disponibilidad depende de la respuesta del host externo. `HeroImageView` consume el store vía `@Environment(\.heroImages)`, inyectado desde `AppContainer`.
 
 ## 8. Persistencia con Realm
 

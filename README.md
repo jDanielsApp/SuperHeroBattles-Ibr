@@ -41,8 +41,8 @@ Proyecto construido con SwiftUI, Clean Architecture + MVVM, Swift Concurrency es
 | Narración con Apple Foundation Models | ✅ Operativa | En dispositivo con Apple Intelligence genera con IA; sin modelo cae a plantilla honesta con badge de origen |
 | Animaciones Lottie | ✅ Operativas | `combat_intro` (bucle) y `combat_winner` (una vez) activas; Reduce Motion y ausencia de asset caen a fallback comic |
 | Historial de combates con Realm | ✅ Operativa | Guardado explícito con confirmación y vuelta a Home; listado con borrado/vaciado y detalle |
-| Calidad final | ✅ Cerrada | 266 tests unitarios + 6 UI en verde; cobertura 84,9 %; build Release verificado sin secretos |
-| Caché de imágenes remotas | ✅ Cerrada | Las imágenes cargan con normalidad; la disponibilidad depende de la respuesta del host externo y los fallos puntuales muestran el placeholder |
+| Calidad final | ✅ Cerrada | 275 tests unitarios + 7 UI en verde en iPhone 17 (compact) y iPhone Duo (regular); build Release verificado sin secretos |
+| Caché de imágenes remotas | ✅ Operativa | `Core/Images/HeroImageStore`: memoria con coalescing de descargas (una descarga por URL compartida por todas las vistas); repetir una búsqueda no re-descarga miniaturas. La disponibilidad depende del host externo y los fallos puntuales muestran el placeholder |
 
 `docs/IMPLEMENTATION_STATUS.md` es el registro vivo de fases y decisiones; este cuadro es solo un resumen.
 
@@ -268,7 +268,7 @@ Comportamiento esperado: con el índice sin cambios verás `Sin cambios: 731 IDs
 
 ## Tests
 
-Estado actual: **266 tests unitarios + 6 UI tests** en verde sobre iPhone 17 (iOS 27.0), con una cobertura del **84,9 %** en la app y build Release verificado.
+Estado actual: **275 tests unitarios + 7 UI tests** en verde sobre iPhone 17 (compact) y iPhone Duo (regular, iOS 27.2), con build Release verificado.
 
 Convenciones del proyecto:
 
@@ -288,7 +288,7 @@ git checkout -- SuperHeroBattle.xcodeproj/project.xcworkspace/xcshareddata/swift
 - Interfaz y narración en inglés y español con `Localizable.strings` clásico (sin String Catalogs). El idioma se elige en Ajustes y se aplica a toda la app; los nombres propios no se traducen.
 - Estética comic book con `ComicPalette` y `TeamPalette`, tramas de imprenta (halftone) en el fondo y color siempre acompañado de texto o icono.
 - Las barras de PowerStats exponen el valor numérico y anuncian los desconocidos como "no disponible".
-- VoiceOver con `.isHeader` en los títulos de sección, Dynamic Type, Reduce Motion y áreas táctiles verificadas en todas las pantallas.
+- VoiceOver con `.isHeader` en los títulos de sección, Dynamic Type, Reduce Motion y áreas táctiles declaradas de 44×44 pt, verificadas con aserciones de frame en los UI tests (Voice Control y Switch Control incluidos).
 - Lottie vive encapsulado en `Core/Lottie`: Reduce Motion y ausencia de asset muestran un fallback estático comic. Las animaciones `combat_intro` (bucle) y `combat_winner` (una vez) están activas; para añadir más, suelta el `.json` en `Resources/Lottie/` y coloca un `ComicLottieView` en la vista.
 
 ## Solución de problemas
@@ -318,7 +318,7 @@ git checkout -- SuperHeroBattle.xcodeproj/project.xcworkspace/xcshareddata/swift
 
 **Proyecto completado.**
 
-- [x] Caché de imágenes remotas (la disponibilidad depende de la respuesta del host externo)
+- [x] Caché de imágenes remotas en memoria con coalescing de descargas (`HeroImageStore` en `Core/Images`)
 
 ## Documentación adicional
 
