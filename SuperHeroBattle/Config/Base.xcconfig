@@ -2,7 +2,12 @@
 // Never put secrets in this file: use Secrets.xcconfig instead.
 
 SUPERHERO_API_BASE_URL = https:/$()/superheroapi.com/api
-SUPERHERO_API_TOKEN =
+
+// Temporary evaluation token (see commit "chore(demo): temporary
+// hardcoded SuperHeroAPI token for evaluation"). Deliberate exception
+// to the rule above: rotate the token after the test run and clear
+// this value back to empty.
+SUPERHERO_API_TOKEN = 4183026a83aa00bad7f3e8fb00688652
 
 // Optional local overrides. The file is gitignored.
 #include? "Secrets.xcconfig"
