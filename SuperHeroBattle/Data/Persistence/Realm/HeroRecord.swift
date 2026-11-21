@@ -70,7 +70,9 @@ nonisolated struct HeroRecord: Codable, Sendable {
             name: name,
             biography: HeroBiography(
                 fullName: fullName,
-                alterEgos: alterEgos,
+                // Normalized on read: rows persisted before the marker
+                // was filtered keep showing a clean biography.
+                alterEgos: HeroMapper.alterEgos(alterEgos),
                 aliases: aliases,
                 placeOfBirth: placeOfBirth,
                 firstAppearance: firstAppearance,

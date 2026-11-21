@@ -58,6 +58,39 @@ final class RealmHeroCatalogRepositoryTests: XCTestCase {
         XCTAssertEqual(all.first?.name, "New Name")
     }
 
+    /// Rows persisted before the marker was filtered keep showing a
+    /// clean biography: the normalization also runs on read.
+    func testLegacyAlterEgosMarkerIsNormalizedOnRead() async throws {
+        let repository = try makeRepository()
+        var legacy = makeHero()
+        legacy = Hero(
+            id: legacy.id,
+            name: legacy.name,
+            biography: HeroBiography(
+                fullName: legacy.fullName,
+                alterEgos: "No alter egos found.",
+                aliases: legacy.biography.aliases,
+                placeOfBirth: legacy.biography.placeOfBirth,
+                firstAppearance: legacy.biography.firstAppearance,
+                publisher: legacy.biography.publisher,
+                alignment: legacy.alignment
+            ),
+            appearance: legacy.appearance,
+            work: legacy.work,
+            connections: legacy.connections,
+            powerStats: legacy.powerStats,
+            imageURL: legacy.imageURL
+        )
+        try await repository.upsert([legacy])
+
+        let stored = try await repository.hero(id: legacy.id)
+        XCTAssertNotNil(stored, "El héroe heredado no se guardó")
+        XCTAssertNil(
+            stored?.biography.alterEgos,
+            "El marcador heredado debe normalizarse al leer de Realm"
+        )
+    }
+
     private func makeRepository() throws -> RealmHeroCatalogRepository {
         try RealmHeroCatalogRepository(
             configuration: RealmStore.configuration(
@@ -73,7 +106,7 @@ final class RealmHeroCatalogRepositoryTests: XCTestCase {
             name: name,
             biography: HeroBiography(
                 fullName: "Bruce Wayne",
-                alterEgos: "No alter egos found.",
+                alterEgos: "Azrael",
                 aliases: ["Insider", "Matches Malone"],
                 placeOfBirth: "Gotham City",
                 firstAppearance: "Detective Comics #27",

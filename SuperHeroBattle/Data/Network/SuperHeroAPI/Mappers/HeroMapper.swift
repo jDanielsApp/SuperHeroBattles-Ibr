@@ -29,7 +29,7 @@ nonisolated struct HeroMapper: Sendable {
 
         return HeroBiography(
             fullName: Self.text(dto.fullName),
-            alterEgos: Self.text(dto.alterEgos),
+            alterEgos: Self.alterEgos(dto.alterEgos),
             aliases: (dto.aliases ?? []).compactMap(Self.text),
             placeOfBirth: Self.text(dto.placeOfBirth),
             firstAppearance: Self.text(dto.firstAppearance),
@@ -104,6 +104,16 @@ nonisolated struct HeroMapper: Sendable {
         default:
             return trimmed
         }
+    }
+
+    /// The API reports a missing alter ego as the literal phrase
+    /// "No alter egos found.": treated as missing data so the detail
+    /// hides the row instead of showing the placeholder verbatim.
+    static func alterEgos(_ raw: String?) -> String? {
+        guard let text = text(raw) else { return nil }
+        return text.caseInsensitiveCompare("No alter egos found.") == .orderedSame
+            ? nil
+            : text
     }
 
     static func integer(_ raw: String?) -> Int? {
