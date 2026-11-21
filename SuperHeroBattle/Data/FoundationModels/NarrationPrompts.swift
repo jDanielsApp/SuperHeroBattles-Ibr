@@ -122,7 +122,7 @@ nonisolated enum NarrationPrompts {
         lines.append("")
         lines.append("Roster:")
         for hero in context.heroes {
-            lines.append("- \(teamLabel(hero.side, language: language)) " + describe(hero))
+            lines.append("- \(teamLabel(hero.side, language: language)) " + describe(hero, language: language))
         }
 
         let bonuses = affinityLines(context, language: language)
@@ -159,7 +159,7 @@ nonisolated enum NarrationPrompts {
         "[\(teamName(side, language: language))]"
     }
 
-    private static func describe(_ hero: NarrationContext.HeroContext) -> String {
+    private static func describe(_ hero: NarrationContext.HeroContext, language: NarrationLanguage) -> String {
         var parts = [hero.hero.name]
 
         if let fullName = hero.hero.fullName {
@@ -193,8 +193,9 @@ nonisolated enum NarrationPrompts {
         }
 
         parts.append(
-            "computed base \(formatted(hero.baseScore)), luck \(hero.luck), "
-                + "individual total \(formatted(hero.totalScore))"
+            "computed base \(formatted(hero.baseScore, language: language)), "
+                + "luck \(hero.luck), "
+                + "individual total \(formatted(hero.totalScore, language: language))"
         )
 
         return parts.joined(separator: "; ") + "."
@@ -240,11 +241,11 @@ nonisolated enum NarrationPrompts {
 
         switch language {
         case .english:
-            lines.append("- \(nameA) scored \(formatted(context.teamATotal)) and "
-                + "\(nameB) scored \(formatted(context.teamBTotal)).")
+            lines.append("- \(nameA) scored \(formatted(context.teamATotal, language: language)) and "
+                + "\(nameB) scored \(formatted(context.teamBTotal, language: language)).")
         case .spanish:
-            lines.append("- \(nameA) anotó \(formatted(context.teamATotal)) y "
-                + "\(nameB) anotó \(formatted(context.teamBTotal)).")
+            lines.append("- \(nameA) anotó \(formatted(context.teamATotal, language: language)) y "
+                + "\(nameB) anotó \(formatted(context.teamBTotal, language: language)).")
         }
 
         switch context.outcome {
@@ -255,12 +256,12 @@ nonisolated enum NarrationPrompts {
             switch language {
             case .english:
                 lines.append(
-                    "- Point difference: \(formatted(context.gap)) — the victory is \(pace)."
+                    "- Point difference: \(formatted(context.gap, language: language)) — the victory is \(pace)."
                 )
                 lines.append("- The winner is \(winnerName).")
             case .spanish:
                 lines.append(
-                    "- Diferencia de puntos: \(formatted(context.gap)) — la victoria es \(pace)."
+                    "- Diferencia de puntos: \(formatted(context.gap, language: language)) — la victoria es \(pace)."
                 )
                 lines.append("- El ganador es \(winnerName).")
             }
@@ -295,8 +296,14 @@ nonisolated enum NarrationPrompts {
         }
     }
 
-    private static func formatted(_ value: Double) -> String {
-        value.formatted(.number.precision(.fractionLength(0...1)))
+    /// Numbers in the narration language's locale: the model echoes the
+    /// same decimal separator the interface shows, so a single screen
+    /// never mixes "132,8" and "132.8".
+    private static func formatted(_ value: Double, language: NarrationLanguage) -> String {
+        value.formatted(
+            .number.precision(.fractionLength(0...1))
+                .locale(Locale(identifier: language.rawValue))
+        )
     }
 }
 
