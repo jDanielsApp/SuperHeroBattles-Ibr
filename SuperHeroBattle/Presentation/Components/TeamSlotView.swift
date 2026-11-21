@@ -10,13 +10,24 @@ struct TeamSlotView: View {
     let onRandom: () -> Void
     let onClear: () -> Void
 
+    @Environment(\.locale) private var locale
+
     private var accent: Color {
         side == .teamA ? TeamPalette.teamA : TeamPalette.teamB
     }
 
     /// Extra context for VoiceOver: team and slot number.
     private var slotContext: String {
-        let team = L10n.string(side == .teamA ? .teamSelectionTeamA : .teamSelectionTeamB)
+        Self.slotContext(side: side, slot: slot, locale: locale)
+    }
+
+    /// Pure and testable: the VoiceOver value in the requested locale.
+    /// It must honor the app language, never the system language.
+    static func slotContext(side: TeamSide, slot: Int, locale: Locale) -> String {
+        let team = L10n.string(
+            side == .teamA ? .teamSelectionTeamA : .teamSelectionTeamB,
+            locale: locale
+        )
         return "\(team), \(slot + 1)"
     }
 

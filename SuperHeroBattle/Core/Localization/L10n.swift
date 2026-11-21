@@ -19,7 +19,12 @@ nonisolated enum L10n {
     /// The explicit locale selects the translation table through the
     /// matching `lproj` bundle: `String(localized:)` does not guarantee
     /// that selection and always answers in the process language.
-    static func string(_ key: LocalizableStringKey, locale: Locale = .current) -> String {
+    ///
+    /// There is no default on purpose: `.current` is the system language,
+    /// not the one chosen in Settings. Views resolve the locale from
+    /// `@Environment(\.locale)` so the string always matches the rest
+    /// of the interface.
+    static func string(_ key: LocalizableStringKey, locale: Locale) -> String {
         bundle(for: locale)
             .localizedString(forKey: key.rawValue, value: key.rawValue, table: nil)
     }

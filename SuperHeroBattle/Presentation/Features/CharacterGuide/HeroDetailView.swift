@@ -4,6 +4,8 @@ import SwiftUI
 struct HeroDetailView: View {
     let hero: Hero
 
+    @Environment(\.locale) private var locale
+
     var body: some View {
         ZStack {
             ComicBackground()
@@ -73,7 +75,10 @@ struct HeroDetailView: View {
                 )
                 detailRow(.guideDetailPlaceOfBirth, hero.biography.placeOfBirth)
                 detailRow(.guideDetailFirstAppearance, hero.biography.firstAppearance)
-                detailRow(.guideDetailAlignment, L10n.string(hero.alignment.localizedKey))
+                detailRow(
+                    .guideDetailAlignment,
+                    Self.alignmentText(hero.alignment, locale: locale)
+                )
             }
         }
     }
@@ -155,9 +160,15 @@ struct HeroDetailView: View {
         let cleaned = values.filter { !$0.isEmpty }
         return cleaned.isEmpty ? nil : cleaned.joined(separator: " / ")
     }
+
+    /// Pure and testable: the localized alignment in the requested
+    /// locale. It must honor the app language, never the system one.
+    static func alignmentText(_ alignment: HeroAlignment, locale: Locale) -> String {
+        L10n.string(alignment.localizedKey, locale: locale)
+    }
 }
 
-private extension HeroAlignment {
+extension HeroAlignment {
     var localizedKey: LocalizableStringKey {
         switch self {
         case .good: .alignmentGood
