@@ -142,6 +142,55 @@ final class GenerateCombatNarrationUseCaseTests: XCTestCase {
         XCTAssertTrue(prompt.contains("Point difference"))
     }
 
+    func testPromptNumbersUseTheNarrationLanguageDecimalSeparator() {
+        // Five known stats averaging 92.8: the fractional base forces a
+        // decimal separator into the prompt.
+        let fractional = Hero(
+            id: "1",
+            name: "Batman",
+            powerStats: PowerStats(
+                intelligence: 100,
+                strength: 100,
+                speed: 100,
+                durability: 100,
+                power: 64
+            )
+        )
+        let participants = BattleParticipants(
+            mode: .oneVsOne,
+            teamA: [fractional],
+            teamB: [fractional]
+        )
+        let result = CombatEngine(luckProvider: SequenceLuckProvider([7, 7]))
+            .resolve(participants)
+
+        let english = NarrationPrompts.combatPrompt(
+            context: NarrationContext(result: result, participants: participants),
+            language: .english
+        )
+        let spanish = NarrationPrompts.combatPrompt(
+            context: NarrationContext(result: result, participants: participants),
+            language: .spanish
+        )
+
+        XCTAssertTrue(
+            english.contains("computed base 92.8"),
+            "El prompt en inglés debe usar el punto decimal"
+        )
+        XCTAssertTrue(
+            spanish.contains("computed base 92,8"),
+            "El prompt en español debe usar la coma decimal"
+        )
+        XCTAssertFalse(
+            english.contains("92,8"),
+            "El prompt en inglés no debe mezclar la coma decimal"
+        )
+        XCTAssertFalse(
+            spanish.contains("92.8"),
+            "El prompt en español no debe mezclar el punto decimal"
+        )
+    }
+
     func testInstructionsAreVersionedAndForbidChangingTheResult() {
         let instructions = NarrationPrompts.instructions(language: .spanish, safeMode: false)
 

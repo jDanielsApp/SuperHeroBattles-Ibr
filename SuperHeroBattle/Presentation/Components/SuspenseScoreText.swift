@@ -75,24 +75,31 @@ struct SuspenseScoreText: View {
         Group {
             switch decision {
             case .revealed:
-                Text(realValue, format: format)
+                Text(realValue, format: localizedFormat)
 
             case .cyclingMystery:
                 TimelineView(.periodic(from: .now, by: SuspenseScore.cyclingInterval)) { _ in
-                    Text(SuspenseScore.randomMystery(in: range), format: format)
+                    Text(SuspenseScore.randomMystery(in: range), format: localizedFormat)
                 }
 
             case .staticMystery:
-                Text(staticMystery, format: format)
+                Text(staticMystery, format: localizedFormat)
             }
         }
         // While in suspense, VoiceOver announces the state, never the random number.
         .accessibilityLabel(accessibilityDescription)
     }
 
+    /// The score format bound to the environment locale: the visible
+    /// number and the VoiceOver announcement share the app's decimal
+    /// separator instead of the system's.
+    private var localizedFormat: FloatingPointFormatStyle<Double> {
+        format.locale(locale)
+    }
+
     private var accessibilityDescription: String {
         isRevealed
-            ? realValue.formatted(format)
+            ? realValue.formatted(localizedFormat)
             : L10n.string(.combatScorePending, locale: locale)
     }
 }
