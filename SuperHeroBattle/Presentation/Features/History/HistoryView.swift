@@ -59,7 +59,11 @@ struct HistoryView: View {
     @ViewBuilder
     private var content: some View {
         if viewModel.isLoading && viewModel.records.isEmpty {
-            loadingView
+            ComicLoadingView(
+                textKey: .historyLoading,
+                accessibilityKey: .historyLoading
+            )
+            .accessibilityIdentifier("history.loading")
         } else if viewModel.loadFailed {
             failureView
         } else if viewModel.isEmpty {
@@ -69,91 +73,27 @@ struct HistoryView: View {
         }
     }
 
-    private var loadingView: some View {
-        VStack(spacing: 14) {
-            Spacer(minLength: 0)
-
-            ProgressView()
-                .controlSize(.large)
-                .tint(ComicPalette.yellow)
-
-            L10n.text(.historyLoading)
-                .font(ComicTypography.body)
-                .foregroundStyle(ComicPalette.paper.opacity(0.78))
-
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(L10n.text(.historyLoading))
-        .accessibilityIdentifier("history.loading")
-    }
-
     private var emptyView: some View {
-        VStack(spacing: 14) {
-            Spacer(minLength: 0)
-
-            Image(systemName: "clock.arrow.circlepath")
-                .font(.system(size: 52, weight: .black))
-                .foregroundStyle(ComicPalette.blue)
-                .accessibilityHidden(true)
-
-            L10n.text(.historyEmptyTitle)
-                .font(ComicTypography.title)
-                .foregroundStyle(ComicPalette.paper)
-                .multilineTextAlignment(.center)
-
-            L10n.text(.historyEmptyMessage)
-                .font(ComicTypography.body)
-                .foregroundStyle(ComicPalette.paper.opacity(0.72))
-                .multilineTextAlignment(.center)
-
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.horizontal, 16)
-        .accessibilityElement(children: .combine)
+        ComicStatusView(
+            systemImage: "clock.arrow.circlepath",
+            titleKey: .historyEmptyTitle,
+            messageKey: .historyEmptyMessage,
+            accent: ComicPalette.blue
+        )
         .accessibilityIdentifier("history.empty")
     }
 
     private var failureView: some View {
-        VStack(spacing: 14) {
-            Spacer(minLength: 0)
-
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 46, weight: .black))
-                .foregroundStyle(ComicPalette.red)
-                .accessibilityHidden(true)
-
-            L10n.text(.historyFailureTitle)
-                .font(ComicTypography.title)
-                .foregroundStyle(ComicPalette.paper)
-                .multilineTextAlignment(.center)
-
-            L10n.text(.historyFailureMessage)
-                .font(ComicTypography.body)
-                .foregroundStyle(ComicPalette.paper.opacity(0.72))
-                .multilineTextAlignment(.center)
-
-            Button {
+        ComicErrorView(
+            titleKey: .historyFailureTitle,
+            messageKey: .historyFailureMessage,
+            retryIdentifier: "history.retry",
+            retry: {
                 Task {
                     await viewModel.retry()
                 }
-            } label: {
-                L10n.text(.searchErrorRetry)
-                    .font(ComicTypography.headline)
-                    .foregroundStyle(ComicPalette.ink)
-                    .padding(.horizontal, 22)
-                    .padding(.vertical, 12)
-                    .background(ComicPalette.yellow, in: Capsule())
             }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("history.retry")
-
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.horizontal, 16)
+        )
     }
 
     private var recordList: some View {
