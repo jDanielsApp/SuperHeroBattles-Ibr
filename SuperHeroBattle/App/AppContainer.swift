@@ -22,6 +22,7 @@ final class AppContainer {
     let characterIDs: any CharacterIDProviding
     let catalogRepository: any HeroCatalogRepository
     let historyRepository: any CombatHistoryRepository
+    let heroImages: any HeroImageLoading
 
     init() {
         let usesUITestFakes = ProcessInfo.processInfo.arguments.contains(Self.uiTestFakesArgument)
@@ -81,6 +82,7 @@ final class AppContainer {
             ? FixedCharacterIDProvider(ids: FixedRosterHeroRepository.roster.map(\.id))
             : BundledCharacterIDProvider()
         catalogRepository = catalog
+        heroImages = HeroImageStore()
 
         drawRandomHeroes = DrawRandomHeroesUseCase(
             characterIDs: characterIDs,
