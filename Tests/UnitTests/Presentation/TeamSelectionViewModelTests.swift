@@ -96,9 +96,9 @@ final class TeamSelectionViewModelTests: XCTestCase {
         )
 
         viewModel.prepareRandomPool()
-        await waitFor { await catalog.storedIDs().count == 6 }
+        await waitFor { catalog.storedIDs().count == 6 }
 
-        let stored = await catalog.storedIDs()
+        let stored = catalog.storedIDs()
         XCTAssertEqual(stored.count, 6, "3v3 precarga exactamente 6 IDs sorteados")
         XCTAssertEqual(
             stored.sorted(),
@@ -109,7 +109,7 @@ final class TeamSelectionViewModelTests: XCTestCase {
         viewModel.prepareRandomPool()
         await settle()
 
-        let upserted = await catalog.upsertedIDs()
+        let upserted = catalog.upsertedIDs()
         XCTAssertEqual(upserted.count, 6, "La precarga no debe ejecutarse dos veces")
     }
 
@@ -131,9 +131,9 @@ final class TeamSelectionViewModelTests: XCTestCase {
             )
 
             viewModel.prepareRandomPool()
-            await waitFor { await catalog.storedIDs().count == expectedCount }
+            await waitFor { catalog.storedIDs().count == expectedCount }
 
-            let stored = await catalog.storedIDs()
+            let stored = catalog.storedIDs()
             XCTAssertEqual(stored.count, expectedCount, "El pool de \(mode.rawValue) debe tener \(expectedCount) héroes")
         }
     }
@@ -152,7 +152,10 @@ final class TeamSelectionViewModelTests: XCTestCase {
         )
 
         viewModel.prepareRandomPool()
-        await waitFor { await loadCatalog.storedIDs().count == 2 }
+        await waitFor { loadCatalog.storedIDs().count == 2 }
+        // The catalog only signals the upsert; the pool append settles on
+        // the main actor right after, so give it a beat before consuming.
+        await settle()
 
         viewModel.fillRandom(side: .teamA, slot: 0)
 
@@ -175,7 +178,9 @@ final class TeamSelectionViewModelTests: XCTestCase {
         )
 
         viewModel.prepareRandomPool()
-        await waitFor { await loadCatalog.storedIDs().count == 4 }
+        await waitFor { loadCatalog.storedIDs().count == 4 }
+        // Same as above: let the main-actor pool append settle.
+        await settle()
 
         // Hero 1 was picked by hand for Team A: the pool skips it.
         viewModel.assign(makeHero(id: "1"), to: .teamA, slot: 0)
@@ -201,7 +206,9 @@ final class TeamSelectionViewModelTests: XCTestCase {
         )
 
         viewModel.prepareRandomPool()
-        await waitFor { await catalog.storedIDs().count == 2 }
+        await waitFor { catalog.storedIDs().count == 2 }
+        // Same as above: let the main-actor pool append settle.
+        await settle()
 
         // Exhaust the pool by consuming it and then clearing the slot.
         for expectedID in ["1", "2"] {
@@ -292,11 +299,11 @@ final class TeamSelectionViewModelTests: XCTestCase {
         )
 
         viewModel.prepareRandomPool()
-        await waitFor { await remote.pendingCount() == 2 }
+        await waitFor { remote.pendingCount() == 2 }
 
         viewModel.cancelActiveWork()
 
-        await remote.completeAllPending()
+        remote.completeAllPending()
         await settle()
 
         XCTAssertNil(viewModel.hero(in: 0, side: .teamA))
@@ -304,7 +311,7 @@ final class TeamSelectionViewModelTests: XCTestCase {
         XCTAssertNil(viewModel.message)
         XCTAssertNil(viewModel.busySlot)
 
-        let stored = await catalog.storedIDs()
+        let stored = catalog.storedIDs()
         XCTAssertTrue(stored.isEmpty, "Una precarga cancelada no debe persistir la tirada")
     }
 

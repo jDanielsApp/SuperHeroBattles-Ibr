@@ -11,9 +11,9 @@ final class LoadHeroesByIDsUseCaseTests: XCTestCase {
         let heroes = try await useCase.execute(ids: ["1", "2"])
 
         XCTAssertEqual(heroes.map(\.id), ["1", "2"])
-        let started = await remote.startedIDs()
+        let started = remote.startedIDs()
         XCTAssertTrue(started.isEmpty)
-        let upserted = await catalog.upsertedIDs()
+        let upserted = catalog.upsertedIDs()
         XCTAssertTrue(upserted.isEmpty)
     }
 
@@ -27,7 +27,7 @@ final class LoadHeroesByIDsUseCaseTests: XCTestCase {
         let heroes = try await useCase.execute(ids: ["1", "2", "3"])
 
         XCTAssertEqual(heroes.map(\.id), ["1", "2", "3"])
-        let upserted = await catalog.upsertedIDs().sorted()
+        let upserted = catalog.upsertedIDs().sorted()
         XCTAssertEqual(upserted, ["1", "3"])
     }
 
@@ -57,7 +57,7 @@ final class LoadHeroesByIDsUseCaseTests: XCTestCase {
             XCTAssertEqual(error as? HeroRepositoryError, .transport)
         }
 
-        let stored = await catalog.storedIDs()
+        let stored = catalog.storedIDs()
         XCTAssertEqual(stored, ["1"])
     }
 
@@ -89,20 +89,20 @@ final class LoadHeroesByIDsUseCaseTests: XCTestCase {
             try await useCase.execute(ids: ids)
         }
 
-        await waitUntil { await remote.startedIDs().count == 6 }
-        let maxConcurrent = await remote.maxConcurrent()
+        await waitUntil { remote.startedIDs().count == 6 }
+        let maxConcurrent = remote.maxConcurrent()
         XCTAssertEqual(maxConcurrent, 6)
 
         for _ in 0..<40 {
-            if await remote.startedIDs().count == ids.count,
-               await remote.pendingCount() == 0 {
+            if remote.startedIDs().count == ids.count,
+               remote.pendingCount() == 0 {
                 break
             }
-            await remote.completeAllPending()
+            remote.completeAllPending()
             await settle()
         }
 
-        await remote.completeAllPending()
+        remote.completeAllPending()
         let result = try await task.value
         XCTAssertEqual(result.map(\.id), ids)
     }

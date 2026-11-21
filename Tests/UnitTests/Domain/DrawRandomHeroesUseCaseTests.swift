@@ -40,7 +40,7 @@ final class DrawRandomHeroesUseCaseTests: XCTestCase {
         XCTAssertEqual(outcome.heroes, [])
         XCTAssertEqual(outcome.drawnIDs, [])
 
-        let started = await remote.startedIDs()
+        let started = remote.startedIDs()
         XCTAssertTrue(started.isEmpty, "Con count 0 no debe lanzarse ninguna petición")
     }
 

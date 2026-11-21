@@ -8,7 +8,7 @@ final class CachedHeroRepositoryTests: XCTestCase {
             _ = try await repository.search(query: "batman")
             _ = try await repository.search(query: "BÁTMAN")
 
-            let count = await remote.count()
+            let count = remote.count()
             XCTAssertEqual(count, 1)
         }
     }
@@ -18,7 +18,7 @@ final class CachedHeroRepositoryTests: XCTestCase {
             _ = try await repository.search(query: "batman")
             _ = try await repository.search(query: "superman")
 
-            let count = await remote.count()
+            let count = remote.count()
             XCTAssertEqual(count, 2)
         }
     }
@@ -29,11 +29,11 @@ final class CachedHeroRepositoryTests: XCTestCase {
             clock.advance(by: 180)
             _ = try await repository.search(query: "batman")
 
-            let afterExpiry = await remote.count()
+            let afterExpiry = remote.count()
             XCTAssertEqual(afterExpiry, 2)
 
             _ = try await repository.search(query: "batman")
-            let afterRefresh = await remote.count()
+            let afterRefresh = remote.count()
             XCTAssertEqual(afterRefresh, 2)
         }
     }
@@ -56,7 +56,7 @@ final class CachedHeroRepositoryTests: XCTestCase {
         }
 
         let heroes = try await repository.search(query: "batman")
-        let queries = await remote.recordedQueries()
+        let queries = remote.recordedQueries()
 
         XCTAssertEqual(heroes.map(\.id), ["1"])
         XCTAssertEqual(queries, ["batman", "batman"])
@@ -70,7 +70,7 @@ final class CachedHeroRepositoryTests: XCTestCase {
         )
 
         let heroes = try await repository.search(query: "   ")
-        let count = await remote.count()
+        let count = remote.count()
 
         XCTAssertTrue(heroes.isEmpty)
         XCTAssertEqual(count, 0)

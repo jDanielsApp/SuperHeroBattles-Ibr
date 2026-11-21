@@ -38,7 +38,8 @@ nonisolated struct StubHeroRepository: HeroRepository {
 }
 
 /// Fake repository with a sequence of outcomes that records received queries.
-actor ScriptedHeroRepository: HeroRepository {
+nonisolated final class ScriptedHeroRepository: HeroRepository, @unchecked Sendable {
+    private let lock = NSLock()
     private var outcomes: [StubHeroOutcome]
     private var queries: [String] = []
 
@@ -47,19 +48,21 @@ actor ScriptedHeroRepository: HeroRepository {
     }
 
     func search(query: String) async throws -> [Hero] {
-        queries.append(query)
+        try lock.withLock {
+            queries.append(query)
 
-        guard !outcomes.isEmpty else {
-            throw HeroRepositoryError.transport
-        }
+            guard !outcomes.isEmpty else {
+                throw HeroRepositoryError.transport
+            }
 
-        switch outcomes.removeFirst() {
-        case .success(let heroes):
-            return heroes
-        case .failure(let error):
-            throw error
-        case .cancellation:
-            throw CancellationError()
+            switch outcomes.removeFirst() {
+            case .success(let heroes):
+                return heroes
+            case .failure(let error):
+                throw error
+            case .cancellation:
+                throw CancellationError()
+            }
         }
     }
 
@@ -68,13 +71,16 @@ actor ScriptedHeroRepository: HeroRepository {
     }
 
     func recordedQueries() -> [String] {
-        queries
+        lock.lock()
+        defer { lock.unlock() }
+        return queries
     }
 }
 
 /// Repository that counts calls to verify the cache.
-actor CountingHeroRepository: HeroRepository {
-    let heroes: [Hero]
+nonisolated final class CountingHeroRepository: HeroRepository, @unchecked Sendable {
+    private let lock = NSLock()
+    private let heroes: [Hero]
     private var searchCount = 0
 
     init(heroes: [Hero]) {
@@ -82,7 +88,7 @@ actor CountingHeroRepository: HeroRepository {
     }
 
     func search(query: String) async throws -> [Hero] {
-        searchCount += 1
+        lock.withLock { searchCount += 1 }
         return heroes
     }
 
@@ -94,6 +100,8 @@ actor CountingHeroRepository: HeroRepository {
     }
 
     func count() -> Int {
-        searchCount
+        lock.lock()
+        defer { lock.unlock() }
+        return searchCount
     }
 }

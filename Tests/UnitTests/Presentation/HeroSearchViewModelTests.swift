@@ -114,7 +114,7 @@ final class HeroSearchViewModelTests: XCTestCase {
         await waitForState(viewModel) { $0 == .results([hero]) }
 
         XCTAssertEqual(viewModel.state, .results([hero]))
-        let queries = await repository.recordedQueries()
+        let queries = repository.recordedQueries()
         XCTAssertEqual(queries, ["batman", "batman"])
     }
 
@@ -178,7 +178,7 @@ final class HeroSearchViewModelTests: XCTestCase {
         await settle()
 
         XCTAssertEqual(viewModel.state, .idle)
-        let count = await repository.count()
+        let count = repository.count()
         XCTAssertEqual(count, 0)
     }
 

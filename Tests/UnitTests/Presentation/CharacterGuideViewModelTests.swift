@@ -79,7 +79,7 @@ final class CharacterGuideViewModelTests: XCTestCase {
         XCTAssertTrue(viewModel.catalogHeroes.isEmpty)
         XCTAssertTrue(viewModel.hasMorePages)
 
-        await remote.setOutcome(.success(heroes))
+        remote.setOutcome(.success(heroes))
         viewModel.retryPage()
         await waitFor(viewModel) { $0.catalogHeroes.count == 30 }
 

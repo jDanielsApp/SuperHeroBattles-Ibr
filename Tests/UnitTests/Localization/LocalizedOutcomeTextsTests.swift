@@ -38,6 +38,7 @@ final class LocalizedOutcomeTextsTests: XCTestCase {
 
     // MARK: - Team slot VoiceOver value
 
+    @MainActor
     func testTeamSlotContextHonorsRequestedLocale() {
         XCTAssertEqual(
             TeamSlotView.slotContext(side: .teamA, slot: 0, locale: spanish),
@@ -51,6 +52,7 @@ final class LocalizedOutcomeTextsTests: XCTestCase {
 
     // MARK: - Hero detail alignment
 
+    @MainActor
     func testHeroAlignmentTextHonorsRequestedLocale() {
         XCTAssertEqual(
             HeroDetailView.alignmentText(.bad, locale: spanish),
