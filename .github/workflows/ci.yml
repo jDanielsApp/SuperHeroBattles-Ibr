@@ -1,0 +1,146 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'data/character_ids.json'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'data/character_ids.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: Build and unit tests
+    if: github.event_name == 'pull_request'
+    runs-on: xcode-27
+    timeout-minutes: 60
+    env:
+      # The xcode-27 runner image ships Xcode 27.2 at this path; the
+      # diagnostics step verifies it and lists the available installs.
+      DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Materialize local xcconfig (example placeholder, no real token)
+        run: cp SuperHeroBattle/Config/Secrets.example.xcconfig SuperHeroBattle/Config/Secrets.xcconfig
+
+      - name: Diagnose Xcode and simulator device types
+        run: |
+          if [ ! -d "$DEVELOPER_DIR" ]; then
+            echo "::error::DEVELOPER_DIR ($DEVELOPER_DIR) is not present in this image. Available Xcode installs:"
+            ls /Applications | grep -i xcode || true
+            exit 1
+          fi
+          xcodebuild -version
+          swift --version
+          shasum -a 256 "$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend"
+          xcodebuild -sdk iphonesimulator -version
+          xcrun simctl list devicetypes | grep -E "iPhone 17" \
+            || { echo "::error::iPhone 17 simulator device type not found in this image"; exit 1; }
+
+      - name: Cache SwiftPM packages
+        uses: actions/cache@v6
+        with:
+          path: ~/Library/Caches/org.swift.swiftpm
+          key: spm-${{ runner.os }}-${{ hashFiles('SuperHeroBattle.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+          restore-keys: spm-${{ runner.os }}-
+
+      - name: Resolve package dependencies
+        run: xcodebuild -project SuperHeroBattle.xcodeproj -resolvePackageDependencies
+
+      - name: Run unit tests
+        run: |
+          set -o pipefail
+          export LOG_FILTER="$(command -v xcbeautify || echo cat)"
+          xcodebuild -project SuperHeroBattle.xcodeproj -scheme SuperHeroBattle \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=27.2' \
+            -only-testing:SuperHeroBattleTests \
+            -resultBundlePath UnitTests.xcresult \
+            test | $LOG_FILTER
+
+      - name: Upload result bundle on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: xcresult-unit-tests
+          path: UnitTests.xcresult
+          if-no-files-found: ignore
+
+  full-suite:
+    name: Full suite (${{ matrix.simulator }})
+    if: github.event_name != 'pull_request'
+    runs-on: xcode-27
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - simulator: iPhone 17
+            slug: iphone-17
+          - simulator: iPhone Duo
+            slug: iphone-duo
+    env:
+      # The xcode-27 runner image ships Xcode 27.2 at this path; the
+      # diagnostics step verifies it and lists the available installs.
+      DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Materialize local xcconfig (example placeholder, no real token)
+        run: cp SuperHeroBattle/Config/Secrets.example.xcconfig SuperHeroBattle/Config/Secrets.xcconfig
+
+      - name: Diagnose Xcode and simulator device types
+        run: |
+          if [ ! -d "$DEVELOPER_DIR" ]; then
+            echo "::error::DEVELOPER_DIR ($DEVELOPER_DIR) is not present in this image. Available Xcode installs:"
+            ls /Applications | grep -i xcode || true
+            exit 1
+          fi
+          xcodebuild -version
+          swift --version
+          shasum -a 256 "$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend"
+          xcodebuild -sdk iphonesimulator -version
+          xcrun simctl list devicetypes | grep -E "${{ matrix.simulator }}" \
+            || { echo "::error::${{ matrix.simulator }} simulator device type not found in this image"; exit 1; }
+
+      - name: Cache SwiftPM packages
+        uses: actions/cache@v6
+        with:
+          path: ~/Library/Caches/org.swift.swiftpm
+          key: spm-${{ runner.os }}-${{ hashFiles('SuperHeroBattle.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+          restore-keys: spm-${{ runner.os }}-
+
+      - name: Resolve package dependencies
+        run: xcodebuild -project SuperHeroBattle.xcodeproj -resolvePackageDependencies
+
+      - name: Run all tests (unit + UI)
+        run: |
+          set -o pipefail
+          export LOG_FILTER="$(command -v xcbeautify || echo cat)"
+          xcodebuild -project SuperHeroBattle.xcodeproj -scheme SuperHeroBattle \
+            -destination 'platform=iOS Simulator,name=${{ matrix.simulator }},OS=27.2' \
+            -resultBundlePath FullSuite.xcresult \
+            test | $LOG_FILTER
+
+      - name: Upload result bundle on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: xcresult-full-${{ matrix.slug }}
+          path: FullSuite.xcresult
+          if-no-files-found: ignore

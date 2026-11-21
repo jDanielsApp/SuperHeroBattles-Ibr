@@ -4,6 +4,7 @@
 ![iOS](https://img.shields.io/badge/iOS-26.0%2B-blue)
 ![Xcode](https://img.shields.io/badge/Xcode-27.2%2B-blue)
 ![Plataforma](https://img.shields.io/badge/UI-SwiftUI-purple)
+![CI](https://github.com/jDanielsApp/SuperHeroBattles-Ibr/actions/workflows/ci.yml/badge.svg?branch=main)
 
 App iOS nativa que convierte SuperHeroAPI en un simulador de combates por equipos: consulta el catálogo de personajes, forma equipos de 1 vs 1, 2 vs 2 o 3 vs 3, y resuelve el ganador con un motor matemático en Swift. Apple Foundation Models se usa exclusivamente para narrar el combate; nunca decide el resultado.
 
@@ -280,6 +281,8 @@ Reglas de ubicación (resumen): un tipo principal por archivo; DTOs en `Data/Net
 
 `.github/workflows/update-character-ids.yml` actualiza el índice los lunes a las 06:17 UTC y bajo demanda (`workflow_dispatch`). No necesita secretos: usa el `GITHUB_TOKEN` automático y solo commitea `data/character_ids.json`.
 
+`.github/workflows/ci.yml` compila y ejecuta los tests automáticamente: **unit tests en cada PR** (iPhone 17) y **suite completa (unit + UI) en cada push a `main`** (iPhone 17 y iPhone Duo). Los jobs usan la imagen `xcode-27` (preview, arm64) porque `macos-26` solo incluye Xcode 26.x: esa imagen trae Xcode 27.2 y el runtime iOS 27.2 con ambos simuladores, y al ser preview puede tener colas algo más largas. No usa secretos: materializa `Secrets.example.xcconfig` como placeholder, así el token real nunca llega al runner y los tests corren en modo hermético. Si un run falla, el `.xcresult` se sube como artifact para depurarlo. Los cambios que solo tocan documentación (`**.md`, `docs/**`) o el índice de IDs no disparan CI.
+
 Configuración única tras el primer push:
 
 1. Pestaña **Actions** del repositorio → habilita los workflows si la UI lo pide.
@@ -326,6 +329,8 @@ git checkout -- SuperHeroBattle.xcodeproj/project.xcworkspace/xcshareddata/swift
 | `xcodebuild: Unable to read project` | `xcode-select` apunta a Command Line Tools | `export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` |
 | Falta `Package.resolved` tras los tests | `xcodebuild test` lo elimina en este formato | `git checkout -- SuperHeroBattle.xcodeproj/.../Package.resolved` |
 | El workflow de Actions falla al pushear | Permisos de solo lectura o `main` protegida | Settings → Actions → Workflow permissions → Read and write; bypass para el bot |
+| CI falla al arrancar por Xcode o simulador | La imagen del runner no incluye Xcode 27.2 o el device type esperado | Consulta el paso "Diagnose" del run (imprime las instalaciones de Xcode y los devicetypes disponibles) y ajusta `runs-on` o `DEVELOPER_DIR` en `ci.yml` |
+| Un UI test falla solo en CI | Flakiness del simulador en el runner | Descarga el artifact `.xcresult` del run fallido y compáralo con la ejecución local antes de reintentar |
 
 ## Hoja de ruta
 
