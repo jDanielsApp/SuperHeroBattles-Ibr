@@ -53,6 +53,7 @@ struct RootView: View {
                 }
         }
         .tint(ComicPalette.yellow)
+        .environment(\.heroImages, container.heroImages)
         .environment(\.locale, language.locale ?? .current)
         .preferredColorScheme(.dark)
     }

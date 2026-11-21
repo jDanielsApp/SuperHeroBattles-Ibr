@@ -1,35 +1,42 @@
 import SwiftUI
 
-/// Remote image with placeholder and loading/error states.
+/// Remote hero image with placeholder, loading and error states.
+///
+/// Images resolve through the shared `HeroImageStore` (environment key
+/// `\.heroImages`): concurrent rows share one download and repeated
+/// searches reuse the cached result instead of starting over.
 struct HeroImageView: View {
     let url: URL?
     let size: CGFloat
+
+    @Environment(\.heroImages) private var heroImages
+
+    /// The loaded image and the URL it belongs to: a stale image is
+    /// never shown for a different URL.
+    @State private var loaded: (url: URL, image: UIImage)?
+    @State private var isFailed = false
 
     init(url: URL?, size: CGFloat = 64) {
         self.url = url
         self.size = size
     }
 
+    private var displayImage: UIImage? {
+        guard let loaded, loaded.url == url else { return nil }
+        return loaded.image
+    }
+
     var body: some View {
         Group {
-            if let url {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    case .failure:
-                        placeholder
-                    case .empty:
-                        ZStack {
-                            placeholder
-                            ProgressView()
-                                .tint(ComicPalette.yellow)
-                        }
-                    @unknown default:
-                        placeholder
-                    }
+            if let displayImage {
+                Image(uiImage: displayImage)
+                    .resizable()
+                    .scaledToFill()
+            } else if url != nil, !isFailed {
+                ZStack {
+                    placeholder
+                    ProgressView()
+                        .tint(ComicPalette.yellow)
                 }
             } else {
                 placeholder
@@ -43,6 +50,26 @@ struct HeroImageView: View {
                 .stroke(ComicPalette.paper.opacity(0.18), lineWidth: 2)
         }
         .accessibilityHidden(true)
+        .task(id: url) {
+            await load()
+        }
+    }
+
+    @MainActor
+    private func load() async {
+        guard let url else {
+            loaded = nil
+            isFailed = false
+            return
+        }
+
+        isFailed = false
+        if let image = await heroImages.image(for: url) {
+            loaded = (url, image)
+        } else {
+            loaded = nil
+            isFailed = true
+        }
     }
 
     private var placeholder: some View {
