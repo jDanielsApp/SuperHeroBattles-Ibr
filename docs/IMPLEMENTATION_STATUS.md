@@ -1,15 +1,14 @@
 # Estado de implementación — SuperHeroBattle
 
-Última actualización: 20/11/2026
+Última actualización: 21/11/2026
 
 Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fase y antes de cada commit relevante.
 
 ## Resumen
 
-- **Fase actual:** Fase 16 cerrada (arrangement adaptativo fuera del scroll) sobre el proyecto completado.
-- **Última fase cerrada:** Fase 16 — `ArrangementView` a nivel de contenedor con scroll propio por panel: lado a lado en horizontal, apilado en vertical, en las cuatro pantallas de paneles.
-- **Herramienta nueva:** skill de proyecto `.opencode/skills/iphone-duo` (HIG destilada + mapa de decisiones por pantalla), con la lección del arrangement-fuera-del-scroll.
-- **Estado del build:** compila en Debug sin warnings de código propio; **266 unit tests + 6 UI tests en verde en iPhone 17 (compact) y en iPhone Duo (regular, iOS 27.2)**.
+- **Fase actual:** Fase 17 cerrada (saneamiento de la revisión de entrega) sobre el proyecto completado.
+- **Última fase cerrada:** Fase 17 — corrección de la revisión final: mezcla de idiomas, áreas táctiles declaradas, UI test del flujo de búsqueda, caché de imágenes, separador decimal, marcador de alter egos, tamaño de vistas/prompt y documentación alineada con el código.
+- **Estado del build:** compila en Debug y Release sin warnings de código propio; **275 unit tests + 7 UI tests en verde en iPhone 17 (compact) y en iPhone Duo (regular, iOS 27.2)**.
 - **Dependencias:** RealmSwift 20.0.6 y Lottie 4.6.1 resueltas con SwiftPM.
 
 ## Decisiones confirmadas
@@ -43,6 +42,7 @@ Este documento es el registro vivo del proyecto. Se actualiza al cerrar cada fas
 | 14. Adaptación iPhone Duo | Completada | `ArrangementView(.split)` en pantalla interior, ancho legible acotado y suite en verde en el simulador Duo |
 | 15. Corrección arrangement en Duo vertical | Completada | `.split.axes(.horizontal)` para no apilar paneles y test de regresión geométrico |
 | 16. Arrangement adaptativo | Completada | ArrangementView fuera del scroll con paneles de scroll propio: lado a lado en horizontal, apilado en vertical |
+| 17. Saneamiento de la revisión de entrega | Completada | Idiomas, áreas táctiles ≥44 pt, UI test de búsqueda, caché de imágenes con coalescing, separador decimal, alter egos, tamaño de vistas y docs alineadas |
 
 ## Fase 0 — completada
 
@@ -378,16 +378,33 @@ Verificación Fase 16: build sin warnings de código propio, **266 unit tests + 
 
 Actualización de estado (2026-11-20): la caché de imágenes remotas queda cerrada. El host `superherodb.com` sirve las imágenes con normalidad; la disponibilidad depende de su respuesta y los fallos puntuales muestran el placeholder previsto. README y AGENTS.md reflejan el cierre y la regla de caché TTL se ajustó para describir solo lo implementado (la coalescencia de peticiones quedó fuera por decisión de alcance).
 
+## Fase 17 — completada
+
+Saneamiento integral de la revisión de entrega. Cada corrección llega con su test de regresión.
+
+- [x] **Mezcla de idiomas** (app en español, sistema en inglés): `L10n.string` sin locale usaba el idioma del sistema (`.current`), no el elegido en Ajustes. Se elimina el valor por defecto del parámetro —el compilador obliga a pasar locale explícito en cada call site futuro— y se corrigen los tres puntos afectados: `TeamSlotView` (valor de VoiceOver "Team A, 1"), `HistoryView` (fila "Winner: Team A") y `HeroDetailView` ("Alineación: Bad"). La lógica extraída a helpers puros y testables: `HistoryOutcomeText`, `TeamSlotView.slotContext(side:slot:locale:)` y `HeroDetailView.alignmentText(_:locale:)`, con tests por locale (`LocalizedOutcomeTextsTests`).
+- [x] **Áreas táctiles declaradas ≥44 pt**: los botones de hueco medían 28-30 pt, los menús de filtro ~30 pt y el submit de búsqueda reportaba un frame de accesibilidad de 22×22 pt pese al frame 44×44 dentro del label. Doble capa en los tres controles: `.frame(minWidth/minHeight: 44)` y `.contentShape(.rect)` dentro del label (área de golpe) más `.frame` sobre el Button (frame declarado que consumen Voice Control y Switch Control). Regresión automatizada: `assertMinimumTarget` en los UI tests comprueba el frame declarado de submit, huecos y menús.
+- [x] **UI test del flujo pedido**: `testSearchFlowOpensResultInAppLanguage` con `-uitest-fakes` escribe "Hero 1", envía y abre la ficha. Arranca además con `-app.language es` y `-AppleLanguages (en)`: la app forzada a español con proceso en inglés reproduce el bug original y verifica que la alineación responde en el idioma de la app ("Bueno", nunca "Good"/"Bad"). Tolerante al push compacto y al panel Duo.
+- [x] **Caché de imágenes en `Core/Images`**: `HeroImageStore` (actor) con coalescing de descargas —una descarga por URL compartida por todas las vistas, propiedad del store, nunca cancelada porque una vista desaparezca— y `NSCache` con límite de entradas; los fallos no se cachean y muestran placeholder. `HeroImageView` pasa de `AsyncImage` a consumir el store vía `@Environment(\.heroImages)`, inyectado desde `AppContainer` (default de entorno para previews). Repetir una búsqueda ya no re-descarga miniaturas ni interrumpe descargas en curso. Tests: coalescing determinista (gate), hit de caché, fallo no cacheado y datos indecodificables.
+- [x] **Separador decimal coherente**: `NarrationPrompts.formatted(_:language:)` numera con el locale del idioma de narración y el marcador fija el locale de la app (`SuspenseScoreText.localizedFormat`, `CombatTeamPanel.scoreFormat`): ya no conviven "132,8" y "132.8" en la misma pantalla. Test con base fraccional (92,8) en ambos idiomas.
+- [x] **"No alter egos found."**: `HeroMapper.alterEgos` trata el marcador como dato ausente y `HeroRecord` normaliza al leer, de modo que las filas persistidas antes del filtro también quedan limpias sin migración de esquema. `HeroMapperTests` (que asertaban el paso literal del marcador) actualizados, con regresión de fila heredada en Realm.
+- [x] **Prompt de 91 líneas**: `NarrationPrompts.instructions` pasa a siete builders de sección (tono, reglas, pacing, estructura, ejemplos, idioma, versión) con rendering **byte-idéntico**: verificado compilando la versión original y la refactorizada en paralelo y comparando salidas con `diff` (vacío). Blindado con golden tests (`NarrationPromptInstructionsTests`). `version` sigue en 4.
+- [x] **Vistas demasiado grandes**: `CombatView` 441→166 líneas (composición pura con `CombatIntroBanner`, `CombatTeamPanel` y `CombatSaveSection`); `CharacterGuideView` 427→216 (con `CharacterGuideHeroRow` y `CharacterGuideCatalogList`); los estados compartidos `ComicStatusView`/`ComicLoadingView`/`ComicErrorView` también deduplican `HistoryView` (268→203). Identificadores de accesibilidad y comportamiento intactos: la suite UI existente no cambió.
+- [x] **Código muerto**: eliminados `GetHeroDetailUseCase` (solo lo referenciaban sus tests y docs) y `.environment(container)` sin lector. Los casos de uso que solo delegan se **conservan** por decisión de arquitectura: AGENTS.md §5 exige que Presentation dependa de casos de uso, y su eliminación reescribiría la regla, los view models y sus tests.
+- [x] **Documentación alineada**: README (estado de la caché, contadores reales, áreas táctiles) y AGENTS.md (regla de imágenes describe `HeroImageStore`) reflejan ahora lo implementado. Auditoría de `try!`/`as!`/force unwraps en producción: limpia.
+
+Verificación Fase 17: build Debug y Release sin warnings de código propio, **275 unit tests + 7 UI tests en verde (282 en total) en iPhone 17 (compact) y en el simulador iPhone Duo (regular, iOS 27.2)**, incluidos el flujo de búsqueda y las aserciones de frame en ambos size classes. Bundle de Release sin `*.xcconfig` ni secretos. La cobertura agregada no se vuelve a citar: el formato de xcresult de Xcode 27 no la expone a `xccov` y el dato previo (84,9 %) era de la Fase 9.
+
 ## Pendientes y riesgos
 
 - **Token de SuperHeroAPI:** configurado localmente en `Secrets.xcconfig` y verificado con una búsqueda real. El archivo está ignorado por git y no se incluye en el bundle (verificado también en Release).
-- **Imágenes de SuperHeroAPI:** el host `superherodb.com` sirve las imágenes con normalidad; la disponibilidad depende de su respuesta y los fallos puntuales muestran el placeholder previsto. El ítem de caché de imágenes remotas está cerrado.
+- **Imágenes de SuperHeroAPI:** el host `superherodb.com` sirve las imágenes con normalidad; la disponibilidad depende de su respuesta y los fallos puntuales muestran el placeholder previsto. La caché en memoria con coalescing de descargas está implementada (`Core/Images/HeroImageStore`, Fase 17).
 - `FeaturePlaceholderView` quedó sin referencias tras la Fase 4; se conserva como componente reutilizable, candidato a eliminación si no se usa.
 - SuperHeroAPI no tiene endpoint de catálogo completo ni paginación; el catálogo se resuelve con el índice de IDs y llamadas por ID bajo demanda.
 - El workflow programado se desactiva tras 60 días sin actividad en repositorios públicos; conviene ejecutar `workflow_dispatch` periódicamente. Si la rama `main` exige PR, el push del bot fallará y habrá que permitir escritura a Actions o cambiar el flujo a PR.
 - Los tests del script no cubren el entorno real de GitHub Actions hasta que se ejecute el primer `workflow_dispatch` en el repositorio remoto.
 - Foundation Models no está disponible en el simulador de este Mac (assets del modelo ausentes en el host); el fallback de plantilla cubre el flujo y la ruta IA se verificó en un iPhone real con iOS 26.5.
-- Reintento automático con backoff y coalescencia de peticiones idénticas quedaron fuera por decisión de alcance.
+- La coalescencia de peticiones de imágenes está implementada (`HeroImageStore`); el reintento automático con backoff sigue fuera de alcance.
 
 ## Verificación ejecutada
 

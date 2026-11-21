@@ -41,8 +41,8 @@ Proyecto construido con SwiftUI, Clean Architecture + MVVM, Swift Concurrency es
 | Narración con Apple Foundation Models | ✅ Operativa | En dispositivo con Apple Intelligence genera con IA; sin modelo cae a plantilla honesta con badge de origen |
 | Animaciones Lottie | ✅ Operativas | `combat_intro` (bucle) y `combat_winner` (una vez) activas; Reduce Motion y ausencia de asset caen a fallback comic |
 | Historial de combates con Realm | ✅ Operativa | Guardado explícito con confirmación y vuelta a Home; listado con borrado/vaciado y detalle |
-| Calidad final | ✅ Cerrada | 266 tests unitarios + 6 UI en verde; cobertura 84,9 %; build Release verificado sin secretos |
-| Caché de imágenes remotas | ✅ Cerrada | Las imágenes cargan con normalidad; la disponibilidad depende de la respuesta del host externo y los fallos puntuales muestran el placeholder |
+| Calidad final | ✅ Cerrada | 275 tests unitarios + 7 UI en verde en iPhone 17 (compact) y iPhone Duo (regular); build Release verificado sin secretos |
+| Caché de imágenes remotas | ✅ Operativa | `Core/Images/HeroImageStore`: memoria con coalescing de descargas (una descarga por URL compartida por todas las vistas); repetir una búsqueda no re-descarga miniaturas. La disponibilidad depende del host externo y los fallos puntuales muestran el placeholder |
 
 `docs/IMPLEMENTATION_STATUS.md` es el registro vivo de fases y decisiones; este cuadro es solo un resumen.
 
@@ -67,6 +67,17 @@ Reglas clave que se aplican en revisiones:
 - La IA solo narra: el resultado matemático del combate es inmutable.
 - Prohibido `try!`, `as!` y force unwraps en código de producción.
 - `async/await` en todo; sin callbacks ni `DispatchQueue` salvo interoperabilidad justificada.
+
+### Por qué MVVM
+
+Se eligió MVVM (Model–View–ViewModel) como patrón de presentación por su equilibrio entre simplicidad, mantenibilidad y testabilidad, además de su buena integración con SwiftUI y su enfoque declarativo. Sobre esa base, una separación ligera en capas (Domain/Data) aporta el desacoplamiento y la testabilidad necesarios sin introducir una complejidad arquitectónica innecesaria para el alcance de esta prueba técnica.
+
+- **View**: representa la interfaz y gestiona las interacciones del usuario.
+- **ViewModel**: view models `@Observable` / `@MainActor` que gestionan el estado de la interfaz y la lógica de presentación, coordinando casos de uso.
+- **Model**: entidades `Sendable` puras y casos de uso en `Domain`.
+- **Data layer**: implementa los protocolos de `Domain`; gestiona las peticiones a SuperHeroAPI, el mapeo de DTOs, la caché TTL, la persistencia en Realm y la narración con Foundation Models.
+
+Esta separación mantiene el código desacoplado, facilita las pruebas unitarias (toda dependencia externa se sustituye por un fake) y simplifica futuras modificaciones.
 
 ## Decisiones técnicas
 
@@ -98,6 +109,18 @@ Decisiones de diseño que definen el comportamiento de la app.
 
 - Catálogo e historial persisten **snapshots inmutables**: los objetos gestionados de Realm nunca cruzan a Domain o Presentation.
 - Si Realm no se puede abrir, la app sigue funcionando con un **respaldo en memoria** durante esa sesión.
+
+### Realm frente a SwiftData
+
+- **Madurez y control**: RealmSwift 20.x lleva años en producción, con reglas de hilos y actores bien documentadas, migraciones explícitas gestionadas en un único punto y comportamiento predecible bajo Swift Concurrency estricta. SwiftData, la alternativa más reciente de Apple, aún está asentando su madurez en migraciones y casos límite de concurrencia.
+- **Criterio de dominio**: en un desarrollo asistido por IA, la verificación del código generado es responsabilidad del desarrollador. Se elige la herramienta que se domina: permite revisar con criterio lo generado, detectar errores sutiles (p. ej., objetos gestionados cruzando actores) y depurar con confianza. Asumir a la vez código nuevo y una tecnología no dominada multiplica el riesgo de aceptar errores sin detectarlos.
+- El proyecto aprovecha además puntos fuertes concretos de Realm: snapshots inmutables para el historial, configuración in-memory determinista para los tests y respaldo en memoria si la base de datos no se puede abrir.
+
+### XCTest frente a Swift Testing
+
+- Swift Testing es el framework moderno de Apple y es una opción válida, pero XCTest sigue siendo plenamente soportado y estable, y además es requisito inevitable para los UI tests (`XCUITest` se apoya en XCTest).
+- **Mismo criterio de dominio**: con un framework conocido, un test en rojo o en verde es una señal fiable. Al validar código generado por IA, esa fiabilidad distingue un fallo real del producto de un artificio del framework.
+- El flujo de verificación del proyecto (`xcodebuild test`, CI) está construido sobre XCTest, así que la elección también minimiza la fricción con la automatización existente.
 
 ## Stack tecnológico
 
@@ -268,7 +291,7 @@ Comportamiento esperado: con el índice sin cambios verás `Sin cambios: 731 IDs
 
 ## Tests
 
-Estado actual: **266 tests unitarios + 6 UI tests** en verde sobre iPhone 17 (iOS 27.0), con una cobertura del **84,9 %** en la app y build Release verificado.
+Estado actual: **275 tests unitarios + 7 UI tests** en verde sobre iPhone 17 (compact) y iPhone Duo (regular, iOS 27.2), con build Release verificado.
 
 Convenciones del proyecto:
 
@@ -288,7 +311,7 @@ git checkout -- SuperHeroBattle.xcodeproj/project.xcworkspace/xcshareddata/swift
 - Interfaz y narración en inglés y español con `Localizable.strings` clásico (sin String Catalogs). El idioma se elige en Ajustes y se aplica a toda la app; los nombres propios no se traducen.
 - Estética comic book con `ComicPalette` y `TeamPalette`, tramas de imprenta (halftone) en el fondo y color siempre acompañado de texto o icono.
 - Las barras de PowerStats exponen el valor numérico y anuncian los desconocidos como "no disponible".
-- VoiceOver con `.isHeader` en los títulos de sección, Dynamic Type, Reduce Motion y áreas táctiles verificadas en todas las pantallas.
+- VoiceOver con `.isHeader` en los títulos de sección, Dynamic Type, Reduce Motion y áreas táctiles declaradas de 44×44 pt, verificadas con aserciones de frame en los UI tests (Voice Control y Switch Control incluidos).
 - Lottie vive encapsulado en `Core/Lottie`: Reduce Motion y ausencia de asset muestran un fallback estático comic. Las animaciones `combat_intro` (bucle) y `combat_winner` (una vez) están activas; para añadir más, suelta el `.json` en `Resources/Lottie/` y coloca un `ComicLottieView` en la vista.
 
 ## Solución de problemas
@@ -318,7 +341,28 @@ git checkout -- SuperHeroBattle.xcodeproj/project.xcworkspace/xcshareddata/swift
 
 **Proyecto completado.**
 
-- [x] Caché de imágenes remotas (la disponibilidad depende de la respuesta del host externo)
+- [x] Caché de imágenes remotas en memoria con coalescing de descargas (`HeroImageStore` en `Core/Images`)
+
+## Capturas de pantalla
+iPhone Duo Close Home
+<img width="1398" height="2034" alt="iphoneduoclosehome" src="https://github.com/user-attachments/assets/0f5766a1-49b8-4464-a4b8-0a973fc12a07" />
+iPhone Duo Open Home
+<img width="2853" height="2007" alt="iphoneduoopenhome" src="https://github.com/user-attachments/assets/fcfeb4d6-d2e5-411d-8ca7-7f5f2a05f87e" />
+iPhone Duo Close Character List
+<img width="1398" height="2034" alt="iphoneduocloselist" src="https://github.com/user-attachments/assets/6fdbc281-a395-4b2a-a368-fad4d9a6916b" />
+iPhone Duo Open Character List
+<img width="2853" height="2007" alt="iphoneduoopenlist" src="https://github.com/user-attachments/assets/7dcefc43-0923-4b61-8f7f-000dddb777e8" />
+iPhone Duo Close Duel
+<img width="1398" height="2034" alt="iphoneduocloseduel" src="https://github.com/user-attachments/assets/b743868c-e052-474d-abb4-5f6e6bcda7bc" />
+iPhone Duo Open Duel
+<img width="2853" height="2007" alt="iphoneduoopenduel" src="https://github.com/user-attachments/assets/87ad741c-9162-4b09-92f9-519461766779" />
+iPhone Duo Close Fight
+<img width="1398" height="2034" alt="iphoneduoclosefight" src="https://github.com/user-attachments/assets/efdfe37b-85f6-476d-86b2-351fee019ec8" />
+iPhone Duo Open Fight
+<img width="2853" height="2007" alt="iphoneduoopenfight" src="https://github.com/user-attachments/assets/0e1a182e-8bee-4efd-8301-8c037d6cbc8c" />
+iPhone Duo vertical
+<img width="2007" height="2853" alt="iphoneduovertical" src="https://github.com/user-attachments/assets/378cfaf5-2a24-4b89-b7cc-04775dc3178f" />
+
 
 ## Documentación adicional
 
